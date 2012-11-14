@@ -76,9 +76,8 @@ MU : ClusterBasic {
     init { |def, args, inuInteraction|
         muDef = def;
         muArgs = args;
-        uInteraction = inuInteraction;
-        //eventNetwork = None;
-        eventNetwork = uInteraction.asOption.collect{ |x| EventNetwork( x.createDesc(this) ) };
+        uInteraction = inuInteraction.asOption;
+        eventNetwork = uInteraction.collect{ |x| EventNetwork( x.createDesc(this) ) };
         eventNetwork.do( _.actuateNow );
     }
 
@@ -90,18 +89,49 @@ MU : ClusterBasic {
     }
 
     start { |target, startPos = 0, latency|
-        var return = ClusterArg(items.collect(_.start));
-        uInteraction.start;
+        var return = this.doesNotUnderstand(\start,target,startPos, latency);
+        uInteraction.do( _.start );
         ^return
     }
 
+    startIO { |target, startPos = 0, latency|
+        ^IO{ this.doesNotUnderstand(\start,target,startPos, latency) } >>= { |return|
+            uInteraction.collect( _.startIO ).getOrElseDoNothing.fmap{ return }
+        }
+    }
+
+    prepareAndStart { |target|
+        uInteraction.do( _.start );
+        this.doesNotUnderstand(\prepareAndStart, target);
+    }
+
+    prepareAndStartIO { |target|
+        ^IO{ this.doesNotUnderstand(\prepareAndStart, target) } >>= { |return|
+            uInteraction.collect( _.startIO ).getOrElseDoNothing.fmap{ return }
+        }
+    }
+
+
     free {
-        this.synths.do(_.free);
+        this.doesNotUnderstand(\free);
 //////
         uInteraction.stop;
 //////
     }
 
+    freeIO {
+        ^IO{ this.doesNotUnderstand(\free) } >>=| uInteraction.stopIO
+    }
+
+    dispose {
+        this.doesNotUnderstand(\free);
+        eventNetwork.do( _.pauseNow );
+    }
+
+    disposeIO {
+        ^IO{ this.doesNotUnderstand(\free) } >>=|
+        eventNetwork.collect( _.pause ).getOrElse( Unit.pure(IO) )
+    }
 
     // not used anymore ?
     map { |key, es|
@@ -124,8 +154,8 @@ MU : ClusterBasic {
 MUChain : ClusterBasic {
 
     var <storeArgs; // [symbol, argValueList, UInteraction]
-    var <uInteractions; //[ Option[ UInteraction ] ]
-    var <eventNetwork; // Options[ EventNetwork ]
+    var <uInteractions; //[ UInteraction ]
+    var <eventNetwork; // Option[ EventNetwork ]
     *oclass{ ^UChain }
 
 
@@ -181,32 +211,72 @@ MUChain : ClusterBasic {
     }
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
-        var return  = ClusterArg(items.collect( _.prStartBasic(target, startPos, latency, withRelease) ));
         uInteractions.do(_.start);
-        ^return
+        ^this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease)
+    }
+
+    prStartBasicIO { |target, startPos = 0, latency, withRelease = false|
+        ^uInteractions.collect(_.startIO).sequece >>=| IO{ this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease) }
     }
 
     start { |target, startPos = 0, latency|
         this.prStartBasic(target, startPos, latency, false )
     }
 
+    startIO { |target, startPos = 0, latency|
+        ^this.prStartBasicIO(target, startPos, latency, false )
+    }
+
     startAndRelease { |target, startPos = 0, latency|
         this.prStartBasic(target, startPos, latency, true )
     }
 
+    startAndReleaseIO { |target, startPos = 0, latency|
+        ^this.prStartBasicIO(target, startPos, latency, true )
+    }
+
     prepareAndStart { |...args|
-        items.do(_.prepareAndStart(*args))
+        uInteractions.do(_.start);
+        this.doesNotUnderstand(*([\prepareAndStart]++args));
+    }
+
+    prepareAndStartIO { |...args|
+        ^uInteractions.collect( _.startIO ).sequence >>=|
+        IO{ this.items.collect{ |x| x.units[0].args }.postln } >>=|
+        IO{ this.doesNotUnderstand(*([\prepareAndStart]++args)) }
     }
 
     stop {
-        items.do(_.stop);
+        this.doesNotUnderstand(\stop);
         uInteractions.do(_.stop);
     }
 
+    stopIO {
+        ^IO{ this.doesNotUnderstand(\stop) } >>=|
+        uInteractions.collect( _.stopIO ).sequence
+    }
+
     release { |time|
-        items.do(_.release( time ) ) ;
+        this.doesNotUnderstand(\stop, time);
         uInteractions.do(_.stop);
     }
+
+    releaseIO { |time|
+        ^IO{ this.doesNotUnderstand(\stop, time) } >>=|
+        uInteractions.collect( _.stopIO ).sequence
+    }
+
+    dispose {
+        this.doesNotUnderstand(\dispose);
+        eventNetwork.do( _.pauseNow )
+    }
+
+    disposeIO {
+        ^IO{ this.doesNotUnderstand(\dispose) } >>=|
+        eventNetwork.collect( _.pause ).getOrElseDoNothing
+    }
+
+
     //methods for which we shouldn't return a ClusterArg
     releaseSelf {
         ^items[0].releaseSelf

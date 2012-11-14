@@ -59,6 +59,8 @@ PFSonicLab {
     }
 
     *loadDefs {
+        var defs;
+
         Udef.defsFolders.add(
             WFSArrayPan.filenameSymbol.asString.dirname +/+ "UnitDefs"
         );
@@ -73,8 +75,43 @@ PFSonicLab {
 			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
 		};
 
-        ^Udef.loadAllFromDefaultDirectory.collect(_.synthDef).flat.select(_.notNil);
+        defs = Udef.loadAllFromDefaultDirectory ++
+        [Udef(\pannerout, { UOut.ar(0, UIn.ar(0) )})];
 
+        ^defs.collect(_.synthDef).flat.select(_.notNil);
+
+    }
+
+    *loadMinimalDefs {
+        var defs;
+
+        Udef.defsFolders = [
+            WFSArrayPan.filenameSymbol.asString.dirname +/+ "UnitDefs"
+        ];
+
+		Udef.userDefsFolder = File.getcwd +/+ "UnitDefs";
+
+		Udef.defsFolders.add(
+            VBAPLib.filenameSymbol.asString.dirname +/+ "UnitDefs"
+        );
+
+		UChain.makeDefaultFunc = {
+			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
+		};
+
+        defs = Udef.loadAllFromDefaultDirectory ++
+        [Udef(\pannerout, { UOut.ar(0, UIn.ar(0) ) })];
+
+        ^defs.collect(_.synthDef).flat.select(_.notNil);
+
+    }
+
+    *loadDefsGeneral { |allDefs = true|
+        ^if( allDefs) {
+            this.loadDefs
+        } {
+            this.loadMinimalDefs
+        }
     }
 
     *serverOptions {
@@ -95,11 +132,11 @@ PFSonicLab {
         }
     }
 
-    *startupLocalhost {
+    *startupLocalhost { |allDefs = true|
 		var conf, x, y, z, defs, server, options;
 
         //no distance correction
-        defs = this.loadDefs;
+        defs = this.loadDefsGeneral(allDefs);
 
 		/*if(GUI.scheme == 'qt') {
 			UMenuBar();
@@ -112,10 +149,10 @@ PFSonicLab {
 
         server.waitForBoot({
 
-            defs.do({|def|
-                def.send( server );
-            });
+            defs.do( _.send( server ) );
+            "Creating vbap buffers".postln;
             VBAPSpeakerConf.default.loadBuffer(server);
+            "VBAP buffers created".postln;
         });
 
         UGlobalGain.gui;
@@ -123,11 +160,12 @@ PFSonicLab {
 
 	}
 
-	*startupSingle {
+
+    *startupSingle { |allDefs = true|
 		var conf, x, y, z, defs, servers, options;
 
         //no distance correction
-        defs = this.loadDefs;
+        defs = this.loadDefsGeneral(allDefs);
 
 		/*if(GUI.scheme == 'qt') {
 			UMenuBar();
@@ -141,20 +179,22 @@ PFSonicLab {
 
         servers.do{ |s|
             s.waitForBoot({
-
                 defs.do({|def|
                     def.send( s );
                 });
-                VBAPSpeakerConf.default.loadBuffer(s);
             });
         };
+
+        "Creating vbap buffers".postln;
+        VBAPSpeakerConf.default.loadBuffer(servers);
+        "VBAP buffers created".postln;
 
         UGlobalGain.gui;
         UGlobalEQ.gui;
 
 	}
 
-	*startupClient {
+	*startupClient { |allDefs = true|
 		var conf, x, y, z, defs, servers, options;
 
         servers = this.makeServers(8, "169.254.175.150", 57456, this.serverOptions);
@@ -167,7 +207,7 @@ PFSonicLab {
         ULib.servers = LoadBalancer(*servers);
         VBAPSpeakerConf.default = PFSonicLab.getConf;
 
-        defs = this.loadDefs;
+        defs = this.loadDefsGeneral(allDefs);
 
         Routine({
             while({ servers
