@@ -22,9 +22,17 @@ ParameterSurface {
 
     //ParameterSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ).plot
     *plane { |origin, dx, dy, n=6, m=6| //a,b,c : RealVector3D
-        var points = all {: origin + (dx * i/(n-1) ) + ( dy * j/(m-1) ), i <- (0..(n-1)), j <- (0..(m-1)) };
-        ^super.newCopyArgs( points )
+        ^super.newCopyArgs( this.makePlanePoints( origin, dx, dy, n, m) )
+    }
 
+    *makePlanePoints { |origin, dx, dy, n=6, m=6|
+        ^all {: origin + (dx * i/(n-1) ) + ( dy * j/(m-1) ), i <- (0..(n-1)), j <- (0..(m-1)) }
+    }
+
+    *planeProjectedIntoSphere{ |origin, dx, dy, n=6, m=6|
+        var p = this.makePlanePoints( origin, dx, dy, n, m);
+        var projected = p.collect{ |x| x.asUnitSpherical };
+        ^super.newCopyArgs( projected )
     }
 
     pointsDegrees {

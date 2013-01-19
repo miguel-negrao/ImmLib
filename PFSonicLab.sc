@@ -16,9 +16,6 @@ PFSonicLab {
 		[ 6.46, 0, 107.3832377266 ],
 		[ 7.64, 0, -146.2172414806 ],
 		[ 7.65, 0, 146.1054525865 ],
-		//center
-		//[ 9.6, 0, 0 ],
-		//[ 6.35, 0, 180 ],
 
 		//mid high
 		[ 9.22, 17.8750032812, -20.4495476108 ],
@@ -48,14 +45,23 @@ PFSonicLab {
 		[ 5.9258332747, -51.38202567, -116.4957697362 ],
 		[ 5.9035836574, -51.6531568981, 116.7749248886 ],
 		[ 6.0235952719, -50.2322714936, -159.9660768355 ],
-		[ 6.0655832366, -49.7580403359, 157.4926118991 ]
+		[ 6.0655832366, -49.7580403359, 157.4926118991 ],
+        //center
+		//[ 9.6, 0, 0 ],
+		//[ 6.35, 0, 180 ]
 		];
+
+
 
 		y = x.flop[1..].swap(0,1).flop;
 		z = x.collect(_[0]);
 
 		^VBAPSpeakerConf(y,z);
 
+    }
+
+    *pannerout {
+       ^Udef(\pannerout, { UMixOut.ar(0, UIn.ar(0), 1 )})
     }
 
     *loadDefs {
@@ -75,8 +81,7 @@ PFSonicLab {
 			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
 		};
 
-        defs = Udef.loadAllFromDefaultDirectory ++
-        [Udef(\pannerout, { UOut.ar(0, UIn.ar(0) )})];
+        defs = Udef.loadAllFromDefaultDirectory ++ [this.pannerout];
 
         ^defs.collect(_.synthDef).flat.select(_.notNil);
 
@@ -99,8 +104,7 @@ PFSonicLab {
 			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
 		};
 
-        defs = Udef.loadAllFromDefaultDirectory ++
-        [Udef(\pannerout, { UOut.ar(0, UIn.ar(0) ) })];
+        defs = Udef.loadAllFromDefaultDirectory ++ [this.pannerout];
 
         ^defs.collect(_.synthDef).flat.select(_.notNil);
 
@@ -132,103 +136,77 @@ PFSonicLab {
         }
     }
 
-    *startupLocalhost { |allDefs = true|
-		var conf, x, y, z, defs, server, options;
-
-        //no distance correction
-        defs = this.loadDefsGeneral(allDefs);
-
-		/*if(GUI.scheme == 'qt') {
+    *startGuis {
+        if( (thisProcess.platform.class.asSymbol == 'OSXPlatform') && {
+				thisProcess.platform.ideName.asSymbol === \scapp
+		}) {
 			UMenuBar();
-		};*/
-
-        server = Server.local;
-
-        ULib.servers = LoadBalancer(server);
-        VBAPSpeakerConf.default = PFSonicLab.getConf;
-
-        server.waitForBoot({
-
-            defs.do( _.send( server ) );
-            "Creating vbap buffers".postln;
-            VBAPSpeakerConf.default.loadBuffer(server);
-            "VBAP buffers created".postln;
-        });
+		} {
+			UMenuWindow();
+		};
 
         UGlobalGain.gui;
         UGlobalEQ.gui;
+        ULib.serversWindow;
+    }
+
+    //startup methods must be run inside a routine
+    *startupLocalhost { |allDefs = true|
+
+        var server = Server.local;
+        server.boot;
+
+        this.startupLoadBalancer([server], send: true, allDefs: allDefs);
 
 	}
 
-
     *startupSingle { |allDefs = true|
-		var conf, x, y, z, defs, servers, options;
 
-        //no distance correction
-        defs = this.loadDefsGeneral(allDefs);
+        var servers = this.makeServers(4, "localhost", 57456, this.serverOptions);
+        servers.do{ |s| s.boot };
 
-		/*if(GUI.scheme == 'qt') {
-			UMenuBar();
-		};*/
-
-        servers = this.makeServers(4, "localhost", 57456, this.serverOptions);
-        servers.do{ |s| s.makeWindow.boot };
-
-        ULib.servers = LoadBalancer(*servers);
-        VBAPSpeakerConf.default = PFSonicLab.getConf;
-
-        servers.do{ |s|
-            s.waitForBoot({
-                defs.do({|def|
-                    def.send( s );
-                });
-            });
-        };
-
-        "Creating vbap buffers".postln;
-        VBAPSpeakerConf.default.loadBuffer(servers);
-        "VBAP buffers created".postln;
-
-        UGlobalGain.gui;
-        UGlobalEQ.gui;
+        this.startupLoadBalancer(servers, send:true, allDefs: allDefs);
 
 	}
 
 	*startupClient { |allDefs = true|
-		var conf, x, y, z, defs, servers, options;
 
-        servers = this.makeServers(8, "169.254.175.150", 57456, this.serverOptions);
-        servers.do{ |s| s.makeWindow };
+        var servers = this.makeServers(8, "169.254.175.150", 57456, this.serverOptions);
 
-		/*if(GUI.scheme == 'qt') {
-			UMenuBar();
-		};*/
-
-        ULib.servers = LoadBalancer(*servers);
-        VBAPSpeakerConf.default = PFSonicLab.getConf;
-
-        defs = this.loadDefsGeneral(allDefs);
-
-        Routine({
-            while({ servers
-                    .collect( _.serverRunning ).every( _ == true ).not; },
-                { 0.2.wait; });
-            "sending defs to mac pro".postln;
-            servers.do{ |s|
-                defs.do({|def|
-                    def.send( s );
-                });
-            };
-            "creating vbap buffers".postln;
-            VBAPSpeakerConf.default.sendBuffer(servers);
-            "VBAP buffers created".postln;
-
-        }).play( AppClock );
-
-
-        UGlobalGain.gui;
-        UGlobalEQ.gui;
+        this.startupLoadBalancer(servers, send:true, allDefs: allDefs);
         CmdPeriod.add(this);
+
+	}
+
+    *startupLoadBalancer { |servers, send = true, allDefs = true|
+
+        ULib.servers = [ LoadBalancer(*servers) ];
+
+        //GUIS
+        this.startGuis;
+
+        VBAPSpeakerConf.default = PFSonicLab.getConf;
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n".postln;
+        "*** Will start waiting for servers".postln;
+        ULib.waitForServersToBoot;
+        "*** Servers booted\n".postln;
+
+        //Udef SYNTHEDEFS
+        "*** Sending synthDefs".postln;
+        this.loadDefsGeneral(allDefs);
+        "*** SynthDefs Send\n".postln;
+
+
+        //VBAP BUFFERS
+        "*** Creating vbap buffers".postln;
+        if( send) {
+            VBAPSpeakerConf.default.sendBuffer(servers);
+        } {
+            VBAPSpeakerConf.default.loadBuffer(servers);
+        };
+        "*** VBAP buffers created\n".postln;
+
+
 
 	}
 

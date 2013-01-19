@@ -1,18 +1,38 @@
 /*
-TO-DO
 
-function composition ?
+(
+x = PField{ |p,t,c| t + c };
+y = PField{ |p,t,c| t * c };
+z = x + y
+)
+
+p = ParameterSurface.sphere(1)
+z.value(p, Var(2.0), Var(10.0) ).do(postln(_))
 
 
+(
+x = PField{ |p,t,c| t + c }.linlin(0.0,1.0,0.0,10.0);
+x.value(p, Var(0.1), Var(0.3) ).do(postln(_))
+)
+
+(
+x = PField{ |p,t,c| t + c }.linlin(0.0,1.0,0.0,10.0);
+x.valueArray( [p, Var(0.1), Var(0.3)] ).do(postln(_))
+)
+
+(
+x = PField{ |p,t,c| t + c };
+p = ParameterSurface.sphere(2);
+x.valueArray( p, [ Var(0.1), Var(0.3) ] ).do(postln(_))
+)
 
 
 */
 
-PField {
+PField : AbstractFunction {
     var <func;
 
-    *new{ |f|  // f = { |p,t, c1, c2, ...| ...}
-
+    *new{ |f| // f = { |p,t, c1, c2, ...| ...}
         ^super.newCopyArgs(f)
     }
 
@@ -33,29 +53,58 @@ PField {
     g = { |...args| surface.points.collect{ |p| f.( *args.prependI(p) ) } }
 
     would this be easier or less easy ?
+
+    Perhaps, assum that PField operates on signals and lift all the operations into signals.
+
+    [1,2][..0]
+
     */
     value{ |surface...args|
+        if(surface.notNil) {
+            var f = { |args2|
+                surface.points.collect{ |p| func.value(*([p]++args2)) }
+            };
+            ^(f <%> args.sequence)
+        } {
+            Error("PField must have at least one argument (the surface)").throw
+        }
+    }
 
-        var f = { |args2|
-            surface.points.collect{ |p| func.(*([p]++args2)) }
+    valueArray{ |...allargs|
+        if(allargs.size > 0) {
+            var last = allargs.last;
+            var newArgs = if( last.isKindOf(Array) || last.isKindOf(List) ) {
+                allargs[..(allargs.size-2)]++last
+            } {
+                allargs
+            };
+            var surface = newArgs[0];
+            var args = newArgs[1..];
+            var f = { |args2|
+                surface.points.collect{ |p| func.value(*([p]++args2)) }
+            };
+            if( surface.isKindOf( ParameterSurface ).not ) {
+                Error(" First argument of PField must be a ParameterSurface ").throw
+            };
+            ^(f <%> args.sequence)
+        } {
+            Error("PField must have at least one argument (the surface)").throw
         };
-        ^(f <%> args.sequence)
+
     }
 
-    + { |aPfield|
-        ^PField(this.func + aPfield.func)
+    // override these in subclasses to perform different kinds of function compositions
+    composeUnaryOp { arg aSelector;
+        ^PField( func.composeUnaryOp( aSelector ) )
     }
-
-    - { |aPfield|
-        ^PField(this.func - aPfield.func)
+    composeBinaryOp { arg aSelector, something, adverb;
+        ^PField( func.composeBinaryOp(aSelector, something.func, adverb) )
     }
-
-    * { |aPfield|
-        ^PField(this.func * aPfield.func)
+    reverseComposeBinaryOp { arg aSelector, something, adverb;
+        ^PField( func.reverseComposeBinaryOp(aSelector, something.func, adverb) )
     }
-
-    / { |aPfield|
-        ^PField(this.func / aPfield.func)
+    composeNAryOp { arg aSelector, anArgList;
+        ^PField( func.composeNAryOp(aSelector, anArgList ) )
     }
 
     test { |...specs|
@@ -105,8 +154,10 @@ PField {
     }
 
     *spotlightFunc{ |centerPoint|
+        var theta = centerPoint.theta;
+        var phi = centerPoint.phi;
         ^{ |p, t, c, d=0.2|
-            var dist = PFFuncs.geodesicDist(centerPoint.theta, centerPoint.phi).(p.theta,p.phi);
+            var dist = PFFuncs.geodesicDist(theta, phi).(p.theta,p.phi);
             var c2 = c.linlin(0.0,1.0, d.neg, 1.0);
             var cpi = c2*pi;
             var cpid = cpi+d;
@@ -121,6 +172,11 @@ PField {
             }
         }
     }
+
+    *test123{
+        ^{ "someone evaluated this !!".postln; }
+    }
+
 
     *spotlightFunc2{
         ^{ |p, t, centerPoint, c, d=0.2|
@@ -279,22 +335,4 @@ PFNetwork4 {
     }
 
 
-}
-
-TestFunc : Function{
-
-    *new{ |f|
-        ^super.newCopyArgs(*f.getArgs)
-    }
-
-    test123{
-        "test123".postln;
-    }
-}
-
-+ Function {
-
-    getArgs{
-        ^[def, context]
-    }
 }

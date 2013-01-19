@@ -276,6 +276,13 @@ MUChain : ClusterBasic {
         eventNetwork.collect( _.pause ).getOrElseDoNothing
     }
 
+    gui {
+        ^MassEditUChain( this.items ).gui;
+    }
+
+    guiIO {
+        ^IO{ this.gui }
+    }
 
     //methods for which we shouldn't return a ClusterArg
     releaseSelf {
@@ -308,6 +315,10 @@ MUChain : ClusterBasic {
 
     duration {
         ^items[0].duration
+    }
+
+    endTime {
+        ^items[0].endTime
     }
 
     <= { |b|
