@@ -119,7 +119,7 @@ PField : AbstractFunction {
 
             var descFunc = { |t|
                 [sliders,specs].flopWith{|x,spec|
-                    x[1].asENInput.fmap{ |es| es.linlin(0.0,1.0,spec[0],spec[1]) }
+                    x[1].asENInput.collect{ |es| es.linlin(0.0,1.0,spec[0],spec[1]) }
                 }.sequence( Writer( _, Tuple3([  ], [  ], [ ]) ) ).postln >>= { |slevs|
                     plot.animateOnly(* ( [this,t]++slevs) )
                 }.postln

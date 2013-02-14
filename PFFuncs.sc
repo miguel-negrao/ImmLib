@@ -84,7 +84,7 @@ PFFuncs {
 
             var plotIO = plots.collect( _.startRendererIO ).sequence(IO);
 
-            var chainIO = chain.prepareAndStartIO( panners.groupsForUnits ).fmap{ panners };
+            var chainIO = chain.prepareAndStartIO( panners.groupsForUnits ).collect{ panners };
 
             ^windowIO >>=| plotIO >>=| chainIO
         }
@@ -92,7 +92,7 @@ PFFuncs {
 
     *testAudioMakePanners { |surface|
         var p = ParameterSurfacePanners(surface);
-        ^p.makePanners.prepareAndStartIO( p.groupsForPanners ).fmap{ p }
+        ^p.makePanners.prepareAndStartIO( p.groupsForPanners ).collect{ p }
     }
 
     /*

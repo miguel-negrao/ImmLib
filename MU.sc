@@ -96,7 +96,7 @@ MU : ClusterBasic {
 
     startIO { |target, startPos = 0, latency|
         ^IO{ this.doesNotUnderstand(\start,target,startPos, latency) } >>= { |return|
-            uInteraction.collect( _.startIO ).getOrElseDoNothing.fmap{ return }
+            uInteraction.collect( _.startIO ).getOrElseDoNothing.collect{ return }
         }
     }
 
@@ -106,8 +106,8 @@ MU : ClusterBasic {
     }
 
     prepareAndStartIO { |target|
-        ^IO{ this.doesNotUnderstand(\prepareAndStart, target) } >>= { |return|
-            uInteraction.collect( _.startIO ).getOrElseDoNothing.fmap{ return }
+        ^IO{ this.doesNotUnderstand(\prepareAndStart, target).postln } >>= { |return|
+            uInteraction.collect( _.startIO ).getOrElseDoNothing.collect{ return }
         }
     }
 

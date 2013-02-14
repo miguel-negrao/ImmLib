@@ -181,6 +181,12 @@ ParameterFieldPlot2 : HaskellPFPlot {
         ^super.new( NetAddr("localhost", currentPort), label ).init( faces, surface )
     }
 
+    *animate{ |pf...args|
+        var plot = ParameterFieldPlot2();
+        ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
+        plot.animate(pf, *args)
+    }
+
     init { |aFaces, aSurface|
         faces = aFaces;
         surface = aSurface;
@@ -241,6 +247,13 @@ ParameterGridPlot : HaskellPFPlot {
         ^super.new( NetAddr("localhost", currentPort), label ).init( points )
     }
 
+    *animate{ |surface, sig, label|
+        var plot = ParameterGridPlot.new(surface, label);
+         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
+        plot.animate(sig)
+
+    }
+
     init { |aPoints|
         points = aPoints
     }
@@ -251,7 +264,7 @@ ParameterGridPlot : HaskellPFPlot {
 
             1.wait;
 
-            rendererAddr.sendMsg(* (["/points"]++points) )
+            rendererAddr.sendMsg(* (["/cubes"]++points) )
         }
     }
 
