@@ -184,7 +184,7 @@ MUChain : ClusterBasic {
             if( head.isArray ) {
                 LazyListCons( head[2].asOption, getUInteractions.(tail) )
             } {
-                None  %% getUInteractions.(tail)
+				None()  %% getUInteractions.(tail)
             }
         } ) };
         var uInteractions = getUInteractions.(args.asLazy).asArray;
@@ -245,6 +245,15 @@ MUChain : ClusterBasic {
         IO{ this.items.collect{ |x| x.units[0].args }.postln } >>=|
         IO{ this.doesNotUnderstand(*([\prepareAndStart]++args)) }
     }
+
+	prepare { |target, startPos = 0, action|
+		var multiAction = MultiActionFunc( {
+			    action.value;
+		} );
+		var actions = ClusterArg(items.collect{ multiAction.getAction });
+
+		^this.doesNotUnderstand(\prepare, target, startPos, actions)
+	}
 
     stop {
         this.doesNotUnderstand(\stop);
