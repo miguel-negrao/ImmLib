@@ -1,4 +1,5 @@
 ParameterSurfacePanners {
+	classvar <>preview=false;
     var <surface, <servers;
     //internal
     var <chainGroups, <pannerGroups, <groupsForUnits, <groupsForPanners, <busses, <panners;
@@ -29,9 +30,15 @@ ParameterSurfacePanners {
     }
 
     makePanners{
-        ^MU(\vbap3D_Simple_Panner,
-            [\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
-        );
+		^if( preview.not ) {
+			MU(\vbap3D_Simple_Panner,
+				[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
+			)
+		} {
+			MU(\ambiEncode,
+				[\angles, surface.pointsDegrees, \u_i_ar_0_bus, busses ]
+			)
+		}
     }
 
     sendToPannersU {
