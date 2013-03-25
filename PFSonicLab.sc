@@ -71,7 +71,7 @@ PFSonicLab {
             WFSArrayPan.filenameSymbol.asString.dirname +/+ "UnitDefs"
         );
 
-		Udef.userDefsFolder = File.getcwd +/+ "UnitDefs";
+		Udef.userDefsFolder = Platform.userAppSupportDir +/+ "UnitDefs";
 
 		Udef.defsFolders.add(
             VBAPLib.filenameSymbol.asString.dirname +/+ "UnitDefs"
@@ -151,9 +151,13 @@ PFSonicLab {
     }
 
     //startup methods must be run inside a routine
-    *startupLocalhost { |allDefs = true|
+    *startupLocalhost { |allDefs = true, debug = false|
 
-        var server = Server.local;
+		var server = if(debug.not){
+			Server.local
+		}{
+			 Server.new('local-debug', DebugNetAddr("localhost", 57110));
+		};
         server.boot;
 
         this.startupLoadBalancer([server], send: true, allDefs: allDefs);
@@ -171,7 +175,12 @@ PFSonicLab {
 
 	*startupClient { |allDefs = true|
 
-        var servers = this.makeServers(8, "169.254.175.150", 57456, this.serverOptions);
+//		var ip = "169.254.175.150";
+		var ip = "169.254.127.184";
+//		var ip = "192.168.2.1";
+//		var ip = "143.117.78.171";
+
+        var servers = this.makeServers(8, ip, 57456, this.serverOptions);
 
         this.startupLoadBalancer(servers, send:true, allDefs: allDefs);
         CmdPeriod.add(this);
