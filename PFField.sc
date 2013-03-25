@@ -107,6 +107,10 @@ PField : AbstractFunction {
         ^PField( func.composeNAryOp(aSelector, anArgList ) )
     }
 
+	<> { |pf|
+		^PField(func <> pf.func)
+	}
+
     test { |...specs|
         var plot = ParameterFieldPlot2(\sphere, "" );
         ^if(specs.size > 0 ) {
