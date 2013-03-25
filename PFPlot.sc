@@ -67,10 +67,12 @@ ParameterFieldPlot {
 
 		};
 
-		u = Canvas3D(w, Rect(0, 0, width, height), items++[Canvas3DItem.cube])
+		u = Canvas3D(w, Rect(0, 0, width, height))
 			.scale_(200)
 			.perspective_(0.3)
 			.distance_(2);
+
+		u.items = items ++ [Canvas3DItem.cube];
 
 		u.transforms = [ Canvas3D.mRotateX(pi/2) ];
 
@@ -182,6 +184,12 @@ ParameterFieldPlot2 : HaskellPFPlot {
     }
 
     *animate{ |pf...args|
+        var plot = ParameterFieldPlot2();
+        ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
+        plot.animate(pf, *args)
+    }
+
+	*animateOnly{ |pf...args|
         var plot = ParameterFieldPlot2();
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(pf, *args)
