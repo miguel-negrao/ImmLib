@@ -176,9 +176,11 @@ PFSonicLab {
 	*startupClient { |allDefs = true|
 
 //		var ip = "169.254.175.150";
-		var ip = "169.254.127.184";
+//		var ip = "169.254.19.178";
+//		var ip = "169.254.188.175";
 //		var ip = "192.168.2.1";
 //		var ip = "143.117.78.171";
+		var ip = "169.254.242.98";
 
         var servers = this.makeServers(8, ip, 57456, this.serverOptions);
 
@@ -226,16 +228,24 @@ PFSonicLab {
             .memSize_(8192*16)
             .numWireBufs_(64*2)
             .numPrivateAudioBusChannels_(1024)
-            .numOutputBusChannels_(40);
+		.outDevice_("HDSPe MADI (Slot-2)")
+		.inDevice_("HDSPe MADI (Slot-2)")
+            .numOutputBusChannels_(48);
 
-        servers = 6.collect{ |i|
+        servers = 8.collect{ |i|
             Server(
                 "slave%".format(i+1).asSymbol,
                 NetAddr("localhost", 57456 + i),
                 options
             )
         };
-        servers.do{ |s| s.makeWindow.boot };
+		fork{
+        servers.do{ |s|
+				{s.makeWindow}.defer;
+				s.boot;
+			2.0.wait;
+		}
+		};
 	}
 
 	*writeDefs {
