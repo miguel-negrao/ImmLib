@@ -180,7 +180,7 @@ PFSonicLab {
 //		var ip = "169.254.188.175";
 //		var ip = "192.168.2.1";
 //		var ip = "143.117.78.171";
-		var ip = "169.254.242.98";
+		var ip = "169.254.205.203";
 
         var servers = this.makeServers(8, ip, 57456, this.serverOptions);
 
