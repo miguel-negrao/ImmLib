@@ -14,7 +14,7 @@ ParameterSurfacePanners {
         var n = surface.points.size;
         servers = servers ? ULib.serversFlat;
         chainGroups = servers.collect{ |s| Group(s) };
-        pannerGroups = chainGroups.collect{ |g| Group(g, \addAfter) };
+        pannerGroups = chainGroups.collect{ |g| ParGroup(g, \addAfter) };
 
         indexesForPanners = (1..n).traverse({ |j|
             ST({ |b| Tuple2( (b+1).mod(servers.size), b) })

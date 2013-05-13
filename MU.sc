@@ -64,21 +64,19 @@ apxCPU { |target|
 MU : ClusterBasic {
     var <muDef;
     var <muArgs;
-    var <uInteraction;
-    var <eventNetwork;
+	var <mod;
+
 
     *oclass{ ^U }
 
-    *new { |def, args, inuInteraction|
-        ^this.doesNotUnderstand(\new, def, args).init(def, args, inuInteraction)
+    *new { |def, args, mod|
+        ^this.doesNotUnderstand(\new, def, args).init(def, args, mod)
     }
 
-    init { |def, args, inuInteraction|
+    init { |def, args, inMod|
         muDef = def;
         muArgs = args;
-        uInteraction = inuInteraction.asOption;
-        eventNetwork = uInteraction.collect{ |x| EventNetwork( x.createDesc(this) ) };
-        eventNetwork.do( _.actuateNow );
+		mod = inMod.asUModFor( this );
     }
 
     gui { |munit|
@@ -89,90 +87,85 @@ MU : ClusterBasic {
     }
 
     start { |target, startPos = 0, latency|
-        var return = this.doesNotUnderstand(\start,target,startPos, latency);
-        uInteraction.do( _.start );
-        ^return
+		this.modPerform( \start, startPos, latency );
+        ^this.doesNotUnderstand(\start,target,startPos, latency);
     }
 
-    startIO { |target, startPos = 0, latency|
+    /*startIO { |target, startPos = 0, latency|
         ^IO{ this.doesNotUnderstand(\start,target,startPos, latency) } >>= { |return|
             uInteraction.collect( _.startIO ).getOrElseDoNothing.collect{ return }
         }
-    }
+    }*/
+
+	//don't need prepare method, UEvNet doesn't use it
 
     prepareAndStart { |target|
-        uInteraction.do( _.start );
+        this.modPerform( \start, 0, 0.2 );
         this.doesNotUnderstand(\prepareAndStart, target);
     }
 
-    prepareAndStartIO { |target|
+    /*prepareAndStartIO { |target|
         ^IO{ this.doesNotUnderstand(\prepareAndStart, target).postln } >>= { |return|
             uInteraction.collect( _.startIO ).getOrElseDoNothing.collect{ return }
         }
-    }
-
+    }*/
 
     free {
         this.doesNotUnderstand(\free);
-//////
-        uInteraction.stop;
-//////
+		this.modPerform( \stop );
     }
 
-    freeIO {
+    /*freeIO {
         ^IO{ this.doesNotUnderstand(\free) } >>=| uInteraction.stopIO
-    }
+    }*/
 
     dispose {
         this.doesNotUnderstand(\free);
-        eventNetwork.do( _.pauseNow );
+        this.modPerform( \dispose );
     }
 
-    disposeIO {
+	disposeArgsFor { |server|
+		this.doesNotUnderstand(\disposeArgsFor, server);
+		this.modPerform( \disposeArgsFor );
+	}
+
+    /*disposeIO {
         ^IO{ this.doesNotUnderstand(\free) } >>=|
         eventNetwork.collect( _.pause ).getOrElse( Unit.pure(IO) )
-    }
-
-    // not used anymore ?
-    map { |key, es|
-        ^es.collect{ |v|
-            IO{ this.set(key, ClusterArg(v)) }
-        }
-    }
-
-    mapWithSpec { |key,es|
-        ^es.collect{ |v|
-            IO{ this.mapSet(key, ClusterArg(v)) }
-        }
-    }
+    }*/
 
     storeArgs {
-        ^[muDef, muArgs, uInteraction]
+        ^[muDef, muArgs, mod]
     }
+
+	modPerform { |what ...args| mod !? _.perform( what, this, *args ); }
 }
 
 MUChain : ClusterBasic {
 
     var <storeArgs; // [symbol, argValueList, UInteraction]
-    var <uInteractions; //[ UInteraction ]
+    var <mods; //[ UInteraction ]
     var <eventNetwork; // Option[ EventNetwork ]
     *oclass{ ^UChain }
 
 
     *new { arg ... args;
-        //need to extract the uInteractions from the args.
+        //need to extract the umods from the args.
         //sorry about the lack of pattern matching...
-        var stripUInteractions = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
+		//version of arguments without umods
+        var stripUMods = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
             if( head.isNumber || head.isKindOf(Boolean) ) {
-                head %% stripUInteractions.(tail)
+                head %% stripUMods.(tail)
             } {
                 if( head.isArray ) {
-            LazyListCons( head[..1], stripUInteractions.(tail) )
+					//removing the mod here
+            LazyListCons( head[..1], stripUMods.(tail) )
                 } {
-                    head %% stripUInteractions.(tail)
+                    head %% stripUMods.(tail)
                 }
             }
         } ) };
+		//get rid of initial track number, duration, etc.
         var stripStart = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
             if( head.isNumber || head.isKindOf(Boolean) ) {
                 stripStart.(tail)
@@ -180,29 +173,30 @@ MUChain : ClusterBasic {
                 xs
             }
         } ) };
-        var getUInteractions = { |xs| stripStart.(xs).match(LazyListEmpty.constf,{ |head,tail|
+		//version of arguments just with umods
+		//returns Array[Option[MUEvNetModDef]]
+        var getUMods = { |xs| stripStart.(xs).match(LazyListEmpty.constf,{ |head,tail|
             if( head.isArray ) {
-                LazyListCons( head[2].asOption, getUInteractions.(tail) )
+                LazyListCons( head[2].asOption, getUMods.(tail) )
             } {
-				None()  %% getUInteractions.(tail)
+				None()  %% getUMods.(tail)
             }
         } ) };
-        var uInteractions = getUInteractions.(args.asLazy).asArray;
-        ^this.doesNotUnderstand(*[\new]++stripUInteractions.(args.asLazy).asArray)
-        .init( args, uInteractions )
+        var uMods = getUMods.(args.asLazy).asArray;
+        ^this.doesNotUnderstand(*[\new]++stripUMods.(args.asLazy).asArray)
+        .init( args, uMods )
     }
 
-    init { |args, auInteractions|
-        storeArgs = args;
+    init { |args, inUMods|
 
-        //connect each UInteraction with the corresponding MU
-        eventNetwork = [auInteractions, this.units].flopWith{ |uIntOption,mu|
-            uIntOption.collect{ |uInt| uInt.createDesc(mu) }
-        }.catOptions.reduce(_ >>=| _ ).asOption.collect( EventNetwork(_) );
+        //connect each UMod with the corresponding MU
+        mods = [inUMods, this.units].flopWith{ |uModOption,mu|
+            uModOption.collect{ |uMod| uMod.asUModFor(mu) }
+        }.catOptions;
 
-        uInteractions = auInteractions.catOptions;
+		"mods : %".format(mods).postln;
 
-        eventNetwork.do( _.actuateNow );
+		storeArgs = args;
     }
 
     //temporary fix ?
@@ -211,12 +205,12 @@ MUChain : ClusterBasic {
     }
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
-        uInteractions.do(_.start);
+        mods.do(_.start);
         ^this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease)
     }
 
     prStartBasicIO { |target, startPos = 0, latency, withRelease = false|
-        ^uInteractions.collect(_.startIO).sequece >>=| IO{ this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease) }
+        ^mods.collect(_.startIO).sequece >>=| IO{ this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease) }
     }
 
     start { |target, startPos = 0, latency|
@@ -236,12 +230,12 @@ MUChain : ClusterBasic {
     }
 
     prepareAndStart { |...args|
-        uInteractions.do(_.start);
+        mods.do(_.start);
         this.doesNotUnderstand(*([\prepareAndStart]++args));
     }
 
     prepareAndStartIO { |...args|
-        ^uInteractions.collect( _.startIO ).sequence >>=|
+        ^mods.collect( _.startIO ).sequence >>=|
         IO{ this.items.collect{ |x| x.units[0].args }.postln } >>=|
         IO{ this.doesNotUnderstand(*([\prepareAndStart]++args)) }
     }
@@ -256,28 +250,33 @@ MUChain : ClusterBasic {
 	}
 
     stop {
+		mods.do(_.stop);
         this.doesNotUnderstand(\stop);
-        uInteractions.do(_.stop);
+    }
+
+	free {
+		mods.do(_.stop);
+        this.doesNotUnderstand(\free);
     }
 
     stopIO {
         ^IO{ this.doesNotUnderstand(\stop) } >>=|
-        uInteractions.collect( _.stopIO ).sequence
+        mods.collect( _.stopIO ).sequence
     }
 
     release { |time|
+		mods.do(_.stop);
         this.doesNotUnderstand(\stop, time);
-        uInteractions.do(_.stop);
     }
 
     releaseIO { |time|
         ^IO{ this.doesNotUnderstand(\stop, time) } >>=|
-        uInteractions.collect( _.stopIO ).sequence
+        mods.collect( _.stopIO ).sequence
     }
 
     dispose {
         this.doesNotUnderstand(\dispose);
-        eventNetwork.do( _.pauseNow )
+		mods.do(_.dispose)
     }
 
     disposeIO {
