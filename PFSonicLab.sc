@@ -123,7 +123,8 @@ PFSonicLab {
         .memSize_(8192*16)
         .numWireBufs_(64*2)
         .numPrivateAudioBusChannels_(1024)
-        .numOutputBusChannels_(40);
+        .numOutputBusChannels_(48)
+		.numInputBusChannels_(8);
     }
 
     *makeServers { |n, ip, port, options|
@@ -180,7 +181,8 @@ PFSonicLab {
 //		var ip = "169.254.188.175";
 //		var ip = "192.168.2.1";
 //		var ip = "143.117.78.171";
-		var ip = "169.254.205.203";
+		//var ip = "169.254.205.203";
+		var ip = "192.168.1.100";
 
         var servers = this.makeServers(8, ip, 57456, this.serverOptions);
 

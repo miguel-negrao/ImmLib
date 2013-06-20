@@ -150,7 +150,12 @@ MUChain : ClusterBasic {
 
 
     *new { arg ... args;
-        //need to extract the umods from the args.
+        ^this.doesNotUnderstand(*[\new]++this.prStripUMods(args) )
+		.init( args, this.prGetUmods(args) )
+    }
+
+	*prStripUMods { |args|
+		//need to extract the umods from the args.
         //sorry about the lack of pattern matching...
 		//version of arguments without umods
         var stripUMods = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
@@ -165,6 +170,10 @@ MUChain : ClusterBasic {
                 }
             }
         } ) };
+		^stripUMods.(args.asLazy).asArray
+	}
+
+	*prGetUmods { |args|
 		//get rid of initial track number, duration, etc.
         var stripStart = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
             if( head.isNumber || head.isKindOf(Boolean) ) {
@@ -182,10 +191,8 @@ MUChain : ClusterBasic {
 				None()  %% getUMods.(tail)
             }
         } ) };
-        var uMods = getUMods.(args.asLazy).asArray;
-        ^this.doesNotUnderstand(*[\new]++stripUMods.(args.asLazy).asArray)
-        .init( args, uMods )
-    }
+        ^getUMods.(args.asLazy).asArray;
+	}
 
     init { |args, inUMods|
 
@@ -329,6 +336,10 @@ MUChain : ClusterBasic {
         ^items[0].endTime
     }
 
+	finiteDuration {
+		^items[0].finiteDuration
+	}
+
     <= { |b|
         ^items[0] <= b.items[0]
     }
@@ -336,5 +347,39 @@ MUChain : ClusterBasic {
     track {
         ^items[0].track
     }
+
+	makeView{ |i=0,minWidth, maxWidth| ^UChainEventView(this, i, minWidth, maxWidth) }
+
+	addDependant { arg dependant;
+		items[0].addDependant(dependant);
+	}
+
+	getTypeColor {
+		^items[0].getTypeColor
+    }
+
+	fadeTimes {
+		^items[0].fadeTimes
+    }
+
+	fadeIn {
+		^items[0].fadeIn
+    }
+
+	fadeOut {
+		^items[0].fadeOut
+    }
+
+	name {
+		^"M "++items[0].name
+    }
+
+	hideInGUI {
+		^items[0].hideInGUI
+	}
+
+	duplicate{
+	    ^this.deepCopy;
+	}
 
 }

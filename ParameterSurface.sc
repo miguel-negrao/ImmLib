@@ -53,4 +53,8 @@ ParameterSurface {
         ^ParameterFieldPlot( this ).showNow
     }
 
+	size {
+		^points.size
+	}
+
 }

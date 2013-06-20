@@ -117,7 +117,7 @@ ParameterFieldPlot {
 
 HaskellPFPlot {
     classvar <currentPort = 30000,
-    <binaryPath = "/Users/miguelnegrao/Documents/ecpliseworkspace/pfVisualizer/.dist-buildwrapper/dist/build/pfVisualizer/pfVisualizer ";
+    <binaryPath = "pfVisualizer";
     var <rendererAddr, <label="";
 
     *new{ |addr, label|
@@ -126,7 +126,7 @@ HaskellPFPlot {
     }
 
     startCommand {
-        ^HaskellPFPlot.binaryPath++rendererAddr.port++" "++label;
+		^HaskellPFPlot.binaryPath++" "++rendererAddr.port++" "++label;
     }
 
     startRenderer { |closeOnCmdPeriod = true|

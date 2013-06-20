@@ -12,7 +12,7 @@ ParameterSurfacePanners {
 
         var indexesForPanners, distributeIndexes;
         var n = surface.points.size;
-        servers = servers ? ULib.serversFlat;
+        servers = servers ? ULib.allServers;
         chainGroups = servers.collect{ |s| Group(s) };
         pannerGroups = chainGroups.collect{ |g| ParGroup(g, \addAfter) };
 
