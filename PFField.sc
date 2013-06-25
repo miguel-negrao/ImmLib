@@ -112,10 +112,10 @@ PField : AbstractFunction {
 	}
 
     test { |...specs|
-        var plot = ParameterFieldPlot2(\sphere, "" );
+        var plot = Param(\sphere, "" );
         ^if(specs.size > 0 ) {
             var sliders = specs.collect{ LayoutSlider("") };
-            var plot = ParameterFieldPlot2(\sphere, "" );
+            var plot = PFieldPlot(\sphere, "Test PField" );
 
             var w = Window().layout_(
                 VLayout(* sliders.collect(_[0]) )
@@ -132,7 +132,7 @@ PField : AbstractFunction {
             //"sliders are : %".format(sliders).postln;
             //"specs are : %".format(spec).postln;
 
-            MUAnimatedInteraction(descFunc, 0.1).test >>= { |n|
+            UEvNetTModDef(descFunc, 0.1).test >>= { |n|
                 n.actuate
             } >>=| plot.startRendererIO >>=| w.frontIO >>=| IO{
                 CmdPeriod.doOnce({
@@ -152,12 +152,19 @@ PField : AbstractFunction {
         }
     }
 
+	/*test2 {
+		^MUENTModDef.test({ |tSig|
+			PFieldPlot.animateOnly(this, tsig)
+
+		}, 0.1)
+	}*/
+
     //bulti-in functions
-    *spotlight{ |centerPoint|
+    *spotlightOriginal{ |centerPoint|
         ^PField( this.spotlightFunc( centerPoint ) )
     }
 
-    *spotlightFunc{ |centerPoint|
+    *spotlightFuncOriginal{ |centerPoint|
         var theta = centerPoint.theta;
         var phi = centerPoint.phi;
         ^{ |p, t, c, d=0.2|
@@ -177,11 +184,6 @@ PField : AbstractFunction {
         }
     }
 
-    *test123{
-        ^{ "someone evaluated this !!".postln; }
-    }
-
-
     *spotlightFunc2{
         ^{ |p, t, centerPoint, c, d=0.2|
             var dist = PFFuncs.geodesicDist(centerPoint.theta, centerPoint.phi).(p.theta,p.phi);
@@ -199,6 +201,35 @@ PField : AbstractFunction {
         }
     }
 
+	*spotlightFunc{
+		var bump = { |x| 2**((1-x.squared).reciprocal.neg)*2 };
+
+		var geodesicDist2 = { |theta1, phi1, theta2, phi2|
+			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
+		};
+
+		^{ |p, t, theta, phi, c, d=0.2|
+			var dist = geodesicDist2.( p.theta, p.phi, theta, phi);
+			var c2 = c.linlin(0.0,1.0, d.neg, 1.0);
+			var cpi = c2*pi; //half of the perimeter of a unit circle measures pi
+			var cpid = cpi+d;
+			if( dist < cpi ) {
+				1
+			} {
+				if( dist < cpid ) {
+					bump.( dist.linlin(cpi,cpid,0.0,1.0) )
+				} {
+					0
+				}
+			}
+		}
+
+	}
+
+	*spotlight{
+		^PField( this.spotlightFunc )
+	}
+
     *barFunc {
         ^{ |p, t, widnessAngle|
             if(p.phi.abs < widnessAngle) {
@@ -208,6 +239,31 @@ PField : AbstractFunction {
             }
         }
     }
+
+	//double factorial
+	*sphericalHarmonic{ |m,l|
+		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
+		//Legendre polynomials
+		var legendrepol = { |m,l|
+			case
+			{m>l} { "Error, m>l".postln }
+			{l==m } { { |x|  ((-1)**m)*dfact.(2*m-1)*((1-x.squared)**(m/2)) } }
+			{l==(m+1)} { ( _*(2*m+1))*legendrepol.(m,m) }
+			{l>=(m+2) } {  ((_*(2*l-1))*legendrepol.(m,l-1)-((l+m-1)*legendrepol.(m,l-2)))/(l-m) }
+		};
+		var simplifiedsh  = { |m,l|
+			if ( (m>l) || (m<l.neg) ) { "error m< -l or m>l".postln };
+			case
+			{m>0}{ { |phi,theta|  legendrepol.(m.abs,l).(cos(theta))*cos(m*phi) } }
+			{m == 0}{ { |phi,theta| legendrepol.(0,l).(cos(theta)) } }
+			{m <0 }{ { |phi,theta| legendrepol.(m.abs,l).(cos(theta))*sin(m.abs*phi) } }
+		};
+
+		var shfunc = simplifiedsh.(m,l);
+		^PField({ |p,t,f=3|
+			(shfunc.( p.theta, (pi/2)-p.phi)*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
+		})
+	}
 
 }
 

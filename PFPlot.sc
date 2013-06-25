@@ -48,7 +48,7 @@ ParameterFieldPlotOld1 {
 
 }
 
-ParameterFieldPlot {
+ParameterFieldPlotOld2 {
 	var <items, <u, <w, <es;
 	*new { |psurface| //EventSource[Array[Double]]
 
@@ -125,6 +125,10 @@ HaskellPFPlot {
         ^super.newCopyArgs(addr, label)
     }
 
+	*enAnimate{ |...args|
+		^ENDef.appendToResult( this.animate( *args ) );
+	}
+
     startCommand {
 		^HaskellPFPlot.binaryPath++" "++rendererAddr.port++" "++label;
     }
@@ -168,7 +172,7 @@ x = ParameterFieldPlot2( \sphere, "test"  );
 x.startRenderer
 x.stopRenderer
 */
-ParameterFieldPlot2 : HaskellPFPlot {
+PFieldPlot : HaskellPFPlot {
     var <faces, <surface;
 
     *new { |type = \sphere, label|
@@ -184,15 +188,15 @@ ParameterFieldPlot2 : HaskellPFPlot {
     }
 
     *animate{ |pf...args|
-        var plot = ParameterFieldPlot2();
+        var plot = this.new;
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(pf, *args)
     }
 
 	*animateOnly{ |pf...args|
-        var plot = ParameterFieldPlot2();
+        var plot = this.new;
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
-        plot.animate(pf, *args)
+        plot.animateOnly(pf, *args)
     }
 
     init { |aFaces, aSurface|
@@ -214,7 +218,7 @@ ParameterFieldPlot2 : HaskellPFPlot {
         ^IO{ this.startRenderer }
     }
 
-    animate{ |pf...args|
+    animate{ |pf...args| //args surface, t, c1, c2, c3...
         var tEventSource = args[1].changes;
         var sendColors = { |v| IO{
             rendererAddr.sendMsg(* (["/colors"]++v.collect{ |v2|
@@ -247,7 +251,7 @@ x = ParameterGridPlot( ParameterSurface.geodesicSphere );
 x.startRenderer
 x.stopRenderer
 */
-ParameterGridPlot : HaskellPFPlot {
+PGridPlot : HaskellPFPlot {
     var <points;
 
     *new { |surface, label|
@@ -256,7 +260,7 @@ ParameterGridPlot : HaskellPFPlot {
     }
 
     *animate{ |surface, sig, label|
-        var plot = ParameterGridPlot.new(surface, label);
+        var plot = this.new(surface, label);
          ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(sig)
 
