@@ -294,3 +294,68 @@ PGridPlot : HaskellPFPlot {
         }.reactimate
     }
 }
+
+PFieldHemiPlot {
+
+	*new{ |surface, sig|
+		var values = surface.points.collect{ 1.0 };
+		var points = surface.points.collect{ |p|
+			var r = p.asRealVector3D;
+			T( r.z < 0, Point(r.x, r.y) )
+		};
+		var w = Window("Dual Hemisphere Plot", Rect(100, 200, 700, 300));
+		var p1 = (w.bounds.width/4)@(w.bounds.height/2);
+		var p2 = (w.bounds.width/4*3)@(w.bounds.height/2);
+		var radius = w.bounds.height/2;
+		var p3 = Point(radius,radius);
+		var centers = points.collect{ |t|
+			if(t.at1) {
+				p1 +
+				(p3 * t.at2)
+			} {
+				p2 +
+				(p3 * t.at2)
+			}
+		};
+		w.view.background_(Color.white);
+		w.drawFunc = { |v|
+			Pen.color = Color.green(0.1,0.5);
+			Pen.addWedge(
+				p1,
+				radius,
+				0,
+				2*pi
+			);
+			Pen.fill;
+			Pen.addWedge(
+				p2,
+				radius,
+				0,
+				2*pi
+			);
+			Pen.fill;
+			"South".drawAtPoint(Point(10,10),color:Color.black);
+			"North".drawAtPoint(Point(w.bounds.width/2+10,10),color:Color.black);
+			[centers, values ].flopWith{ |c, v|
+				Pen.color = Color.yellow(v);
+				Pen.addWedge(
+					c,
+					10,
+					0,
+					2*pi
+				);
+				Pen.fill;
+			}
+
+
+		};
+		^Writer(Unit, T([],[],[IO{
+			w.front;
+			CmdPeriod.doOnce{ if(w.isClosed.not){ w.close } };
+		}]) ) >>=|
+		sig.collect{ |xs| IO{
+			values = xs;
+			{ w.refresh }.defer;
+		} }.reactimate;
+	}
+}

@@ -111,6 +111,7 @@ PField : AbstractFunction {
 		^PField(func <> pf.func)
 	}
 
+	//I don't think this is working currently
     test { |...specs|
         var plot = Param(\sphere, "" );
         ^if(specs.size > 0 ) {
@@ -160,15 +161,35 @@ PField : AbstractFunction {
 	}*/
 
     //bulti-in functions
-    *spotlightOriginal{ |centerPoint|
-        ^PField( this.spotlightFunc( centerPoint ) )
+	rotate { |pf| //angle1, 2, 3 -pi/2, pi/2
+		^PField{ |p,t, xz=0, yz=0, xy=0...args|
+			var newP = p.rotateXZ(xz).rotateYZ(yz).rotateXY(xy);
+			this.func.valueArray( [newP,t]++args )
+		}
+	}
+	*prBump{ ^{ |x| 2**((1-x.squared).reciprocal.neg)*2 } }
+
+	*prGeodesicDist { |theta1, phi1|
+		^{ | theta2, phi2|
+			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
+		}
+	}
+
+	*prGeodesicDist2 {
+		^{ |theta1, phi1, theta2, phi2|
+			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
+		}
+	}
+
+    *spotlightFixed{ |theta, phi|
+        ^PField( this.spotlightFixedFunc( theta, phi ) )
     }
 
-    *spotlightFuncOriginal{ |centerPoint|
-        var theta = centerPoint.theta;
-        var phi = centerPoint.phi;
+    *spotlightFixedFunc{ |theta, phi| //UnitSpherical
+		var bump = this.prBump;
+		var geodesicDist = this.prGeodesicDist( theta, phi);
         ^{ |p, t, c, d=0.2|
-            var dist = PFFuncs.geodesicDist(theta, phi).(p.theta,p.phi);
+            var dist = geodesicDist.(p.theta,p.phi);
             var c2 = c.linlin(0.0,1.0, d.neg, 1.0);
             var cpi = c2*pi;
             var cpid = cpi+d;
@@ -176,7 +197,7 @@ PField : AbstractFunction {
                 1
             } {
                 if( dist < cpid ) {
-                    PFFuncs.bump( dist.linlin(cpi,cpid,0.0,1.0) )
+                    bump.( dist.linlin(cpi,cpid,0.0,1.0) )
                 } {
                     0
                 }
@@ -184,29 +205,13 @@ PField : AbstractFunction {
         }
     }
 
-    *spotlightFunc2{
-        ^{ |p, t, centerPoint, c, d=0.2|
-            var dist = PFFuncs.geodesicDist(centerPoint.theta, centerPoint.phi).(p.theta,p.phi);
-            var cpi = c*pi;
-            var cpid = cpi+d;
-            if( dist < cpi ) {
-                1
-            } {
-                if( dist < cpid ) {
-                    PFFuncs.bump( dist.linlin(cpi,cpid,0.0,1.0) )
-                } {
-                    0
-                }
-            }
-        }
-    }
+	*spotlight{
+		^PField( this.spotlightFunc )
+	}
 
 	*spotlightFunc{
-		var bump = { |x| 2**((1-x.squared).reciprocal.neg)*2 };
-
-		var geodesicDist2 = { |theta1, phi1, theta2, phi2|
-			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
-		};
+		var bump = this.prBump;
+		var geodesicDist2 = this.prGeodesicDist2;
 
 		^{ |p, t, theta, phi, c, d=0.2|
 			var dist = geodesicDist2.( p.theta, p.phi, theta, phi);
@@ -226,8 +231,8 @@ PField : AbstractFunction {
 
 	}
 
-	*spotlight{
-		^PField( this.spotlightFunc )
+	*bar{
+		^PField( this.barFunc )
 	}
 
     *barFunc {
@@ -240,19 +245,46 @@ PField : AbstractFunction {
         }
     }
 
+	*expandContract{
+		^PField( this.expandContractFunc )
+	}
+
+	*expandContractFunc {
+		var scale = { |x| var k = 15; k**x/k };
+		^{|p, t, theta, phi, c|
+			if(c < 0.5){
+				PField.spotlightFunc.(p, t, theta, phi, scale.( (c*2) ) )
+			} {
+				PField.spotlightFunc.(p, t, theta+pi, phi.neg, scale.( c.linlin(0.5,1.0, 1.0, 0.0) ) )
+			}
+		}
+	}
+
+	*gradient {
+		^PField( this.gradientFunc )
+	}
+
+	*gradientFunc {
+		var distFunc = this.prGeodesicDist2;
+		^{ |p, t, theta, phi, a, b|
+			var x = distFunc.(theta, phi, p.theta,p.phi)/pi;
+			(a*(1-x)) + (b*x)
+		}
+	}
+
 	//double factorial
 	*sphericalHarmonic{ |m,l|
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
 		//Legendre polynomials
 		var legendrepol = { |m,l|
 			case
-			{m>l} { "Error, m>l".postln }
+			{m>l} { Error("Error, m>l").throw }
 			{l==m } { { |x|  ((-1)**m)*dfact.(2*m-1)*((1-x.squared)**(m/2)) } }
 			{l==(m+1)} { ( _*(2*m+1))*legendrepol.(m,m) }
 			{l>=(m+2) } {  ((_*(2*l-1))*legendrepol.(m,l-1)-((l+m-1)*legendrepol.(m,l-2)))/(l-m) }
 		};
 		var simplifiedsh  = { |m,l|
-			if ( (m>l) || (m<l.neg) ) { "error m< -l or m>l".postln };
+			if ( (m>l) || (m<l.neg) ) {  Error("error m< -l or m>l").throw };
 			case
 			{m>0}{ { |phi,theta|  legendrepol.(m.abs,l).(cos(theta))*cos(m*phi) } }
 			{m == 0}{ { |phi,theta| legendrepol.(0,l).(cos(theta)) } }
@@ -263,6 +295,96 @@ PField : AbstractFunction {
 		^PField({ |p,t,f=3|
 			(shfunc.( p.theta, (pi/2)-p.phi)*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
 		})
+	}
+
+	//Random Hills
+	*generateHillsFunc {
+		^{ |n| n.collect{
+			var tau = 2*pi;
+			var theta = rrand(0.0,tau);
+			var phi = rrand(tau.neg/4,tau/4);
+			var size = rrand(0.3,0.5);
+			{ |p|
+				PFFuncs.growArea(UnitSpherical(theta, phi)).(p,size,0.5)
+			}
+		}.sum / n
+		}
+	}
+
+	*generateHillsBipolarFunc {
+		^{ |n| (n.collect{
+			var tau = 2*pi;
+			var theta = rrand(0.0,tau);
+			var phi = rrand(tau.neg/4,tau/4);
+			var size = rrand(0.3,0.5);
+			{ |p|
+				PFFuncs.growArea(UnitSpherical(theta, phi)).(p,size,0.5) * [-1,1].choose
+			}
+		}.sum / n)*0.5 + 0.5
+		}
+	}
+
+	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5|
+		//time wrapping around numSecs
+		var t2 = t.collect(_.mod(numSecs));
+		var initFs = T( generateHillsFunc.(5), generateHillsFunc.(5) );
+
+		//this generates an event every numSecs containing the from and to functions
+		//to be morphed
+		var changefuncEvent = t2
+		.changes
+		.storePrevious
+		.select{ |tup| (tup.at2 < 0.2) && (tup.at1 > (numSecs-0.2) ) }
+		.hold(0.0).inject(initFs,{ |state,x|
+			T( state.at2, generateHillsFunc.(numHills));
+		});
+
+		//this morphs from function A to function B
+		var f = { |tup|
+			PField({ |p, t|
+				var k = 0.5;
+				var t2 = t/numSecs;
+				( (1-t2) * tup.at1.(p)  ) + (t2 * tup.at2.(p))
+			}).(surface,t2)
+		};
+
+		//event switching
+		^changefuncEvent >>= f
+	}
+
+	*randomHills { |surface, t, numSecs, numHills = 5|
+		^this.randomPatchGeneral( this.generateHillsFunc, surface, t, numSecs, numHills )
+	}
+
+	*randomHillsBipolar { |surface, t, numSecs, numHills = 5|
+		^this.randomPatchGeneral( this.generateHillsBipolarFunc, surface, t, numSecs, numHills )
+	}
+
+	*continousRandomSpotlight{ |surface, t, numSecs|
+		//time wrapping around numSecs
+		var t2 = t.collect{ |t| t.mod(numSecs) / numSecs };
+		var randomSpotLight = {
+			PField.spotlightFixedFunc( rrand(0, 2pi), rrand(pi.neg,pi) )
+		};
+
+		var changefuncEvent = t2
+		.changes
+		.storePrevious
+		.select{ |tup| (tup.at2 < 0.2) && (tup.at1 > (0.8) ) }
+		.hold(0.0).collect( randomSpotLight );
+
+		var f = { |h|
+			PField({ |p, t|
+				if(t < 0.5) {
+					h.(p,0,1-(t*2),0.2)
+				} {
+					h.(p,0,(t-0.5)*2,0.2)
+				}
+			}).(surface,t2)
+		};
+
+		//event switching
+		^changefuncEvent >>= f
 	}
 
 }

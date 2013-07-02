@@ -212,7 +212,7 @@ MUChain : ClusterBasic {
     }
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
-        mods.do(_.start);
+		mods.do(_.start(nil, startPos) );
         ^this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease)
     }
 
