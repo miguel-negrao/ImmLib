@@ -31,8 +31,6 @@
 				[\angles, surface.pointsDegrees, \u_i_ar_0_bus, busses ]
 			]).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
 
-			decoder =
-
 			UScore(*(events++panners) ).cleanOverlaps
 		}
 	}

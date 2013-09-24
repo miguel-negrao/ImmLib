@@ -13,7 +13,7 @@
 			f.()
 		}
 		{\previewStereo}{
-			var points = ClusterArg( surface.points.collect{ |p| Point(p.asRealVector3D.x,p.asRealVector3D.y) } );
+			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
 			MUChain( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) )
 		}
 	}

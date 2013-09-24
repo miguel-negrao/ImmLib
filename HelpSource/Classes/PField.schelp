@@ -1,0 +1,354 @@
+TITLE:: PField
+summary:: (put short description here)
+categories:: Undocumented classes
+related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+
+DESCRIPTION::
+(put long description here)
+
+
+CLASSMETHODS::
+
+METHOD:: expandContract
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: randomPatchGeneral
+(describe method here)
+
+ARGUMENT:: generateHillsFunc
+(describe argument here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: t
+(describe argument here)
+
+ARGUMENT:: numSecs
+(describe argument here)
+
+ARGUMENT:: numHills
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: barFuncH
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: expandContractFunc
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: prBump
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: bar
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: gradient
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: gradientFunc
+code::
+
+// gradientFunc
+(
+var surface = PSurface.geodesicSphere;
+UEvNetTModDef.test({ |t|
+
+	var pf = PField.gradient( surface );
+	                       //p, t, theta, phi, a, b
+	PFieldPlot.animateOnly( pf, t, 0.0, 0.0, 0.0, 1.0 );
+
+}, delta: 0.1, startTime:0.0)
+)
+(
+var surface = PSurface.geodesicSphere;
+UEvNetTModDef.test({ |t|
+
+	var pf = PField.gradient( surface) ;
+	                       //p, t, theta, phi, a, b
+	PFieldPlot.animateOnly( pf, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+}, delta: 0.1, startTime:0.0)
+)
+(
+var surface = PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] );
+UEvNetTModDef.test({ |t|
+
+	var pf = PField.gradient( surface ) ;
+	                       //u, v, t, u2, v2, a, b
+	var x = pf.( surface, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+	PGridPlot.animate(surface, x, "hello !")
+}, delta: 0.1, startTime:0.0)
+)
+::
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: generateHillsBipolarFunc
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: f
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: expandContract2
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: prGeodesicDist
+(describe method here)
+
+ARGUMENT:: theta1
+(describe argument here)
+
+ARGUMENT:: phi1
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: spotlight
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: continousRandomSpotlight
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: t
+(describe argument here)
+
+ARGUMENT:: numSecs
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: spotlightFixed
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: u
+(describe argument here)
+
+ARGUMENT:: v
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: randomHills
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: t
+(describe argument here)
+
+ARGUMENT:: numSecs
+(describe argument here)
+
+ARGUMENT:: numHills
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: randomHillsBipolar
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: t
+(describe argument here)
+
+ARGUMENT:: numSecs
+(describe argument here)
+
+ARGUMENT:: numHills
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: generateHillsFunc
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: spotlightFixedFunc
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT:: u2
+(describe argument here)
+
+ARGUMENT:: v2
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: spotlightFunc
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: prGeodesicDist2
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: expandContract2Func
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: sphericalHarmonic
+(describe method here)
+
+ARGUMENT:: m
+(describe argument here)
+
+ARGUMENT:: l
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+METHOD:: composeNAryOp
+(describe method here)
+
+ARGUMENT:: aSelector
+(describe argument here)
+
+ARGUMENT:: anArgList
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: reverseComposeBinaryOp
+(describe method here)
+
+ARGUMENT:: aSelector
+(describe argument here)
+
+ARGUMENT:: something
+(describe argument here)
+
+ARGUMENT:: adverb
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: <>
+(describe method here)
+
+ARGUMENT:: pf
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: composeUnaryOp
+(describe method here)
+
+ARGUMENT:: aSelector
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: valueArray
+(describe method here)
+
+ARGUMENT::  ... allargs
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: value
+(describe method here)
+
+ARGUMENT:: surface
+(describe argument here)
+
+ARGUMENT::  ... args
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: func
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: composeBinaryOp
+(describe method here)
+
+ARGUMENT:: aSelector
+(describe argument here)
+
+ARGUMENT:: something
+(describe argument here)
+
+ARGUMENT:: adverb
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+EXAMPLES::
+
+code::
+(some example code)
+::

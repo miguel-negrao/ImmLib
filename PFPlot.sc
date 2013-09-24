@@ -120,12 +120,17 @@ HaskellPFPlot {
     <binaryPath = "pfVisualizer";
     var <rendererAddr, <label="";
 
-    *new{ |addr, label|
+    *basicNew{ |addr, label|
         currentPort = currentPort + 1;
         ^super.newCopyArgs(addr, label)
     }
 
 	*enAnimate{ |...args|
+		^ENDef.appendToResult( this.animate( *args ) );
+	}
+
+	//alias
+	*new{ |...args|
 		^ENDef.appendToResult( this.animate( *args ) );
 	}
 
@@ -172,29 +177,27 @@ x = ParameterFieldPlot2( \sphere, "test"  );
 x.startRenderer
 x.stopRenderer
 */
-PFieldPlot : HaskellPFPlot {
+PSmoothPlot : HaskellPFPlot {
     var <faces, <surface;
 
-    *new { |type = \sphere, label|
+    *basicNew { |type = \sphere, label|
         var faces = FP3DPoligon.sphereFaces(2);
         var points = faces.collect{ |vertices| vertices.sum / 3 };
-        var surface = ParameterSurface( points.collect{ |p|
-            //var p1 = p.asUnitSpherical;
-            //UnitSpherical(p1.theta-(pi/2), p1.phi)
-            p.asUnitSpherical
+        var surface = PSurface.sphericalGeometry( points.collect{ |p|
+            p.asUnitSpherical.storeArgs
         } );
         currentPort = currentPort + 1;
-        ^super.new( NetAddr("localhost", currentPort), label ).init( faces, surface )
+        ^super.basicNew( NetAddr("localhost", currentPort), label ).init( faces, surface )
     }
 
     *animate{ |pf...args|
-        var plot = this.new;
+        var plot = this.basicNew;
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(pf, *args)
     }
 
 	*animateOnly{ |pf...args|
-        var plot = this.new;
+        var plot = this.basicNew;
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animateOnly(pf, *args)
     }
@@ -254,13 +257,13 @@ x.stopRenderer
 PGridPlot : HaskellPFPlot {
     var <points;
 
-    *new { |surface, label|
-        var points = surface.points.collect{ |x| x.asCartesian.asArray }.flat;
-        ^super.new( NetAddr("localhost", currentPort), label ).init( points )
+    *basicNew { |surface, label|
+        var points = surface.pointsRV3D.collect{ |x| x.asArray }.flat;
+        ^super.basicNew( NetAddr("localhost", currentPort), label ).init( points )
     }
 
     *animate{ |surface, sig, label|
-        var plot = this.new(surface, label);
+        var plot = this.basicNew(surface, label);
          ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(sig)
 
@@ -295,12 +298,11 @@ PGridPlot : HaskellPFPlot {
     }
 }
 
-PFieldHemiPlot {
+PHemiPlot {
 
-	*new{ |surface, sig|
+	*animate{ |surface, sig|
 		var values = surface.points.collect{ 1.0 };
-		var points = surface.points.collect{ |p|
-			var r = p.asRealVector3D;
+		var points = surface.pointsRV3D.collect{ |r|
 			T( r.z < 0, Point(r.x, r.y) )
 		};
 		var w = Window("Dual Hemisphere Plot", Rect(100, 200, 700, 300));
@@ -357,5 +359,13 @@ PFieldHemiPlot {
 			values = xs;
 			{ w.refresh }.defer;
 		} }.reactimate;
+	}
+
+	*enAnimate{ |...args|
+		^ENDef.appendToResult( this.animate( *args ) );
+	}
+
+	*new {|...args|
+		^ENDef.appendToResult( this.animate( *args ) );
 	}
 }
