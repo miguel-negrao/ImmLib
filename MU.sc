@@ -382,4 +382,8 @@ MUChain : ClusterBasic {
 	    ^this.deepCopy;
 	}
 
+	lockStartTime {
+		^items[0].lockStartTime
+	}
+
 }
