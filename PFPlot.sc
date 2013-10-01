@@ -1,120 +1,3 @@
-//unused
-ParameterFieldPlotOld1 {
-
-	*new { |psurface, arrayES|
-
-		var w, width = 500, height = 400, rate = 0.005, size = 0.05, points, items, func, u;
-
-		w !? _.close;
-		w = Window("SphereSphape 1", Rect(128, 64, width, height+35), false).front;
-		w.addFlowLayout;
-
-
-		items = psurface.points.collect{ |p|
-			var xzy = p.asCartesian;
-
-			Canvas3DItem.cube
-				.transform(Canvas3D.mScale(*size.dup(3)))
-				.transform(Canvas3D.mTranslate(xzy.x,xzy.y,xzy.z))
-
-		};
-
-		u = Canvas3D(w, Rect(0, 0, width, height), items++[Canvas3DItem.cube])
-			.scale_(200)
-			.perspective_(0.3)
-			.distance_(2);
-
-		u.mouseMoveAction = {|v,x,y|
-			u.transforms = [
-				Canvas3D.mRotateY(x / -200 % 2pi),
-				Canvas3D.mRotateX(y / 200 % 2pi)
-			];
-			u.refresh;
-		};
-
-		func = { |arr|
-			[items,arr].flopWith{ |item, v|
-				item.color_(Color.green(v));
-			};
-			defer{ u.refresh };
-		};
-
-		arrayES.do(func);
-
-		w.onClose_{
-			arrayES.stopDoing(func)
-		}
-	}
-
-}
-
-ParameterFieldPlotOld2 {
-	var <items, <u, <w, <es;
-	*new { |psurface| //EventSource[Array[Double]]
-
-		var w, width = 500, height = 400, rate = 0.005, size = 0.05, points, items, u;
-
-		w = Window("SphereSphape 1", Rect(128, 64, width, height+35), false);
-		w.addFlowLayout;
-
-
-		items = psurface.points.collect{ |p|
-			var xzy = p.asCartesian;
-
-			Canvas3DItem.cube
-				.transform(Canvas3D.mScale(*size.dup(3)))
-				.transform(Canvas3D.mTranslate(xzy.x,xzy.y,xzy.z))
-
-		};
-
-		u = Canvas3D(w, Rect(0, 0, width, height))
-			.scale_(200)
-			.perspective_(0.3)
-			.distance_(2);
-
-		u.items = items ++ [Canvas3DItem.cube];
-
-		u.transforms = [ Canvas3D.mRotateX(pi/2) ];
-
-		u.mouseMoveAction = {|v,x,y|
-			u.transforms = [
-				Canvas3D.mRotateY(x / -200 % 2pi),
-				Canvas3D.mRotateX(y / 200 % 2pi)
-			];
-			u.refresh;
-		};
-		^super.newCopyArgs(items, u, w).init;
-	}
-
-	init {
-		w.onClose_({ es.remove });
-	}
-
-	animate{ |arrayES|
-		es = arrayES.collect{ |arr|
-			IO{
-				[items,arr].flopWith{ |item, v|
-					item.color_(Color.green(v));
-				};
-				defer{ u.refresh };
-			}
-		};
-		^es.reactimate
-	}
-
-	show {
-		^IO{ w.front }
-	}
-
-	close {
-		^IO{ w.isClosed.not.if({ w.close}) }
-	}
-
-	showNow {
-		w.front
-	}
-}
-
 HaskellPFPlot {
     classvar <currentPort = 30000,
     <binaryPath = "pfVisualizer";
@@ -221,8 +104,8 @@ PSmoothPlot : HaskellPFPlot {
         ^IO{ this.startRenderer }
     }
 
-    animate{ |pf...args| //args surface, t, c1, c2, c3...
-        var tEventSource = args[1].changes;
+    animate{ |pf...args| //args t, c1, c2, c3...
+        var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
             rendererAddr.sendMsg(* (["/colors"]++v.collect{ |v2|
                 [0.0,v2.linlin(0.0,1.0,0.3,1.0),0.0]
@@ -230,7 +113,7 @@ PSmoothPlot : HaskellPFPlot {
             }
         };
         var outSignal = pf.(*args);
-        var outSignal2 = (sendColors.(_) <%> pf.( *([surface]++args[1..]) ) );
+		var outSignal2 = (sendColors.(_) <%> pf.valueS(*([surface]++args[0..]) ) );
         ^(outSignal2  <@ tEventSource).reactimate.collect{ outSignal }
     }
 
@@ -243,7 +126,7 @@ PSmoothPlot : HaskellPFPlot {
             }.flat;
             rendererAddr.sendMsg( *msg )
         } };
-        ^( (sendColors.(_) <%> pf.value( *([surface]++args) )) <@ tEventSource).reactimate
+        ^( (sendColors.(_) <%> pf.valueS( *([surface]++args) )) <@ tEventSource).reactimate
     }
 
 }
@@ -262,8 +145,8 @@ PGridPlot : HaskellPFPlot {
         ^super.basicNew( NetAddr("localhost", currentPort), label ).init( points )
     }
 
-    *animate{ |surface, sig, label|
-        var plot = this.basicNew(surface, label);
+    *animate{ | sig, label|
+        var plot = this.basicNew(ImmDef.currentSurface, label);
          ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
         plot.animate(sig)
 
@@ -296,6 +179,7 @@ PGridPlot : HaskellPFPlot {
             }
         }.reactimate
     }
+
 }
 
 PHemiPlot {
@@ -362,10 +246,29 @@ PHemiPlot {
 	}
 
 	*enAnimate{ |...args|
-		^ENDef.appendToResult( this.animate( *args ) );
+		^ENDef.appendToResult( this.animate( *[ImmDef.currentSurface]++args ) );
 	}
 
 	*new {|...args|
-		^ENDef.appendToResult( this.animate( *args ) );
+		"PHemiPlot : new : ImmDef.currentSurface %".format(ImmDef.currentSurface).postln;
+		^ENDef.appendToResult( this.animate( *[ImmDef.currentSurface]++args ) );
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

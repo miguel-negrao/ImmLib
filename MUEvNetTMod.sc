@@ -64,4 +64,44 @@ MUENTModDef : UENTModDef {
         }
 
     }
+
 }
+
+ImmDef : MUENTModDef {
+	classvar <currentSurface;
+	var <surface;
+
+    *new { |descFunc, surface, delta = 0.1|
+        ^super.newCopyArgs(descFunc, delta, surface)
+    }
+
+    createDesc { |unit, tESM|
+        ^tESM >>= { |tEventSource|
+            var tSignal = tEventSource.hold(0.0);
+			currentSurface = surface;
+			ENDef.evaluate( descFunc, [tSignal] )
+            >>= this.addReactimatesFunc(unit, tEventSource)
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

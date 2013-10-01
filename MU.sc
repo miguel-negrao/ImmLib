@@ -208,7 +208,7 @@ MUChain : ClusterBasic {
 
     //temporary fix ?
     units {
-        ^super.units.items.flop.collect( MU.fromArray(_) )
+		^this.doesNotUnderstand(\units).items.flop.collect( MU.fromArray(_) )
     }
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
