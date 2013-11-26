@@ -1,0 +1,38 @@
+TITLE:: Plotter3D
+summary:: (put short description here)
+categories:: Undocumented classes
+related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+
+DESCRIPTION::
+(put long description here)
+
+
+CLASSMETHODS::
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: points
+[ RealVector3D ]
+
+ARGUMENT:: colors
+(describe argument here)
+
+ARGUMENT:: closeOnCmdPeriod
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+
+
+EXAMPLES::
+
+code::
+(
+Plotter3D(
+	10.collect{ RealVector3D[ rrand(-1.0,1.0), rrand(-1.0,1.0), rrand(-1.0,1.0) ] },
+	10.collect{ |i| { rrand(0.5,1.0) } ! 3 }
+)
+)
+::

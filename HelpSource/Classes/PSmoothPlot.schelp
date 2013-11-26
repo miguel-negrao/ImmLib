@@ -1,0 +1,47 @@
+TITLE:: PSmoothPlot
+summary:: Plot a PField on a 3D surface
+categories:: ImmDef
+related:: Classes/PHemiPlot, Classes/PGridPlot, Classes/PSurface, Classes/PField
+
+DESCRIPTION::
+Plots a PField using a color map projected onto the surface where the PField is being applied.
+
+It starts a separate process with a window containing opengl rendering of the surface. cmd-. will close the window.
+
+Currently only the spherical surface is implemented.
+
+PRIVATE::animate, animateOnly, basicNew, animate, animateOnly, faces, startRenderermstartRendererIO, surface
+
+CLASSMETHODS::
+
+METHOD:: new
+This will add the creation of the window to the list of IO actions to be performed when the event network is started.
+
+When using this class the PField has to be internally evaluated twice, once for the actual points in the surface being used and another time for the points being used for the 3D rendering. Because of this the PField is passed to the plot unevaluated together with the signals to be used for evaluation.
+
+ARGUMENT::pf
+The unevaluated link::Classes/PField::
+
+ARGUMENT::args
+The signals to be used for evaluation of the PField
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField({ |u, v, t|
+
+		sin( 2pi * ( (0.3 * u) + t) )
+
+	});
+
+	PSmoothPlot( pf, t );
+
+}).test
+)
+::

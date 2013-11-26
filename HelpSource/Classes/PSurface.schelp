@@ -1,0 +1,142 @@
+TITLE:: PSurface
+summary:: Represents a surface in 3D space
+categories:: ImmLib
+related:: Classes/PField,  Classes/ImmDef
+
+DESCRIPTION::
+	A PSurface represents a surface in 3D space on which a speaker system can place virtual sources.
+
+
+	Given a speaker system with speaker locations x^i we assume that there is some surface S which contains all the points. We assume also that S has a parametrization, that is, that there exists a function p(u, v) with (u, v) on some domain D such that p(D) = S.
+
+
+	The coordinates u, v are called local coordinates. This allows us to locate any point
+on the surface using only two coordinates, since for any point x in S there exists (u, v)
+such that p(u, v) = x. In a intuitive sense this surface should be the one that is more
+similar to the shape suggested by the speaker locations although it doesn’t have to be
+exactly the same, so if the speakers are arranged in a dome we can consider S to be
+the half-sphere { (x, y, z) : x2 + y 2 + z 2 = 1 ∧ z >= 0 }.
+
+PRIVATE::pointsWrapped, distFunc, points, rangeU, rangeV, toFunc, fromFunc, isClosed, maxDist, pointsRV3D
+
+
+CLASSMETHODS::
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: points
+Array of floats because it's fast to prepend to the rest of arguments in function.
+
+ARGUMENT:: pointsWrapped
+Points in some other arbitrary class as long as the panners, etc know what to do with them, e.g. UnitSpherical, RealVector2D, etc.
+
+ARGUMENT:: toFunc
+Function to send coordinates pairs u,v into RealVector3D.
+
+ARGUMENT:: fromFunc
+Function to get coordinates from RealVector3D.
+
+ARGUMENT:: distFunc
+Geodesic distance function - distance along the shortest path between two points on surface.
+
+ARGUMENT:: maxDist
+Maximum geodesic distance.
+
+ARGUMENT:: rangeU
+e.g. [0, 2*pi].
+
+ARGUMENT:: rangeV
+e.g. [-pi, pi].
+
+ARGUMENT:: isClosed
+closed surface: edges wrap around, e.g. torus, sphere.
+
+returns:: PSurface
+
+METHOD:: sphericalGeometry
+Given a set of points on the unit sphere creates a spherical PSurface.
+
+ARGUMENT:: points
+[ [0,0], ... ]
+
+returns:: PSurface
+
+METHOD:: sphere
+Creates a sphere with n points using the an algoritum by Robert Bauer ( Distribution of points on a sphere with application to star catalogs. Journal of Guidance and Control, 23(1), 2000. URL http://www.aric.or.kr/treatise/journal/content.asp?idx=1204 )
+ARGUMENT:: n
+number of points
+
+returns:: PSurface
+
+METHOD:: plane
+Creates a planar PSurface
+
+ARGUMENT:: origin
+origin of direction vectors.
+
+ARGUMENT:: dx
+direction vector
+
+ARGUMENT:: dy
+direction vector
+
+ARGUMENT:: n
+number of points in dx direction
+
+ARGUMENT:: m
+number of points in dy direction
+
+returns:: PSurface
+
+METHOD:: geodesicSphere
+Creates a PSurface with the points of geodesic sphere. This gives the best simmetry for 42 points.
+
+returns:: PSurface
+
+
+INSTANCEMETHODS::
+
+METHOD:: du
+size of range in u direction
+
+returns:: SimpleNumber
+
+
+METHOD:: dv
+size of range in v direction
+
+returns:: SimpleNumber
+
+METHOD:: size
+number of points
+
+returns:: SimpleNumber
+
+METHOD:: pointsDegrees
+converts points to UnitSpherical using degrees (0-360)
+
+
+METHOD:: ucenter
+center of u range
+
+returns:: SimpleNumber
+
+METHOD:: vcenter
+center of v range
+
+returns:: SimpleNumber
+
+METHOD:: plot
+Plot the surface using Plotter3D
+
+
+EXAMPLES::
+
+code::
+PSurface.geodesicSphere.plot
+
+PSurface.sphere(10).plot
+
+PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ).plot
+::

@@ -1,0 +1,22 @@
+TITLE:: MU
+summary:: A class for running multiple Us in parallel
+categories:: ImmLib
+related:: Classes/U, Classes/MUChain
+
+DESCRIPTION::
+This class behaves virtually identical to U (unit), but in the background it will play multiple copies of the same unit at the same time.
+
+It is implemented using ClusterBasic for runtime redirection of the methods to each of the parallel units.
+
+This is class is mostly used internally by MUChain and should not be used directly.
+
+CLASSMETHODS::
+
+METHOD:: new
+The new method requires at least on the arguments to be or have embeded somewhere inside an array a ClusterArg instance. The ClusterArg instance determines how many parallel units to create.
+
+EXAMPLES::
+
+code::
+MU(\test, [\freq, ClusterArg([ 200,1000 ]) ])
+::

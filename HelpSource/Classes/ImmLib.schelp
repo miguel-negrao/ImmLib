@@ -1,0 +1,9 @@
+TITLE:: ImmLib
+summary:: ImmLib
+categories:: ImmLib
+related:: Reference/ImmLib
+
+DESCRIPTION::
+See link::Reference/ImmLib::
+
+This class is only for storing the preview mode variable.

@@ -1,354 +1,613 @@
 TITLE:: PField
-summary:: (put short description here)
-categories:: Undocumented classes
-related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+summary:: A parameter field definition
+categories:: ImmLib
+
 
 DESCRIPTION::
-(put long description here)
+Encapsulates a function RxRxRxR^n -> [0,1] where R are the real numbers
 
+These are functions that will lool like
+
+code::
+f = { |u, v, t, c1, c2| ... }
+::
+
+Where u and v are two spatial coordinates, t is time and c1, c2, ... are parameters of the function.
+
+note:: The range of u and v will depend on the surface. This can be checked using link::Classes/PSurface#rangeU:: and link::Classes/PSurface#rangeV::. For a spherical surface the ranges are [0,2pi]x[-pi/2, pi/2] ::
+
+note::For the plotting to work correctly the PField should output on the [0, 1] range.::
+
+note::
+It's important to distinguish the arguments to the creation methods of predefined PFields with the actual arguments of the function that PField encapsulates. Creation arguments are static, once set can't be changed, evaluation arguments can be modulated.
+code::
+x = PField.spotlightFixed(0, 0) //creation arguments
+x.value(t, 0.5) //evaluation arguments
+::
+::
 
 CLASSMETHODS::
 
-METHOD:: expandContract
-(describe method here)
+PRIVATE::prBump, barFuncU, barFuncV, expandContract2Func, expandContractFunc, generateHillsBipolarFunc, gradientFunc, moveHills, prGeodesicDist, prGeodesicDist2, randomPatchGeneral, spotlightFixedFunc, spotlightFunc, generateHillsFunc
 
-ARGUMENT:: surface
-(describe argument here)
+METHOD:: new
+Creates a PField
 
-returns:: (describe returnvalue here)
+ARGUMENT:: f
+A function of type
 
-METHOD:: randomPatchGeneral
-(describe method here)
-
-ARGUMENT:: generateHillsFunc
-(describe argument here)
-
-ARGUMENT:: surface
-(describe argument here)
-
-ARGUMENT:: t
-(describe argument here)
-
-ARGUMENT:: numSecs
-(describe argument here)
-
-ARGUMENT:: numHills
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: barFuncH
-(describe method here)
-
-ARGUMENT:: surface
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: expandContractFunc
-(describe method here)
-
-ARGUMENT:: surface
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: prBump
-(describe method here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: bar
-(describe method here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: gradient
-(describe method here)
-
-ARGUMENT:: surface
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: gradientFunc
 code::
+f = { |u, v, t, c1, c2| ... }
+::
 
-// gradientFunc
+returns:: a PField
+
+discussion::
+
+A PField can be any mathematical function that can be described by SuperCollider's language operators. It should return a number.
+
+code::
 (
-var surface = PSurface.geodesicSphere;
-UEvNetTModDef.test({ |t|
+ImmDef({ |t|
 
-	var pf = PField.gradient( surface );
-	                       //p, t, theta, phi, a, b
-	PFieldPlot.animateOnly( pf, t, 0.0, 0.0, 0.0, 1.0 );
+	var pf = PField({ |u, v, t|
 
-}, delta: 0.1, startTime:0.0)
+		sin( 2pi * ( (0.3 * u) + t) )
+
+	});
+
+	PSmoothPlot( pf, t );
+
+}).test
 )
-(
-var surface = PSurface.geodesicSphere;
-UEvNetTModDef.test({ |t|
 
-	var pf = PField.gradient( surface) ;
-	                       //p, t, theta, phi, a, b
-	PFieldPlot.animateOnly( pf, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
-}, delta: 0.1, startTime:0.0)
-)
 (
-var surface = PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] );
-UEvNetTModDef.test({ |t|
+ImmDef({ |t|
 
-	var pf = PField.gradient( surface ) ;
-	                       //u, v, t, u2, v2, a, b
-	var x = pf.( surface, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
-	PGridPlot.animate(surface, x, "hello !")
-}, delta: 0.1, startTime:0.0)
+	var pf = PField({ |u, v, t|
+
+		sin( 2pi * ( (0.2 * u) + t) ) * sin( 2pi * ( (0.3 * v) + t ) + pi )
+
+	});
+
+	PSmoothPlot( pf, t );
+
+}).test
 )
 ::
 
-ARGUMENT:: surface
-(describe argument here)
+PFields are evaluated inside an event network. They are evaluated using the code::value:: method just like funtions. They should be passed in an FPSignal that carries the time events together with any other signals that controls the PField's parameters.
 
-returns:: (describe returnvalue here)
 
-METHOD:: generateHillsBipolarFunc
-(describe method here)
 
-returns:: (describe returnvalue here)
 
-METHOD:: new
-(describe method here)
 
-ARGUMENT:: f
-(describe argument here)
 
-returns:: (describe returnvalue here)
 
-METHOD:: expandContract2
-(describe method here)
 
-ARGUMENT:: surface
-(describe argument here)
 
-returns:: (describe returnvalue here)
 
-METHOD:: prGeodesicDist
-(describe method here)
 
-ARGUMENT:: theta1
-(describe argument here)
 
-ARGUMENT:: phi1
-(describe argument here)
 
-returns:: (describe returnvalue here)
+
+subsection:: Predefined PFields
+
+
+
+
+
+
+METHOD:: gradient
+
+A PField with value which goes linearly from value a at point (u2,v2) to value b at points at the maximum distance from (u2,v2). The result at points in between is proportional to the distance to (u2,v2).
+
+The PField has arguments u, v, t, u2, v2, a, b
+
+returns:: A PField
+
+discussion::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.gradient;
+	          //     t  u2   v2   a    b
+	PSmoothPlot( pf, t, 0.0, 0.0, 0.0, 1.0 );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+
+// gradient 2
+(
+ImmDef({ |t|
+
+	var pf = PField.gradient;
+	             //  t  u2   v2   a                              b
+	PSmoothPlot( pf, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+
+//gradient plane
+(
+ImmDef({ |t|
+
+	var pf = PField.gradient() ;
+	           //t  u2   v2   a                             b
+	var x = pf.( t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+	PGridPlot( x, "hello !")
+}, surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+)
+::
 
 METHOD:: spotlight
-(describe method here)
+A PField that grows symetrically from a start point until occupying all the surface.
 
-ARGUMENT:: surface
-(describe argument here)
+The PField has arguments u1, v1, t, u2, v2, c, d=0.2 and returns 1 if the distanceof (u1,v1) to (u2,v2) is smaller then c and 0 otherwise. d controls how wide is the smoothing area between the transition area from 0 to 1.
 
-returns:: (describe returnvalue here)
+returns:: a PField
 
-METHOD:: continousRandomSpotlight
-(describe method here)
+discussion::
 
-ARGUMENT:: surface
-(describe argument here)
+d = 0
+code::
+(
+ImmDef({ |t|
 
-ARGUMENT:: t
-(describe argument here)
+	var pf = PField.spotlight;
 
-ARGUMENT:: numSecs
-(describe argument here)
+	               //t, u,     v,    c,    d
+	PSmoothPlot( pf, t, 0.0,   0.0,  0.5,  0.0 );
 
-returns:: (describe returnvalue here)
+}).test
+)
+::
+
+d = 0.5
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.spotlight;
+
+	               //t, u,     v,    c,    d
+	PSmoothPlot( pf, t, 0.0,   0.0,  0.5,  0.5 );
+
+}).test
+)
+::
+
+animating u, v and c
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.spotlight;
+	               //time, u,   v,      c,
+	PSmoothPlot( pf, t,    t,   t * 2,  { |x| (sin(x*2)+1)/3 }.lift.(t)  );
+
+}).test
+)
+::
+
+On a plane:
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.spotlight;
+	           //time, u,                       v,                               c
+	var x = pf.( t,    t.collect( _.mod(1.0) ), { |x| (x*2).mod(1.0) }.lift.(t), { |x| (sin(x*2)+1)/4 }.lift.( t ) );
+
+	PGridPlot( x, "Spotlight on Plane")
+
+},
+surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ),
+delta: 0.1
+).test( startTime:0.0 )
+)
+::
+
 
 METHOD:: spotlightFixed
-(describe method here)
+like spotlight but the position of the point to which distance is being measured (u,v) is fixed and not modulatable. The PField function has arguments t, c (0-1), d (0-1).
 
 ARGUMENT:: surface
-(describe argument here)
+a PSurface
 
 ARGUMENT:: u
-(describe argument here)
+a number
 
 ARGUMENT:: v
-(describe argument here)
+a number
 
-returns:: (describe returnvalue here)
+returns:: a PField
 
-METHOD:: randomHills
-(describe method here)
+discussion::
 
-ARGUMENT:: surface
-(describe argument here)
+code::
+(
+ImmDef({ |t|
 
-ARGUMENT:: t
-(describe argument here)
+	var pf = PField.spotlightFixed( pi/4, pi/2);
+	               //time,  c
+	PSmoothPlot( pf, t,     { |x| (sin(x*5)+1)/2 }.lift.(t) );
 
-ARGUMENT:: numSecs
-(describe argument here)
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
 
-ARGUMENT:: numHills
-(describe argument here)
+code::
+(
+ImmDef({ |t|
 
-returns:: (describe returnvalue here)
+	var pf = PField.spotlightFixed( 0.5, 0.5);
+	            //time,  c
+	var x = pf .( t,     { |x| (sin(x*5)+1)/2 }.lift.(t) );
 
-METHOD:: randomHillsBipolar
-(describe method here)
+	PGridPlot( x, "spotlightFixed")
 
-ARGUMENT:: surface
-(describe argument here)
+}, surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+)
+::
 
-ARGUMENT:: t
-(describe argument here)
 
-ARGUMENT:: numSecs
-(describe argument here)
 
-ARGUMENT:: numHills
-(describe argument here)
+METHOD:: expandContract
+A PField that "grows" symetrically from a start point (u2,v2) until occupying the entire surface and then shrinks into the antipodal point.
 
-returns:: (describe returnvalue here)
+The PField has arguments u1, v1, t, u2, v2, c (0-1) where (u2,v2) is the start point and c is the grow factor.
 
-METHOD:: generateHillsFunc
-(describe method here)
+note::Only valid for spherical surfaces.::
 
-returns:: (describe returnvalue here)
 
-METHOD:: spotlightFixedFunc
-(describe method here)
+returns:: a PField
 
-ARGUMENT:: surface
-(describe argument here)
+discussion::
+code::
+(
+ImmDef({ |t|
 
-ARGUMENT:: u2
-(describe argument here)
+	var pf = PField.expandContract;
+	               //time, u,   v,    phi, c, d=0.2
+	PSmoothPlot( pf, t,    0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t );
 
-ARGUMENT:: v2
-(describe argument here)
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
 
-returns:: (describe returnvalue here)
 
-METHOD:: spotlightFunc
-(describe method here)
+code::
+(
+ImmDef({ |t|
 
-ARGUMENT:: surface
-(describe argument here)
+	var pf = PField.expandContract;
+	              // t, theta, phi, c, d=0.2
+	PSmoothPlot( pf, t, t, t * 2, { |x| (sin(x*2)+1)/2 }.lift.( t ) );
 
-returns:: (describe returnvalue here)
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
 
-METHOD:: prGeodesicDist2
-(describe method here)
+METHOD:: expandContract2
+A PField that grows symetrically from a start point (u2,v2) until occupying all the space and then shrinks into a second point (u3,v3).
 
-returns:: (describe returnvalue here)
+The PField has arguments u1, v1, t, u2, v2, u3, v3, c (0-1) where (u2,v2) is the start point, (u3,v3) is the end point and c is the grow factor.
 
-METHOD:: expandContract2Func
-(describe method here)
+note::Only valid for spherical surfaces.::
 
-ARGUMENT:: surface
-(describe argument here)
+returns:: a PField
 
-returns:: (describe returnvalue here)
+discussion::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.expandContract2;
+	              // t, u2,  v2,  u3, v3,  c
+	PSmoothPlot( pf, t, 0.0, 0.0, pi, t,   { |x| (sin(x*2)+1)/2 } <%> t );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.expandContract2;
+	             // t, u2,  v2,  u3,  v3,  c
+	//var x = pf .( t, 0.0, 0.0, 1.0, 1.0, { |x| (sin(x*2)+1)/2 } <%> t );
+	var x = pf .( t, //t
+		{ |t| (t*0.5).mod(1.0) } <%> t, { |t| (t*0.2).mod(1.0) } <%> t, //u2,v2
+		{ |t| (t*0.1).mod(1.0) } <%> t, { |t| (t*0.1).mod(1.0) } <%> t, //u3,v3
+		{ |x| (sin(x*2)+1)/2 } <%> t ); //c
+	PGridPlot( x )
+
+},
+surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ),
+delta: 0.1).test(startTime:0.0)
+)
+::
+
+METHOD:: barU
+A PField that grows parallel to the u axis.
+
+The PField has arguments u, v, t, widness (0-1).
+
+returns:: a PField
+
+discussion::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.barU;
+	                      //widness
+	PSmoothPlot( pf, t,  { |x| (sin(x*2)+1) } <%> t );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+METHOD:: barV
+A PField that grows parallel to the v axis.
+
+The PField has arguments u, v, t, widness (0-1).
+
+returns:: a PField
+
+discussion::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.barV;
+	                      //widness
+	PSmoothPlot( pf, t,  { |x| (sin(x*2)+1) } <%> t );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+code::
+(
+ImmDef({ |t|
+
+	var pf = PField.barV;
+	           //t,  widness
+	var x = pf.( t,  { |x| (sin(x*2)+1) } <%> t );
+
+	PGridPlot(x, "hello !")
+
+}, surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+)
+
+::
 
 METHOD:: sphericalHarmonic
-(describe method here)
+
+A PField which uses the spherical harmonic functions for given m,n coeficients. The spherical harmonic function is multiplied with a monocromatic source at frequency f.
+
+The PField has arguments  u, v, t, f where f is the frequency of the monocromatic source.
 
 ARGUMENT:: m
-(describe argument here)
+An integer
+
+-l <= m <= l
 
 ARGUMENT:: l
-(describe argument here)
+An integer
 
-returns:: (describe returnvalue here)
+returns:: a PField
+
+discussion::
+
+code::
+(
+
+ImmDef({ |t|
+
+	//var pf = PField.sphericalHarmonic(0,0);
+	var pf = PField.sphericalHarmonic(1,2);
+	//var pf = PField.sphericalHarmonic(2,1);
+	           //    t, f
+	PSmoothPlot( pf, t, 3.0 );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+
+//projected onto plane
+(
+ImmDef({ |t|
+
+	//var pf = PField.sphericalHarmonic(0,0);
+	var pf = PField.sphericalHarmonic(1,2);
+	//var pf = PField.sphericalHarmonic(2,1);
+
+	var x = PField({ |u,v,t| pf.func.(u*2*pi,v*pi,t) }).( t, 3.0 );
+	PGridPlot( x, "hello !")
+
+
+}, surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+)
+
+::
+
+
+
+
+
+
+
+subsection:: reactive pfields
+
+Reactive fields are not straight mathematical functions, they use switching (FRP) to change the mathematical function being used when some event comes in. This allows to essentially generate new mathematical functions at runtime while the PField is running.
+
+
+METHOD:: continousRandomSpotlight
+A PField that grows symetrically from a start point until occupying all the surface and then shrinks back to the same point, it then randomly chooses another point to grow to and repeats the process. It takes numSecs to grow and shrink back to the chosen point.
+
+ARGUMENT:: t
+FPSignal
+
+ARGUMENT:: numSecs
+SimpleNumber
+
+returns:: FPSignal[ SimpleNumber ]
+
+discussion::
+
+code::
+(
+ImmDef({ |t|
+	//surface, t, numSecs
+	var x = PField.continousRandomSpotlight( t, 5);
+
+	PHemiPlot( x * 2 )
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+
+METHOD:: randomHills
+Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills). The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+
+ARGUMENT:: t
+FPSignal
+
+ARGUMENT:: numSecs
+SimpleNumber
+
+ARGUMENT:: numHills
+Integer
+
+returns:: FPSignal[ SimpleNumber ]
+
+discussion::
+
+code::
+(
+
+ImmDef({ |t|
+	//surface, t, numSecs, numHills = 5
+	var x = PField.randomHills( t, 5, 5);
+
+	PHemiPlot( x * 2 )
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+
+
+
+METHOD:: randomHillsBipolar
+every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills). Some hills have a positive number associated (contribute upwards) and others have a negative number (contribute downwards). The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+
+
+ARGUMENT:: t
+FPSignal
+
+ARGUMENT:: numSecs
+SimpleNumber
+
+ARGUMENT:: numHills
+Integer
+
+returns:: FPSignal[ SimpleNumber ]
+
+discussion::
+
+code::
+(
+ImmDef({ |t|
+	var x = PField.randomHillsBipolar( t, 5, 2);
+
+	PHemiPlot( x )
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+::
+
+
+
+
+
+
+
+
+
 
 
 INSTANCEMETHODS::
 
-METHOD:: composeNAryOp
-(describe method here)
+PRIVATE:: composeNAryOp, reverseComposeBinaryOp, <>, valueArray, composeBinaryOp, composeUnaryOp, plotImage, valueArrayS, valuePlot, valueS
 
-ARGUMENT:: aSelector
-(describe argument here)
-
-ARGUMENT:: anArgList
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: reverseComposeBinaryOp
-(describe method here)
-
-ARGUMENT:: aSelector
-(describe argument here)
-
-ARGUMENT:: something
-(describe argument here)
-
-ARGUMENT:: adverb
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: <>
-(describe method here)
-
-ARGUMENT:: pf
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: composeUnaryOp
-(describe method here)
-
-ARGUMENT:: aSelector
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: valueArray
-(describe method here)
-
-ARGUMENT::  ... allargs
-(describe argument here)
-
-returns:: (describe returnvalue here)
-
-METHOD:: value
-(describe method here)
-
-ARGUMENT:: surface
-(describe argument here)
-
-ARGUMENT::  ... args
-(describe argument here)
-
-returns:: (describe returnvalue here)
 
 METHOD:: func
-(describe method here)
+The actual mathematical function of the PField
+returns:: Function
 
-returns:: (describe returnvalue here)
+METHOD:: value
+Evaluate the PField
 
-METHOD:: composeBinaryOp
-(describe method here)
+ARGUMENT::  ... args
+Of kind FPSignal or SimpleNumber
 
-ARGUMENT:: aSelector
-(describe argument here)
+returns:: FPSignal[ SimpleNumber ]
 
-ARGUMENT:: something
-(describe argument here)
+METHOD:: rotate
 
-ARGUMENT:: adverb
-(describe argument here)
+Create a new PField which allows for rotation around 3 axis.
 
-returns:: (describe returnvalue here)
+The new PField has 3 extra arguments prepended to the argument list for the 3 angles of rotation (rotate, tilt, tumble).
 
+note::Only valid for spherical surfaces.::
 
-EXAMPLES::
+discussion::
 
 code::
-(some example code)
+(
+ImmDef({ |t|
+
+	var pf = PField.spotlightFixed(0,0).rotate;
+                  // t,     rotate  tilt     tumble   c
+	PSmoothPlot( pf, t,     0.0,    0.0,     t,       0.5 );
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
 ::
+
+Examples::
+
+It's possible to switch from a pfield to another after a certain ammount of seconds:
+
+code::
+//later
+(
+
+ImmDef({ |t|
+
+	var pf1 = PField({ |u, v, t|
+		sin(u + t)
+	});
+	var x = pf1.(t);
+	var pf2 = PField({ |u, v, t|
+		1.0
+	});
+	var y = pf2.(t);
+	PGridPlot( x.switchLater(t, y, 4), "hello !")
+
+}, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+
+)
+::
+
+
+

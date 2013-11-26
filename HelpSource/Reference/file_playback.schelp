@@ -1,0 +1,229 @@
+title:: File playback with ImmLib
+summary:: "how to" for file playback with ImmLib
+categories::ImmLib
+
+By default MUChains just launchs n parallel UChains. When using buffers this would mean also loading the same buffer n times to memory. To avoid the multiple allocations one should use link::Classes/GlobalSndFile:: instead.
+
+First evaluate these Udefs:
+
+code::
+Udef(\filePlayBack1, {
+    var out = BufSndFilePlayer.ar( 1 );
+
+    UOut.ar( 0, out * \amp.kr(0.5) )
+})
+.setSpec(\soundFile, BufSndFileSpec() );
+
+Udef(\bpf, {
+
+    var bpf = BPF.ar( UIn.ar(0), \freq.kr(400,1.0));
+    var out = bpf * 0.5 * Line.ar(0.0,1.0,1);
+    UOut.ar(0, out )
+
+});
+
+Udef(\bpf2, {
+
+    var bpf1 = BPeakEQ.ar( UIn.ar(0),  \freq1.kr(400,1.0), rq: 1.0, db:20 );
+    var bpf2 = BPeakEQ.ar( bpf1,  \freq2.kr(800,1.0), rq:0.4, db:20 );
+    var out = bpf2 * 0.5 * Line.ar(0.0,1.0,1);
+    UOut.ar(0, out )
+
+})
+.setSpec(\freq1, \freq)
+.setSpec(\freq2, \freq);
+
+
+Udef(\lpf, {
+
+    var bpf = LPF.ar( UIn.ar(0),  \freq.kr(400,1.0) );
+    var out = bpf * 0.5 * Line.ar(0.0,1.0,1);
+    UOut.ar(0, out )
+
+});
+
+Udef(\ringMod, {
+    var in = UIn.ar(0);
+    var mix = \mix.kr(0);
+    var ring = (1 - mix) + ( mix * SinOsc.ar( SinOsc.ar(10).range(200,600) ) );
+    UOut.ar(0, in * ring)
+});
+
+Udef(\freeze, {
+    var in = UIn.ar(0);
+    var mix = \mix.kr(0);
+    var fft1 = FFT(LocalBuf(2048), in);
+    var fft2 = PV_MagFreeze(fft1, LFPulse.kr(0.5, width:0.99) );
+    var fft3 = IFFT(fft2);
+    var out = ( (1 - mix) * in) + ( mix * fft3 );
+    UOut.ar(0, out)
+});
+
+Udef(\nothing, {
+    UOut.ar(0, UIn.ar(0) )
+});
+
+Udef(\verb1, {
+    var out = UIn.ar(0,1);
+    out = FreeVerb.ar(out, \mix.ar(0.33), \room.ar(0.5), \damp.ar(0.5) );
+    UOut.ar(0, out)
+
+})
+.setSpec(\mix, \unipolar.asSpec.default_(0.33) )
+.setSpec(\room, \unipolar.asSpec.default_(0.5) )
+.setSpec(\damp, \unipolar.asSpec.default_(0.5) );
+::
+
+To check which global buffers are currently allocated one can do:
+code::
+GlobalBufSndFile.globalBuffers.as(Array).do(_.postln)
+::
+
+Allocate the buffer:
+code::
+(
+~globalBuf = GlobalBufSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav", 0, loop:true, useChannels:[0]);
+~globalBuf.createTheBuffers
+)
+::
+
+The buffer can be freed with:
+
+code::
+~globalBuf.dispose
+::
+
+
+Play the sound file on all points of surface:
+
+code::
+//straight to out
+(
+q = ();
+
+q.surface = PSurface.sphere(20);
+
+q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
+	[\filePlayBack1,
+		[\soundFile, ~globalBuf ]
+	]
+).fadeIn_(10).fadeIn_(10);
+
+q.score = UScore.immNew(q.surface, q.chain1);
+
+q.score.prepareAndStart
+)
+
+q.chain1.gui
+::
+
+
+This will just play the exact same sound stream panned to all the points of the surface. Most probably the sound will simply be heard from nearest virtual point due to the precedence effect.
+
+In order to defeat the precedence effect one should decorrelate each stream using the code::\decorrelate:: Udef.
+
+code::
+//decorrelated
+(
+q = ();
+
+q.surface = PSurface.sphere(20);
+
+q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
+	[\filePlayBack1,
+		[\soundFile, ~globalBuf ]
+	],
+	[\decorrelate]
+).fadeIn_(10).fadeIn_(10);
+
+q.score = UScore.immNew(q.surface, q.chain1);
+
+q.score.prepareAndStart
+)
+::
+
+
+
+
+One can then apply further processing to the sound file applying PFields to parameters of the processing units.
+
+
+code::
+//low pass filter
+(
+q = ();
+
+q.pf = PField({ |u, v, t, k|
+    var tau = 2*pi;
+    sin ( (v*k) + t )
+});
+q[\f] = { |t|
+
+    var bfreq = q.pf.( t.changeRate( Var(0.5) ), 2.0 );
+    (freq: UArg( bfreq.linexp(0.0,1.0,400,10000) ) )
+
+};
+
+q.surface = PSurface.sphere(20);
+
+q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
+	[\filePlayBack1,
+		[\soundFile, ~globalBuf ]
+	],
+	[\decorrelate],
+	[\lowPass, nil, ImmDef(q[\f], q.surface, 0.1)]
+).fadeIn_(10).fadeIn_(10);
+
+q.score = UScore.immNew(q.surface, q.chain1);
+
+q.score.prepareAndStart
+)
+
+
+
+
+
+//with reverb
+//direct sound is oscilating from side to side
+(
+q = ();
+
+q.pf = PField({ |u, v, t, k|
+    var tau = 2*pi;
+	(sin ( ((v*k) + t) * tau ) + 1)/2
+});
+
+q[\f]  = { |t|
+	var pfmix = q.pf.rotate;
+	var bmix = PSmoothPlot( pfmix, t.changeRate( Var(0.3) ), Var(0.0), Var(pi/2), Var(0), Var(2.0) );
+	( mix: UArg( bmix ) )
+};
+
+q.surface = PSurface.sphere(20);
+
+q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
+	[\filePlayBack1,
+		[\soundFile, ~globalBuf ]
+	],
+	[\decorrelate],
+	[\verb1, [\room, 0.7], ImmDef(q[\f], q.surface, 0.1)]
+).fadeIn_(10).fadeIn_(10);
+
+q.score = UScore.immNew(q.surface, q.chain1);
+
+q.score.prepareAndStart
+)
+::
+
+using multiple chains
+available fields
+examples
+
+
+
+
+
+
+
+
+
