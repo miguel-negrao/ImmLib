@@ -623,39 +623,4 @@ q.score.gui
                 ITERATIVE ALGORITMHS
 };
 
-*/
-//SCLANG status
-*/
 
-(
-t = StaticText();
-w = Window.new;
-w.front.layout_(HLayout(t));
-r = Routine({
-	loop{
-		t.string_("sclang: " ++ "ps -p $(pidof sclang | sed 's/\s/,/g') -o %cpu --noheaders".unixCmdGetStdOut.postln );
-		1.wait;
-	}
-});
-r.play(AppClock);
-w.onClose_{r.stop}
-)
-
-"top -b -n 1 | grep sclang".unixCmdGetStdOut
-"top -b -n 1 -p $(pidof sclang | sed 's/\s/,/g')".unixCmdGetStdOut
-"ps -p $(pidof sclang | sed 's/\s/,/g') -o %cpu --noheaders".unixCmdGetStdOut
-"ps -p 4357 -o %cpu --noheaders".unixCmdGetStdOut
-
-(
-fork{
-inf.do{
-	"ps -p 4357 -o %cpu --noheaders".unixCmdGetStdOut.postln;
-	1.wait;
-	}
-}
-
-)
-
-
-//1 - Dust + Bandpassed Noise
-//time = 60s
