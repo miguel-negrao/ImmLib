@@ -18,7 +18,7 @@ HaskellPFPlot {
 	}
 
 	*fullBinaryPath {
-		^"%/pfVisualizer/%/%".format(HaskellPFPlot.filenameSymbol.asString.dirname,
+		^"%/../pfVisualizer/%/%".format(HaskellPFPlot.filenameSymbol.asString.dirname,
 			thisProcess.platform.name, HaskellPFPlot.binary)
 	}
 
