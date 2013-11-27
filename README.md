@@ -1,17 +1,20 @@
 Install
 -------
 
-* Unit Lib: https://github.com/GameOfLife/Unit-Lib
-* WFSCollider class library: https://github.com/GameOfLife/WFSCollider-Class-Library
-* WFS Library: 
-* FP Lib: https://github.com/miguel-negrao/FPLib
+* Cluster: https://github.com/miguel-negrao/Cluster
 * UEvNetMod: https://github.com/miguel-negrao/UEvNetMod
 * Modality: https://github.com/ModalityTeam/Modality-toolkit
-* Cluster: https://github.com/miguel-negrao/Cluster
+* Unit Lib: https://github.com/GameOfLife/Unit-Lib
+* WFSCollider class library: https://github.com/GameOfLife/WFSCollider-Class-Library
+* FP Lib: https://github.com/miguel-negrao/FPLib
+
+
+
 * wslib quark
 * PopUpTreeMenu quark
 * VectorSpace quark
 * MathLib quark
+
 * sc3-plugins
 
 
