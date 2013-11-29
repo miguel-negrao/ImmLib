@@ -31,7 +31,7 @@ Udef(\mynoise7, {
 q = ();
 
 //40
-q.m = 20;
+q.m = 40;
 
 q.surface = PSurface.sphere(q.m);
 
@@ -51,10 +51,10 @@ q[\f] = { |t|
 	)
 };
 
-q.chain1 = MUChain.immNew(q.surface, [\mynoise7, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(15).fadeOut_(5);
+q.chain1 = MUChain.immNew(q.surface, [\mynoise7, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
 
 q.score = UScore.immNew(q.surface, q.chain1);
-//q.score.gui
+q.score.gui;
 q.score.prepareAndStart
 )
 q.score.gui
@@ -147,6 +147,7 @@ Udef(\fm2, {
 		\fc.ukr( 400, \freq, lag: 0.2) + SinOsc.ar( fm, mul: i*fm )
 	);
 
+
 	out = out * 0.3;
 
 	out = EnvGen.ar(Env([0.0,1.0,1.0,0.0],[5,50,5],[3,0,-3])) * out;
@@ -165,6 +166,7 @@ q[\f] = { |t|
 	var i =  PField.randomHills(t, 4);
 	var fm =  PField.randomHills(t, 5);
 
+	PGridPlot( i );
 	PHemiPlot( i );
 
 	( i: USpecArg( i * 2 ), fm: UArg( fm.linlin( 0.0, 0.5, 50, 100) ) )
@@ -312,7 +314,7 @@ Udef(\test3, {
 })
 )
 
-
+//isn't working
 (
 q = ();
 
@@ -328,7 +330,9 @@ q.surface = PSurface.sphere(20);
 
 q[\f] = { |t|
 
-	var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
+	//var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
+	//numSecs, numHills = 5, size = 0.4, step = 0.4
+	var x = PField.moveHills(t, 1, 5, 0.1, 0.2, false);
 
 	PHemiPlot( x );
 
@@ -411,7 +415,7 @@ Udef(\standardLSin, {
 
 	out = out * 0.25;
 
-	out = EnvGen.ar( Env([0.0,1.0,1.0,0.0],[10,40,10],[3,0,-3] )) * out;
+	//out = EnvGen.ar( Env([0.0,1.0,1.0,0.0],[10,40,10],[3,0,-3] )) * out;
 
 	UOut.ar(0, out *  \amp.kr(1.0) )
 } )
@@ -421,7 +425,8 @@ Udef(\standardLSin, {
 (
 q = ();
 
-q.surface = PSurface.sphere(40);
+//q.surface = PSurface.sphere(40);
+q.surface = PSurface.sphericalGeometry([[0,pi/2]]);
 
 q[\f] = { |t|
 
@@ -523,6 +528,7 @@ q.score.prepareAndStart
 
 )
 q.score.gui
+UScore.current.asCompileString
 
 /*
 .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-

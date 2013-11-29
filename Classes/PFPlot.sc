@@ -23,7 +23,7 @@ HaskellPFPlot {
 	}
 
     startCommand {
-		^HaskellPFPlot.fullBinaryPath++" "++rendererAddr.port++" "++label;
+		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label;
     }
 
     startRenderer { |closeOnCmdPeriod = true|
@@ -112,9 +112,10 @@ PSmoothPlot : HaskellPFPlot {
     animate{ |pf...args| //args t, c1, c2, c3...
         var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
-            rendererAddr.sendMsg(* (["/colors"]++v.collect{ |v2|
-                [0.0,v2.linlin(0.0,1.0,0.3,1.0),0.0]
-            }.flat))
+			rendererAddr.sendMsg(* (["/colors"]++([v,surface.points].flopWith{ |c,xs|
+				var x  = c.linlin(0.0,1.0,0.3,1.0);
+				[0.0, x, 0.0]
+			}.flat)))
             }
         };
         var outSignal = pf.(*args);
