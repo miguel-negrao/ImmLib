@@ -562,8 +562,6 @@ PField : AbstractFunction {
 		var genPoints2 = { |n| { T( rrand(0, 2pi), rrand(-pi, pi) ) } ! n };
 		var newState = { |oldPoints, step = 0.4|  T( oldPoints, iteratePoints.(oldPoints, step) ) };
 
-
-
 		//time wrapping around numSecs
 		var t2 = t.collect(_.mod(numSecs));
 
@@ -573,7 +571,8 @@ PField : AbstractFunction {
 			genPoints
 		} {
 			genPoints2
-		}.(numHills, step) );
+		}.(numHills),
+		step );
 
 		//this generates an event every numSecs containing the from and to functions
 		//to be morphed
@@ -598,7 +597,7 @@ PField : AbstractFunction {
 
 				surface.points.collect{ |v|
 					funcs.collect{ |f|
-						f.(v[0], v[1], size, 0.5)
+						f.(v[0], v[1], t, size, 0.5)
 					}.sum.min(1.0)
 				}
 			}

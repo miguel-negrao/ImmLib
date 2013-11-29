@@ -1,3 +1,5 @@
+A Library for immersive spatialization
+
 Install
 -------
 

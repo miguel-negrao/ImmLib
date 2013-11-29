@@ -314,7 +314,6 @@ Udef(\test3, {
 })
 )
 
-//isn't working
 (
 q = ();
 
@@ -330,9 +329,9 @@ q.surface = PSurface.sphere(20);
 
 q[\f] = { |t|
 
-	//var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
+	var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
 	//numSecs, numHills = 5, size = 0.4, step = 0.4
-	var x = PField.moveHills(t, 1, 5, 0.1, 0.2, false);
+	//var x = PField.moveHills(t, 1, 5, 0.1, 0.2, false);
 
 	PHemiPlot( x );
 
