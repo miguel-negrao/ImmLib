@@ -49,7 +49,7 @@ ImmLib {
 
 	}
 
-	*sonicLabTest {
+	*startupSonicLabTest {
 		var options;
 		options = VBAPOptions.fromPreset(\soniclabTest)
 		.extraDefFolders_( this.extraDefs );
@@ -57,7 +57,7 @@ ImmLib {
 		VBAPLib.startupR( options );
 	}
 
-	*sonicLab {
+	*startupSonicLab {
 		var options = VBAPOptions.fromPreset(\soniclab)
 		.extraDefFolders_( this.extraDefs );
 		Udef.loadOnInit = true;

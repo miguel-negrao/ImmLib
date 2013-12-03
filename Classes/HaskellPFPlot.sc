@@ -87,7 +87,7 @@ PSmoothPlot : HaskellPFPlot {
     var <faces, <surface;
 
     *basicNew { |type = \sphere, label|
-        var faces = FP3DPoligon.sphereFaces(2);
+        var faces = PSurface.sphereFaces(2);
         var points = faces.collect{ |vertices| vertices.sum / 3 };
         var surface = PSurface.sphericalGeometry( points.collect{ |p|
             p.asUnitSpherical.storeArgs
