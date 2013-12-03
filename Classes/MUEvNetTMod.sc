@@ -66,6 +66,7 @@ MUENTModDef : UENTModDef {
                 EventNetwork.returnUnit
             } {
                 dict.collect{ |uarg, key|
+					Object.checkArgs(MUENTModDef, \addReactimatesFunc, [uarg,key], [UModArg, Symbol]);
                     uarg.match({ |sig|
                         (sig <@ tEventSource).collect{ |v| IO{
                             unit.items.do{ |u,i|

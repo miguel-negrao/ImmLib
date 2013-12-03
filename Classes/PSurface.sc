@@ -98,7 +98,7 @@ PSurface {
 	// PSurface.geodesicSphere.plot
 	// best simmetry for 42 points
 	*geodesicSphere {
-		var points = FP3DPoligon.sphereFaces(1).flatten.as(Set).as(Array).collect{ |xs|
+		var points = PSurface.sphereFaces(1).flatten.as(Set).as(Array).collect{ |xs|
 			this.prToSphericalRange(*xs.asUnitSpherical.storeArgs) };
 		^this.sphericalGeometry( points )
 	}
@@ -162,5 +162,126 @@ PSurface {
 	vcenter {
 		^rangeV.sum / 2
 	}
+
+	*icosahedronFaces { |transforms, emissive, ambient=0.5, specular=0.5, diffuse=0.5, shininess = 0.5, width|
+        var t = (1.0 + 5.sqrt) / 2.0;
+
+        var points = [
+            RealVector3D[-1,  t,  0],
+            RealVector3D[ 1,  t,  0],
+            RealVector3D[-1, t.neg,  0],
+            RealVector3D[ 1, t.neg,  0],
+
+            RealVector3D[ 0, -1,  t],
+            RealVector3D[ 0,  1,  t],
+            RealVector3D[ 0, -1, t.neg],
+            RealVector3D[ 0,  1, t.neg],
+
+            RealVector3D[ t,  0, -1],
+            RealVector3D[ t,  0,  1],
+            RealVector3D[t.neg,  0, -1],
+            RealVector3D[t.neg,  0,  1]
+        ];
+
+        ^[
+
+        // 5 faces around point 0
+        [0, 11, 5],
+        [0, 5, 1],
+        [0, 1, 7],
+        [0, 7, 10],
+        [0, 10, 11],
+
+        // 5 adjacent faces
+        [1, 5, 9],
+        [5, 11, 4],
+        [11, 10, 2],
+        [10, 7, 6],
+        [7, 1, 8],
+
+        // 5 faces around point 3
+        [3, 9, 4],
+        [3, 4, 2],
+        [3, 2, 6],
+        [3, 6, 8],
+        [3, 8, 9],
+
+        // 5 adjacent faces
+        [4, 9, 5],
+        [2, 4, 11],
+        [6, 2, 10],
+        [8, 6, 7],
+        [9, 8, 1]
+        ].collect{ |arr|
+            arr.collect( points.at(_) )
+        }
+    }
+
+    *sphereFaces { |n|
+        var triangles = this.icosahedronFaces().collect{ |tri| tri.collect( _.normalize ) };
+        var splitTriangles = { |triangles, n|
+            if( n == 0) {
+                triangles
+            } {
+                var newTriangles = triangles.collect{ |tri|
+                        var a,b,c, ab, bc, ac;
+                        var f = { |x,y| (x + ((y-x)/2)).normalize };
+                        #a,b,c = tri;
+                        ab = f.(a,b);
+                        bc = f.(b,c);
+                        ac = f.(a,c);
+                        [
+                            [a,ab,ac],
+                            [b,ab,bc],
+                            [c,bc,ac],
+                            [ab,bc,ac]
+                        ]
+                }.flatten;
+                splitTriangles.(newTriangles, n-1)
+            }
+        };
+        ^splitTriangles.(triangles,n)
+    }
+
+    *cubeFaces {
+
+        [
+        // Front face
+        [[-1.0, -1.0,  1.0],
+        [1.0, -1.0,  1.0],
+        [1.0,  1.0,  1.0],
+        [-1.0,  1.0,  1.0]],
+
+        // Back face
+        [[-1.0, -1.0, -1.0],
+        [-1.0,  1.0, -1.0],
+        [1.0,  1.0, -1.0],
+        [1.0, -1.0, -1.0]],
+
+        // Top face
+        [[-1.0,  1.0, -1.0],
+        [-1.0,  1.0,  1.0],
+        [1.0,  1.0,  1.0],
+        [1.0,  1.0, -1.0]],
+
+        // Bottom face
+        [[-1.0, -1.0, -1.0],
+        [1.0, -1.0, -1.0],
+        [1.0, -1.0,  1.0],
+        [-1.0, -1.0,  1.0]],
+
+        // Right face
+        [[1.0, -1.0, -1.0],
+        [1.0,  1.0, -1.0],
+        [1.0,  1.0,  1.0],
+        [1.0, -1.0,  1.0]],
+
+        // Left face
+        [[-1.0, -1.0, -1.0],
+        [-1.0, -1.0,  1.0],
+        [-1.0,  1.0,  1.0],
+        [-1.0,  1.0, -1.0]]];
+
+    }
 
 }

@@ -329,9 +329,9 @@ q.surface = PSurface.sphere(20);
 
 q[\f] = { |t|
 
-	var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
+	//var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
 	//numSecs, numHills = 5, size = 0.4, step = 0.4
-	//var x = PField.moveHills(t, 1, 5, 0.1, 0.2, false);
+	var x = PField.moveHills(t, 1, 3, 0.36, 1.0, false);
 
 	PHemiPlot( x );
 
@@ -511,7 +511,7 @@ q[\f] = { |t|
 	//I don't think the freq is the same here...
 	var field = PField({ |u, v, t| (sin ( (v*2pi*0.2) + t ) +1 )/2});
 
-	var x = field.valuePlot(t);
+	var x = field.(t);
 
 	PGridPlot( x );
 
