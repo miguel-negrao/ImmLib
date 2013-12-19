@@ -20,7 +20,7 @@ Plotter3D : HaskellPFPlot {
     var <points, <colors;
 
     *new { |points, colors, closeOnCmdPeriod = false|
-		var points2 = points.collect{ |x| if(x.isKindOf(Spherical)) {x.asCartesian.asArray}{x.as(Array)} }.flat.postln;
+		var points2 = points.collect{ |x| if(x.isKindOf(Spherical)) {x.asCartesian.asArray}{x.as(Array)} }.flat;
 		^super.basicNew( NetAddr("localhost", currentPort), "Plotter3D" ).init( points2, colors, closeOnCmdPeriod )
     }
 
