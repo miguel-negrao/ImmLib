@@ -58,11 +58,11 @@ q.score.gui;
 q.score.prepareAndStart
 )
 q.score.gui
-
+ImmLib.startupStereo
 UScore.current.asCompileString
 
-
-
+x = PGridPlot.basicNew(PSurface.sphere(20),\test);
+x.startRenderer
 /*
 .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
 / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
@@ -331,7 +331,7 @@ q[\f] = { |t|
 
 	//var x = PField.moveHills(t, 1, 6, 0.3, 1.0, false);
 	//numSecs, numHills = 5, size = 0.4, step = 0.4
-	var x = PField.moveHills(t, 1, 3, 0.36, 1.0, false);
+	var x = PField.moveHills(t, 0.5, 5, 0.35, 1, false);
 
 	PHemiPlot( x );
 
@@ -339,9 +339,9 @@ q[\f] = { |t|
 
 };
 
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60, [ \test1, nil,  ImmDef(q[\f], q.surface, 0.1) ] );
-q.chain2 = MUChain.immNew(q.surface, 50, 1, 60, [ \test2, [], ImmDef(q[\f], q.surface, 0.1) ] );
-q.chain3 = MUChain.immNew(q.surface, 100, 2, 60, [ \test3, [], ImmDef(q[\f], q.surface, 0.1) ] );
+q.chain1 = MUChain.immNew(q.surface, 0, 0, 200, [ \test1, nil,  ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(3);
+q.chain2 = MUChain.immNew(q.surface, 20, 1, 200, [ \test2, [], ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(3);
+q.chain3 = MUChain.immNew(q.surface, 40, 2, 200, [ \test3, [], ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(3);
 
 q.score = UScore.immNew(q.surface, q.chain1, q.chain2, q.chain3);
 
