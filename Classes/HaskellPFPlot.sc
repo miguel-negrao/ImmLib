@@ -195,7 +195,7 @@ PGridPlot : HaskellPFPlot {
     }
 
     animate{ |sig|
-        ^sig.collect{ |vs|
+		^sig.sampleOn(ImmDef.currentTimeES).collect{ |vs|
             IO{
                 rendererAddr.sendMsg(*(["/colors"]++vs.collect{ |v|
                 [0.0,v.linlin(0.0,1.0,0.3,1.0),0.0]
@@ -263,7 +263,7 @@ PHemiPlot {
 			w.front;
 			CmdPeriod.doOnce{ if(w.isClosed.not){ w.close } };
 		}]) ) >>=|
-		sig.collect{ |xs| IO{
+		sig.sampleOn(ImmDef.currentTimeES).collect{ |xs| IO{
 			values = xs;
 			{ w.refresh }.defer;
 		} }.reactimate;

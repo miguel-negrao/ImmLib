@@ -483,42 +483,44 @@ PField : AbstractFunction {
 	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
 		//time wrapping around numSecs
 		var gen = { generateHillsFunc.(numHills, surface, sizeA, sizeB, bumpSize) };
-		var t2 = t.collect(_.mod(numSecs));
-		var initFs = T( gen.(), gen.() );
-
-		//this generates an event every numSecs containing the from and to functions
-		//to be morphed
-		var changefuncEvent = t2
-		.changes
-		.storePrevious
-		.select{ |tup| (tup.at2 < 0.2) && (tup.at1 > (numSecs-0.2) ) }
-		.hold(0.0).inject(initFs,{ |state,x|
-			T( state.at2, gen.() );
-		});
+		var numSecsSig = numSecs.asFPSignal;
 
 		//this morphs from function A to function B
 		var f = { |tup|
-			PField({ |u, v, t|
-				var k = 0.5;
-				var t2 = t/numSecs;
-				( (1-t2) * tup.at1.(u,v)  ) + (t2 * tup.at2.(u,v))
-			}).(t2)
+
+			var oldState = tup.at1;
+			var n = tup.at2;
+
+			//we create a new set of hills to morph to:
+			var newState = T( oldState.at2, gen.() );
+			var a = newState.at1;
+			var b = newState.at2;
+
+			//we create a new local time signal starting from 0;
+			var localT = Var(1.0).integral(t);
+
+			var pfSig = PField({ |u, v, t|
+				var t2 = t/n;
+				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
+			}).(localT);
+
+			{ |x, t, newN| T(x, if(t>=n){Some(T(newState,newN))}{None()}) }.lift.(pfSig, localT, numSecsSig);
 		};
 
 		//event switching
-		^changefuncEvent >>= f
+		^f.selfSwitch( T( T( gen.(), gen.() ), numSecsSig.now) );
 	}
 
 	*randomHills { | t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
-		this.checkArgs(\PField, \randomHills,
-			[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
+		//this.checkArgs(\PField, \randomHills,
+			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
 			numSecs, numHills, sizeA, sizeB, bumpSize )
 	}
 
 	*randomHillsBipolar {| t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
-		this.checkArgs(\PField, \randomHillsBipolar,
-			[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
+		//this.checkArgs(\PField, \randomHillsBipolar,
+			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsBipolarFunc, ImmDef.currentSurface,
 			t, numSecs, numHills, sizeA, sizeB, bumpSize )
 	}

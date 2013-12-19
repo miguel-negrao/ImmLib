@@ -476,20 +476,31 @@ ImmDef({ |t|
 
 
 METHOD:: randomHills
-Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills). The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random widness given by code::sizeA:: and code::sizeB::. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
 
 ARGUMENT:: t
 FPSignal
 
 ARGUMENT:: numSecs
-SimpleNumber
+SimpleNumber or FPSignal.
 
 ARGUMENT:: numHills
 Integer
 
-returns:: FPSignal[ SimpleNumber ]
+ARGUMENT:: sizeA
+Float [0,1]
+
+ARGUMENT:: sizeB
+Float [0,1]
+
+ARGUMENT:: bumpSize
+Float [0,1]
+
+returns:: FPSignal[ [SimpleNumber] ]
 
 discussion::
+
+When using an FPSignal for numSecs, the number of seconds is only sampled when switching occurs to the new set of hills. So if the previous numSecs value was 8seconds, even if the numSecs signal changes in the mean time, only after 8 seconds will the new value of numSecs signal be sampled.
 
 code::
 (

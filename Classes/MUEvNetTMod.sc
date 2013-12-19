@@ -68,13 +68,13 @@ MUENTModDef : UENTModDef {
                 dict.collect{ |uarg, key|
 					Object.checkArgs(MUENTModDef, \addReactimatesFunc, [uarg,key], [UModArg, Symbol]);
                     uarg.match({ |sig|
-                        (sig <@ tEventSource).collect{ |v| IO{
+                        (sig <@ tEventSource.postln).collect{ |v| IO{
                             unit.items.do{ |u,i|
                                 u.mapSet(key, v[i])
                             }
                         } }.reactimate
                         },{ |sig|
-                            (sig <@ tEventSource).collect{ |v| IO{
+                            (sig <@ tEventSource.postln).collect{ |v| IO{
                                 unit.items.do{ |u,i|
                                     u.set(key, v[i] )
                                 }
@@ -89,6 +89,7 @@ MUENTModDef : UENTModDef {
 
 ImmDef : MUENTModDef {
 	classvar <currentSurface;
+	classvar <currentTimeES;
 	var <surface;
 
 	*new { |descFunc, surface = (PSurface.geodesicSphere), delta = 0.1|
@@ -102,6 +103,7 @@ ImmDef : MUENTModDef {
         ^tESM >>= { |tEventSource|
             var tSignal = tEventSource.hold(0.0);
 			currentSurface = surface;
+			currentTimeES = tEventSource;
 			ENDef.evaluate( descFunc, [tSignal] )
             >>= this.addReactimatesFunc(unit, tEventSource)
         }
