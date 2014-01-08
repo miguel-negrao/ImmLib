@@ -552,7 +552,7 @@ PField : AbstractFunction {
 		};
 
 		//event switching
-		^changefuncEvent >>= f
+		^changefuncEvent.switch( f )
 	}
 
 	*moveHills { |t, numSecs, numHills = 5, size = 0.4, step = 0.4, startInSamePlace = true|
@@ -606,7 +606,7 @@ PField : AbstractFunction {
 		};
 
 		//event switching
-		^changefuncEvent >>= f
+		^changefuncEvent.switch( f )
 
 	}
 
