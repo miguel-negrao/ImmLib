@@ -19,6 +19,39 @@ Install
 
 * sc3-plugins
 
+Server
+------
+
+Sever should use following commits:
+* WFS Library - branch fromMiguel, commit 38767f9a7b8a50792b55c08b1c1ef5901a0afe0e
+* Unit Lib - 842546da44871997853e6a9aa8ab4fcaf73033eb
+
+The following commands should be run in the server once:
+
+~~~
+
+(
+ULib.writeDefaultSynthDefs;
+VBAPSynthDef.writeDefs(32);
+SynthDef("rec-ins", {arg bufnum;
+    DiskOut.ar(bufnum, In.ar(NumOutputBuses.ir,32) );
+}).writeDefFile;
+)
+
+~~~
+
+the startup.scd should be 
+
+~~~
+
+Routine({
+	VBAPLib.startupR( \soniclabSlave );
+	"VBAPLib started".postln;
+	"sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal;
+}).play(AppClock)
+
+~~~
+
 
 License
 -------

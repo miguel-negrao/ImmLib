@@ -335,7 +335,7 @@ delta: 0.1).test(startTime:0.0)
 METHOD:: barU
 A PField that grows parallel to the u axis.
 
-The PField has arguments u, v, t, widness (0-1).
+The PField has arguments u, v, t, wideness (0-1).
 
 returns:: a PField
 
@@ -346,7 +346,7 @@ code::
 ImmDef({ |t|
 
 	var pf = PField.barU;
-	                      //widness
+	                      //wideness
 	PSmoothPlot( pf, t,  { |x| (sin(x*2)+1) } <%> t );
 
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
@@ -356,7 +356,7 @@ ImmDef({ |t|
 METHOD:: barV
 A PField that grows parallel to the v axis.
 
-The PField has arguments u, v, t, widness (0-1).
+The PField has arguments u, v, t, wideness (0-1).
 
 returns:: a PField
 
@@ -367,7 +367,7 @@ code::
 ImmDef({ |t|
 
 	var pf = PField.barV;
-	                      //widness
+	                      //wideness
 	PSmoothPlot( pf, t,  { |x| (sin(x*2)+1) } <%> t );
 
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
@@ -379,7 +379,7 @@ code::
 ImmDef({ |t|
 
 	var pf = PField.barV;
-	           //t,  widness
+	           //t,  wideness
 	var x = pf.( t,  { |x| (sin(x*2)+1) } <%> t );
 
 	PGridPlot(x, "hello !")
@@ -476,7 +476,7 @@ ImmDef({ |t|
 
 
 METHOD:: randomHills
-Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random widness given by code::sizeA:: and code::sizeB::. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness given by code::sizeA:: and code::sizeB::. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
 
 ARGUMENT:: t
 FPSignal
