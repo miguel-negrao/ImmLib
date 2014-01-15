@@ -64,4 +64,45 @@ ImmLib {
 		VBAPLib.startupR( options );
 	}
 
+	*recWindow {
+		var q = ();
+
+		q.recServer = ULib.allServers.at(0);
+
+		q.pathGui = TextView().string_("/tmp/test1.aiff");
+
+		q.bitGui = PopUpMenu().items_(["int24","int16","float"]).value_(0);
+
+		q[\play] = Button().states_([["record"],["stop recording"]]).action_{ |v|
+
+			if(v.value == 1) {
+				//start
+				"recording".postln;
+				q.recSynth = Synth.basicNew("rec-ins", q.recServer);
+				q.recBuf = Buffer.new(q.recServer, 65536, 32);
+				q.recBuf.alloc(
+					q.recBuf.writeMsg(q.pathGui.string, "AIFF", q.bitGui.item.postln, 0, 0, true,
+						completionMessage:
+						q.recSynth.newMsg(q.recServer, ["bufnum", q.recBuf], 'addToTail')
+					)
+				)
+			} {
+				//stop
+				q.recSynth.free;
+				q.recBuf.close(completionMessage:q.recBuf.freeMsg);
+			}
+		};
+
+		q.w = Window.new("ImmLib record", Rect(200, 300, 700, 100))
+		.layout_(
+			VLayout(
+				q.pathGui,
+				HLayout(q[\play], q.headerGui, q.bitGui)
+			)
+		);
+
+		q.w.front;
+		^q
+	}
+
 }
