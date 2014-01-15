@@ -293,7 +293,7 @@ MUChain : ClusterBasic {
     }
 
     gui {
-        ^MassEditUChain( this.items ).gui;
+        ^ImmUChain( this.items ).gui;
     }
 
     guiIO {
