@@ -449,16 +449,18 @@ PField : AbstractFunction {
 	//reactive fields (i.e. using FRP switching)
 	//Random Hills
 	*generateHillsFunc {
-		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5|
+		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5, heightA=1.0, heightB=1.0|
+			[heightA, heightB].postln;
 			n.collect{
 				var tau = 2*pi;
 				var u2 = rrand(s.rangeU[0], s.rangeU[1]);
 				var v2 = rrand(s.rangeV[0], s.rangeV[1]);
 				var size = rrand(sizeA, sizeB);
+				var height = rrand(heightA, heightB);
 				var f = PField.spotlightFixedFunc(s, u2, v2);
 				{ |u,v,t|
 					//PFFuncs.growArea(UnitSpherical(theta, phi)).(p,size,0.5)
-					f.(u,v,nil,size, bumpSize)
+					f.(u,v,nil,size, bumpSize) * height
 				}
 			}.sum / n
 		}
@@ -480,42 +482,51 @@ PField : AbstractFunction {
 		}
 	}
 
-	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
-		//time wrapping around numSecs
-		var gen = { generateHillsFunc.(numHills, surface, sizeA, sizeB, bumpSize) };
+	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
 		var numSecsSig = numSecs.asFPSignal;
+		var numHillsSig = numHills.asFPSignal;
+		var sizeASig = sizeA.asFPSignal;
+		var sizeBSig = sizeB.asFPSignal;
+		var bumpSizeSig = bumpSize.asFPSignal;
+		var heightASig = heightA.postln.asFPSignal;
+		var heightBSig = heightB.postln.asFPSignal;
 
 		//this morphs from function A to function B
-		var f = { |tup|
+		var f = { |xs|
 
-			var oldState = tup.at1;
-			var n = tup.at2;
+			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig;
+			#oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb = xs;
 
 			//we create a new set of hills to morph to:
-			var newState = T( oldState.at2, gen.() );
-			var a = newState.at1;
-			var b = newState.at2;
+			newState = T( oldState.at2, generateHillsFunc.(nextnumHills, surface, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb) );
+			a = newState.at1;
+			b = newState.at2;
 
 			//we create a new local time signal starting from 0;
-			var localT = Var(1.0).integral(t);
+			localT = Val(1.0).integral(t);
 
-			var pfSig = PField({ |u, v, t|
+			pfSig = PField({ |u, v, t|
 				var t2 = t/n;
 				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
 			}).(localT);
 
-			{ |x, t, newN| T(x, if(t>=n){Some(T(newState,newN))}{None()}) }.lift.(pfSig, localT, numSecsSig);
+			{ |x, t, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb|
+				T(x, if(t>=n){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
+			.lift.(pfSig, localT, numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig);
 		};
 
 		//event switching
-		^f.selfSwitch( T( T( gen.(), gen.() ), numSecsSig.now) );
+		//calling .now is not pure...
+		var startValues = [numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig].collect(_.now);
+		var startValues2 = [startValues[1], surface]++startValues[2..];
+		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues );
 	}
 
-	*randomHills { | t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
+	*randomHills { | t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
-			numSecs, numHills, sizeA, sizeB, bumpSize )
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
 	}
 
 	*randomHillsBipolar {| t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
