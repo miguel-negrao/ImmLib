@@ -74,6 +74,28 @@ ImmDef({ |t|
 
 }).test
 )
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+	var pf = PField({ |u, v, t|
+
+		sin( 2pi * ( (0.2 * u) + t) ) * sin( 2pi * ( (0.3 * v) + t ) + pi )
+
+	});
+
+	var out = 	PSmoothPlot( pf, t );
+
+	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \whiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
 ::
 
 PFields are evaluated inside an event network. They are evaluated using the code::value:: method just like funtions. They should be passed in an FPSignal that carries the time events together with any other signals that controls the PField's parameters.
@@ -119,7 +141,7 @@ ImmDef({ |t|
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
 )
 
-// gradient 2
+
 (
 ImmDef({ |t|
 
@@ -127,6 +149,25 @@ ImmDef({ |t|
 	             //  t  u2   v2   a                              b
 	PSmoothPlot( pf, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+	var pf = PField.gradient;
+	             //  t  u2   v2   a                              b
+	var out = PSmoothPlot( pf, t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+
+	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \whiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
 )
 
 //gradient plane
@@ -161,6 +202,25 @@ ImmDef({ |t|
 	PSmoothPlot( pf, t, 0.0,   0.0,  0.5,  0.0 );
 
 }).test
+)
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+	var pf = PField.spotlight;
+
+	               //t, u,     v,    c,    d
+	var out = PSmoothPlot( pf, t, 0.0,   0.0,  0.5,  0.0 );
+
+	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
 )
 ::
 
@@ -330,6 +390,30 @@ ImmDef({ |t|
 surface: PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ),
 delta: 0.1).test(startTime:0.0)
 )
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	var pf = PField.expandContract2;
+	             // t, u2,  v2,  u3,  v3,  c
+	//var x = pf .( t, 0.0, 0.0, 1.0, 1.0, { |x| (sin(x*2)+1)/2 } <%> t );
+	var x = pf .( t, //t
+		{ |t| (t*0.5).mod(1.0) } <%> t, { |t| (t*0.2).mod(1.0) } <%> t, //u2,v2
+		{ |t| (t*0.1).mod(1.0) } <%> t, { |t| (t*0.1).mod(1.0) } <%> t, //u3,v3
+		{ |x| (sin(x*2)+1)/2 } <%> t ); //c
+	PGridPlot( x );
+
+	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
 ::
 
 METHOD:: barU
@@ -421,6 +505,28 @@ ImmDef({ |t|
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
 )
 
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	//var pf = PField.sphericalHarmonic(0,0);
+	var pf = PField.sphericalHarmonic(1,2);
+	//var pf = PField.sphericalHarmonic(2,1);
+	           //    t, f
+	var out = PSmoothPlot( pf, t, 3.0 );
+
+	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
+
 //projected onto plane
 (
 ImmDef({ |t|
@@ -472,6 +578,28 @@ ImmDef({ |t|
 
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
 )
+
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	//surface, t, numSecs
+	var x = PField.continousRandomSpotlight( t, 5);
+
+	PHemiPlot( x * 2 );
+
+
+	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
 ::
 
 
@@ -513,6 +641,25 @@ ImmDef({ |t|
 
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
 )
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	var x = PField.randomHills( t, 5, 5);
+
+	PHemiPlot( x * 2 );
+
+	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
 ::
 
 
@@ -543,6 +690,26 @@ ImmDef({ |t|
 	PHemiPlot( x )
 
 }, surface: PSurface.geodesicSphere, delta: 0.1).test( startTime:0.0)
+)
+
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	var x = PField.randomHillsBipolar( t, 5, 2);
+
+	PHemiPlot( x * 2 );
+
+	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
 )
 ::
 
