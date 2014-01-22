@@ -9,6 +9,7 @@ Install
 * Unit Lib: https://github.com/GameOfLife/Unit-Lib
 * WFSCollider class library: https://github.com/GameOfLife/WFSCollider-Class-Library
 * FP Lib: https://github.com/miguel-negrao/FPLib
+* a patched version of sc3-plugins including PV_Decorrelated : https://github.com/miguel-negrao/sc3-plugins branch 'pv'
 
 
 
