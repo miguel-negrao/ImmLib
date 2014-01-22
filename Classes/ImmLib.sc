@@ -28,10 +28,10 @@ ImmLib {
 		^[this.baseDirectory++"/UnitDefs"]
 	}
 
-	*startupStereo {
+	*startupStereo { |numServers = 1|
 
 			var options = VBAPOptions(
-				serverDescs: [["single","localhost", 57456]],
+			serverDescs: numServers.collect{ |i| ["ImmLib"++(i+1),"localhost", 57456+i] },
 				device: nil,
 				numOutputChannels: 48,
 				angles: VBAPOptions.speakerPresets[\soniclab][\angles],
