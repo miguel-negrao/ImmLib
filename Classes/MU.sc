@@ -287,6 +287,11 @@ MUChain : ClusterBasic {
 		mods.do(_.dispose)
     }
 
+	disconnect {
+		this.doesNotUnderstand(\disconnect);
+		mods.do(_.disconnect)
+	}
+
     disposeIO {
         ^IO{ this.doesNotUnderstand(\dispose) } >>=|
         eventNetwork.collect( _.pause ).getOrElseDoNothing
