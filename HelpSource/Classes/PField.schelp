@@ -28,7 +28,7 @@ x.value(t, 0.5) //evaluation arguments
 
 CLASSMETHODS::
 
-PRIVATE::prBump, barFuncU, barFuncV, expandContract2Func, expandContractFunc, generateHillsBipolarFunc, gradientFunc, moveHills, prGeodesicDist, prGeodesicDist2, randomPatchGeneral, spotlightFixedFunc, spotlightFunc, generateHillsFunc
+PRIVATE::prBump, barFuncU, barFuncV, expandContract2Func, expandContractFunc, generateHillsBipolarFunc, gradientFunc, prGeodesicDist, prGeodesicDist2, randomPatchGeneral, spotlightFixedFunc, spotlightFunc, generateHillsFunc
 
 METHOD:: new
 Creates a PField
@@ -91,7 +91,7 @@ q[\f] = { |t|
 	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
 };
 
-q.chain = MUChain.immNew(q.surface, \whiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
 q.score = UScore.immNew(q.surface, q.chain);
 q.score.gui;
 q.score.prepareAndStart
@@ -164,7 +164,7 @@ q[\f] = { |t|
 	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
 };
 
-q.chain = MUChain.immNew(q.surface, \whiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
 q.score = UScore.immNew(q.surface, q.chain);
 q.score.gui;
 q.score.prepareAndStart
@@ -604,7 +604,7 @@ q.score.prepareAndStart
 
 
 METHOD:: randomHills
-Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness given by code::sizeA:: and code::sizeB::. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness given  in [sizeA, sizeB] and height in [heightA, heightB]. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
 
 ARGUMENT:: t
 FPSignal
@@ -622,6 +622,12 @@ ARGUMENT:: sizeB
 Float [0,1]
 
 ARGUMENT:: bumpSize
+Float [0,1]
+
+ARGUMENT:: heightA
+Float [0,1]
+
+ARGUMENT:: heightB
 Float [0,1]
 
 returns:: FPSignal[ [SimpleNumber] ]
@@ -714,11 +720,55 @@ q.score.prepareAndStart
 ::
 
 
+METHOD:: moveHills
+
+code::numHills:: spotlight functions are created with random center locations and wideness given by code::size::. On each iteration of the timer (the time between iteration is given by the delta parameter of ImmDef) the center of each hill is moved in a random direction by a distance given by code::step::. The parameters are not yet modulateable.
 
 
+ARGUMENT:: t
+FPSignal
 
+ARGUMENT:: numSecs
+SimpleNumber
 
+ARGUMENT:: numHills
+SimpleNumber
 
+ARGUMENT:: size
+SimpleNumber
+
+ARGUMENT:: step
+SimpleNumber
+
+ARGUMENT:: startInSamePlace
+Boolean
+If true all spotlights start at the same location.
+
+returns:: FPSignal[ SimpleNumber ]
+
+discussion::
+
+code::
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	var x = PField.moveHills(t:t, numSecs:0.5, numHills:5, size:0.35, step:1, startInSamePlace:false);
+
+	PGridPlot( x );
+
+    (freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
+::
 
 
 
@@ -749,7 +799,6 @@ The new PField has 3 extra arguments prepended to the argument list for the 3 an
 note::Only valid for spherical surfaces.::
 
 discussion::
-
 code::
 (
 ImmDef({ |t|
@@ -786,6 +835,68 @@ ImmDef({ |t|
 
 )
 ::
+
+If one wants to change values of the pfield arguments or other elements of the signal by typing code one can use VarProxy:
+
+code::
+
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+	var pf = PField.spotlight;
+
+	var c = VarProxy.enIn(\x, 0.5);
+	var d = c.enDebug("c");
+	               //t, u,     v,    c,    d
+	var out = PSmoothPlot( pf, t, 0.0,   0.0,  c,  0.0 );
+
+	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.score.gui;
+q.score.prepareAndStart
+)
+
+
+VarProxy(\x, 0.0)
+VarProxy(\x, 1.0)
+
+//when we don't need this score anymore (i.e. before evaluating the block of code above again) we should dispose of the score in order to stop disconnect everything in the event network:
+q.score.stop
+q.score.disconnect
+::
+
+Closing windows automatically with cmd-.
+
+code::
+(
+q = ();
+q.m = 40;
+q.surface = PSurface.sphere(q.m);
+
+q[\f] = { |t|
+
+	var x = PField.moveHills(t:t, numSecs:0.5, numHills:5, size:0.35, step:1, startInSamePlace:false);
+
+	PGridPlot( x );
+
+    (freq: UArg( x.linexp(0.0,1.0,100,10000) ))
+};
+
+q.chain = MUChain.immNew(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.score = UScore.immNew(q.surface, q.chain);
+q.scoregui = q.score.gui;
+q.score.prepareAndStart;
+CmdPeriod.add({q.scoregui.close; });
+)
+::
+
+
 
 
 

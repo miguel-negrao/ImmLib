@@ -210,7 +210,6 @@ PField : AbstractFunction {
 					})
 				);
 				w.refresh;
-				"beep".postln;
 				}.defer;
 				0.1.wait;
 				t = t + 0.1;
@@ -421,6 +420,38 @@ PField : AbstractFunction {
 		}
 	}
 
+	*gradientC {
+		^PField( this.gradientCFunc( ImmDef.currentSurface ) )
+	}
+
+	*gradientCFunc { |surface|
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		^{ |u, v, t, u2, v2, a, b, curve|
+			var x = distFunc.(u, v, u2, v2)/maxDist;
+			if( curve.abs < 0.0001) {
+				(a*(1-x)) + (b*x)
+			} {
+				var denom = 1.0 - exp(curve);
+				var  numer = 1.0 - exp(x * curve);
+				a + ((b - a) * (numer/denom))
+			}
+		}
+	}
+
+	*gradientF { |f|
+		^PField( this.gradientFFunc( ImmDef.currentSurface, f ) )
+	}
+
+	*gradientFFunc { |surface, f|
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		^{ |u, v, t, u2, v2, a, b|
+			var x = distFunc.(u, v, u2, v2)/maxDist;
+			f.(x, a, b)
+		}
+	}
+
 	//double factorial
 	*sphericalHarmonic{ |m,l|
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
@@ -450,7 +481,6 @@ PField : AbstractFunction {
 	//Random Hills
 	*generateHillsFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5, heightA=1.0, heightB=1.0|
-			[heightA, heightB].postln;
 			n.collect{
 				var tau = 2*pi;
 				var u2 = rrand(s.rangeU[0], s.rangeU[1]);
@@ -488,30 +518,30 @@ PField : AbstractFunction {
 		var sizeASig = sizeA.asFPSignal;
 		var sizeBSig = sizeB.asFPSignal;
 		var bumpSizeSig = bumpSize.asFPSignal;
-		var heightASig = heightA.postln.asFPSignal;
-		var heightBSig = heightB.postln.asFPSignal;
+		var heightASig = heightA.asFPSignal;
+		var heightBSig = heightB.asFPSignal;
 
 		//this morphs from function A to function B
 		var f = { |xs|
 
-			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig;
+			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig, r;
 			#oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb = xs;
-
+			//"Running switch function again realt: %".format(t.now).postln;
 			//we create a new set of hills to morph to:
 			newState = T( oldState.at2, generateHillsFunc.(nextnumHills, surface, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb) );
 			a = newState.at1;
 			b = newState.at2;
 
 			//we create a new local time signal starting from 0;
-			localT = Val(1.0).integral(t);
+			localT = t.integral1;
 
 			pfSig = PField({ |u, v, t|
 				var t2 = t/n;
 				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
 			}).(localT);
-
+			counter = counter + 1;
 			{ |x, t, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb|
-				T(x, if(t>=n){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
+				T(x, if((t>=n)){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
 			.lift.(pfSig, localT, numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig);
 		};
 
@@ -522,7 +552,7 @@ PField : AbstractFunction {
 		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues );
 	}
 
-	*randomHills { | t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+	*randomHills { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
