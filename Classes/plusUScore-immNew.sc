@@ -34,7 +34,7 @@
 			[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
 		]).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
 
-		^UScore(*(events++panners) ).cleanOverlaps
+		^UScore(*(events++panners) )
 		/*}
 		{\previewStereo}{
 		UScore( *events ).cleanOverlaps
