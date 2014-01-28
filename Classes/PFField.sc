@@ -539,7 +539,7 @@ PField : AbstractFunction {
 				var t2 = t/n;
 				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
 			}).(localT);
-			counter = counter + 1;
+
 			{ |x, t, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb|
 				T(x, if((t>=n)){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
 			.lift.(pfSig, localT, numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig);
@@ -651,6 +651,78 @@ PField : AbstractFunction {
 
 	}
 
+
+
+	//sin(2pi * f * y)
+	//y = x + ct
+	//sin(2pi * f* (x + ct) )
+	//sin(2pi * ( (f*x) + (f*c*t) ) )
+
+	*waveUSin {  |t, l, f, plot = false|
+
+		var pf = PField({ |u,v, t, l|
+			sin( 2pi * ( (l*u) + t) )
+		});
+		^if( plot ){
+			PSmoothPlot(pf, t.changeRate(f), l).postln
+		} {
+			pf.(t.changeRate(f), l)
+		}
+
+	 }
+
+	*waveVSin { |t, l, f, plot = false|
+		var pf = PField({ |u,v, t, l|
+			sin( 2pi * ( (l*v) + t) )
+		});
+		^if( plot ){
+			PSmoothPlot(pf, t.changeRate(f), l)
+		} {
+			pf.(t.changeRate(f), l)
+		}
+	}
+
+	*wave2DSin { |t, u0, v0, l, f, plot = false|
+		var surface = ImmDef.currentSurface;
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		var pf = PField({ |u,v, t, u0, v0, l|
+			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) + t) )
+		});
+		^if( plot ){
+			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+		} {
+			pf.(t.changeRate(f), u0, v0, l)
+		}
+	}
+
+	*wave2DSaw { |t, u0, v0, l, f, plot = false|
+		var surface = ImmDef.currentSurface;
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		var pf = PField({ |u,v, t, u0, v0, l|
+			( (l*distFunc.(u,v,u0,v0)/maxDist) + t) % 1.0
+		});
+		^if( plot ){
+			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+		} {
+			pf.(t.changeRate(f), u0, v0, l)
+		}
+	}
+
+	*wave2D { |t, u0, v0, l, f, g, plot = false|
+		var surface = ImmDef.currentSurface;
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		var pf = PField({ |u,v, t, u0, v0, l|
+			g.( (l*distFunc.(u,v,u0,v0)/maxDist) + t)
+		});
+		^if( plot ){
+			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+		} {
+			pf.(t.changeRate(f), u0, v0, l)
+		}
+	}
 
 }
 
