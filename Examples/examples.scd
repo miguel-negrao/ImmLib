@@ -51,10 +51,10 @@ q[\f] = { |t|
 	)
 };
 
-q.chain1 = MUChain.immNew(q.surface, [\mynoise7, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
+q.chain1 = MUChain.immNew(q.surface, [\mynoise7, [] , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
 q.chain1.gui;
 
-q.score = UScore.immNew(q.surface, q.chain1);
+q.score = UScore.immNew(q.surface, q.chain1 );
 q.score.gui;
 q.score.prepareAndStart
 )

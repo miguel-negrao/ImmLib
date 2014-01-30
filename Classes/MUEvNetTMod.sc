@@ -87,25 +87,71 @@ MUENTModDef : UENTModDef {
 
 }
 
+ImmMod : UEvNetTMod {
+	var <sliderProxys;
+
+	asUModFor { |unit|
+        var tESM;
+        timer = ENTimer(desc.delta);
+		sliderProxys = desc.sliderValues.collect{ |v| FRPGUIProxy(nil, v) };
+        tESM = timer.asENInput;
+        tES = tESM.a;
+		eventNetwork = EventNetwork( desc.createDesc(unit, tESM, sliderProxys.collect(_.asENInput) ) );
+        eventNetwork.actuateNow;
+    }
+
+	sliderWindow {
+		var sliders = desc.sliderValues.collect{ |v| Slider().value_(v) };
+		var ezsliders = [sliders, desc.sliderLabels, ].flopWith{ |sl, label, val|
+			VLayout( StaticText().string_(label), sl )
+		};
+		[sliders, sliderProxys].flopWith{ |sl, proxy| proxy.view_(sl) };
+		^Window().layout_(HLayout(*ezsliders)).front
+	}
+}
+
 ImmDef : MUENTModDef {
 	classvar <currentSurface;
 	classvar <currentTimeES;
 	var <surface;
+	var <sliderLabels, <sliderValues, <sliderSpecs, <slidersPresets;
+	/*
+	it's easier to enter the values with this notation
+	slidersDescArg = [ "slider1", 0.1, "slider"2, 0.2, "slider3", 0.7 ]
 
-	*new { |descFunc, surface = (PSurface.geodesicSphere), delta = 0.1|
-		this.checkArgs(\ImmDef, \new, [descFunc, surface, delta], [Function, PSurface, SimpleNumber] );
-        ^super.newCopyArgs(descFunc, delta, surface)
+	internally gets saved as:
+	sliderLabels = [ "slider1", "slider"2, "slider3" ]
+	sliderValues = [ 0.1, 0.2, 0.7 ]
+
+	slidersPresets = [ [1.0,0.5,0.2], [0.4,0.2,0.1] ]
+	*/
+
+	*new { |descFunc, surface = (PSurface.geodesicSphere), delta = 0.1,
+		slidersDescArg = #[], sliderSpecs=#[], slidersPresets=#[] |
+		var check1 = if(slidersDescArg.size.odd){ Error("ImmDef - slidersDescArg: array size must be even").throw };
+		var x = slidersDescArg.clump(2).flop;
+		var sliderLabels = x[0] ? [];
+		var sliderValues = x[1] ? [];
+		var sliderSpecs2 = sliderSpecs.collect(_.asSpec);
+		this.checkArgs(\ImmDef, \new, [descFunc, surface, delta, sliderLabels,
+			sliderValues, sliderSpecs2, slidersPresets],
+			[Function, PSurface, SimpleNumber, Array, Array, Array, Array] );
+        ^super.newCopyArgs(descFunc, delta, surface, sliderLabels, sliderValues, sliderSpecs2, slidersPresets)
     }
 
-    createDesc { |unit, tESM|
-		//this.checkArgs( [unit, tESM], [Unit, ] );
+    createDesc { |unit, tESM, slidersM|
 		this.checkArgs(\ImmDef, \createDesc, [unit, tESM], [MU, Writer] );
         ^tESM >>= { |tEventSource|
             var tSignal = tEventSource.hold(0.0);
 			currentSurface = surface;
 			currentTimeES = tEventSource;
-			ENDef.evaluate( descFunc, [tSignal] )
-            >>= this.addReactimatesFunc(unit, tEventSource)
+			slidersM.sequence(EventNetwork) >>= { |sliderSigs|
+				var mappedSigs = [sliderSigs, sliderSpecs].flopWith{ |sig, spec|
+					sig.collect{ |v| spec.map(v) }
+				};
+				ENDef.evaluate( descFunc, [tSignal]++mappedSigs )
+				>>= this.addReactimatesFunc(unit, tEventSource)
+			}
         }
     }
 
@@ -126,6 +172,15 @@ ImmDef : MUENTModDef {
 	}
 
 
+	asUModFor { |unit|
+
+        ^ImmMod(this).asUModFor(unit, delta)
+
+    }
+
+	storeArgs {
+		^[descFunc, surface, delta,  [sliderLabels, sliderValues].flop.flatten, sliderSpecs, slidersPresets]
+    }
 
 }
 
