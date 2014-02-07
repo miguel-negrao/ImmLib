@@ -62,6 +62,10 @@ PSurface {
 			rangeU, rangeV, isClosed, points.collect{ |x| toFunc.(*x) })
 	}
 
+	storeArgs {
+		^[points, pointsWrapped, toFunc, fromFunc, distFunc, maxDist, rangeU, rangeV, isClosed]
+	}
+
 	*sphericalGeometry { |points|
 		//points :  [ [0,0], ... ]
 		^this.new(
@@ -92,6 +96,15 @@ PSurface {
 		var phi = h.acos;
 		var theta = sqrt(n*pi)*phi;
 		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) };
+		^this.sphericalGeometry( points )
+	}
+
+	// PSurface.sphereSelect(300, { |x| x[1] > (pi/2*0.3) }).plot
+	*sphereSelect{ | n = 10 , f|
+		var h = { |k| (2*k-1)/n - 1 };
+		var phi = h.acos;
+		var theta = sqrt(n*pi)*phi;
+		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) }.select(f);
 		^this.sphericalGeometry( points )
 	}
 

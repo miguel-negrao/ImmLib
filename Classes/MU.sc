@@ -74,6 +74,15 @@ MU : ClusterBasic {
         ^this.doesNotUnderstand(\new, def, args).init(def, args, mod)
     }
 
+	*fromArrayWithMod { |array, mod|
+		^super.fromArray(array).initfromArrayWithMod(mod)
+	}
+
+	//no mod initialization here
+	initfromArrayWithMod { |modArg|
+		mod = modArg;
+	}
+
     init { |def, args, inMod|
         muDef = def;
         muArgs = args;
@@ -198,9 +207,10 @@ MUChain : ClusterBasic {
     init { |args, inUMods|
 
         //connect each UMod with the corresponding MU
-        mods = [inUMods, this.units].flopWith{ |uModOption,mu|
+		var mus = this.doesNotUnderstand(\units).items.flop.collect( MU.fromArray(_) );
+        mods = [inUMods, mus].flopWith{ |uModOption,mu|
             uModOption.collect{ |uMod| uMod.asUModFor(mu) }
-        }.catOptions;
+        };
 
 		//"mods : %".format(mods).s;
 
@@ -209,16 +219,18 @@ MUChain : ClusterBasic {
 
     //temporary fix ?
     units {
-		^this.doesNotUnderstand(\units).items.flop.collect( MU.fromArray(_) )
+		^[this.doesNotUnderstand(\units).items.flop, mods].flopWith{ |xs,modOption|
+			MU.fromArrayWithMod(xs, modOption.orNil)
+		}
     }
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
-		mods.do(_.start(nil, startPos) );
+		mods.catOptions.do(_.start(nil, startPos) );
         ^this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease)
     }
 
     prStartBasicIO { |target, startPos = 0, latency, withRelease = false|
-        ^mods.collect(_.startIO).sequece >>=| IO{ this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease) }
+        ^mods.catOptions.collect(_.startIO).sequece >>=| IO{ this.doesNotUnderstand(\prStartBasic, target, startPos, latency, withRelease) }
     }
 
     start { |target, startPos = 0, latency|
@@ -238,12 +250,12 @@ MUChain : ClusterBasic {
     }
 
     prepareAndStart { |...args|
-        mods.do(_.start);
+        mods.catOptions.do(_.start);
         this.doesNotUnderstand(*([\prepareAndStart]++args));
     }
 
     prepareAndStartIO { |...args|
-        ^mods.collect( _.startIO ).sequence >>=|
+        ^mods.catOptions.collect( _.startIO ).sequence >>=|
         IO{ this.items.collect{ |x| x.units[0].args } } >>=|
         IO{ this.doesNotUnderstand(*([\prepareAndStart]++args)) }
     }
@@ -258,38 +270,38 @@ MUChain : ClusterBasic {
 	}
 
     stop {
-		mods.do(_.stop);
+		mods.catOptions.do(_.stop);
         this.doesNotUnderstand(\stop);
     }
 
 	free {
-		mods.do(_.stop);
+		mods.catOptions.do(_.stop);
         this.doesNotUnderstand(\free);
     }
 
     stopIO {
         ^IO{ this.doesNotUnderstand(\stop) } >>=|
-        mods.collect( _.stopIO ).sequence
+        mods.catOptions.collect( _.stopIO ).sequence
     }
 
     release { |time|
-		mods.do(_.stop);
+		mods.catOptions.do(_.stop);
         this.doesNotUnderstand(\stop, time);
     }
 
     releaseIO { |time|
         ^IO{ this.doesNotUnderstand(\stop, time) } >>=|
-        mods.collect( _.stopIO ).sequence
+        mods.catOptions.collect( _.stopIO ).sequence
     }
 
     dispose {
         this.doesNotUnderstand(\dispose);
-		mods.do(_.dispose)
+		mods.catOptions.do(_.dispose)
     }
 
 	disconnect {
 		this.doesNotUnderstand(\disconnect);
-		mods.do(_.disconnect)
+		mods.catOptions.do(_.disconnect)
 	}
 
     disposeIO {
@@ -298,7 +310,7 @@ MUChain : ClusterBasic {
     }
 
     gui {
-        ^ImmUChain( this.items ).gui;
+        ^ImmUChain( this.items, mods ).gui;
     }
 
     guiIO {

@@ -1,8 +1,13 @@
 
 ImmU : MassEditU { // mimicks a real U, but in fact edits multiple instances of the same
 
-	init { |inUnits|
+	*new { |units, mod| // all units have to be of the same Udef
+		^super.newCopyArgs.init(units, mod);
+	}
+
+	init { |inUnits, amod|
 		var firstDef, defs;
+		mod = amod;
 		units = inUnits.asCollection;
 		defs = inUnits.collect(_.def);
 		firstDef = defs[0];
@@ -37,33 +42,20 @@ ImmU : MassEditU { // mimicks a real U, but in fact edits multiple instances of 
 
 ImmUChain : MassEditUChain {
 
-	init {
-		var allDefNames = [], allUnits = Order();
+	*new { |uchains, mods|
+		^super.newCopyArgs( uchains ).initImmUChain(mods);
+	}
 
-		uchains.do({ |uchain|
-			uchain.units.select({|x| x.def.class != LocalUdef}).do({ |unit|
-				var defName, index;
-				defName = unit.defName;
-				if( allDefNames.includes( defName ).not ) {
-					allDefNames = allDefNames.add( defName );
-				};
-				index = allDefNames.indexOf( defName );
-				allUnits.put( index, allUnits[ index ].add( unit ) );
-			});
-		});
-
-		units = allUnits.asArray.collect({ |item, i|
-			if( allDefNames[i].notNil ) {
-				if( item.size == 1 ) {
-					item[0];
-				} {
-					//differs from Mass here
-					ImmU( item );
-				};
-			} {
-				nil
-			};
-		}).select(_.notNil);
+	initImmUChain { |mods|
+		if(mods.notNil) {
+			units = [mods, uchains.collect(_.units).flop].flopWith{ |modOption, units|
+				ImmU( units, modOption.orNil )
+			}
+		} {
+			units = uchains.collect(_.units).flop.collect{ | units|
+				ImmU( units )
+			}
+		};
 
 		this.changed( \init );
 	}

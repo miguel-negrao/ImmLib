@@ -68,13 +68,13 @@ MUENTModDef : UENTModDef {
                 dict.collect{ |uarg, key|
 					Object.checkArgs(MUENTModDef, \addReactimatesFunc, [uarg,key], [UModArg, Symbol]);
                     uarg.match({ |sig|
-                        (sig <@ tEventSource.postln).collect{ |v| IO{
+                        (sig <@ tEventSource).collect{ |v| IO{
                             unit.items.do{ |u,i|
                                 u.mapSet(key, v[i])
                             }
                         } }.reactimate
                         },{ |sig|
-                            (sig <@ tEventSource.postln).collect{ |v| IO{
+                            (sig <@ tEventSource).collect{ |v| IO{
                                 unit.items.do{ |u,i|
                                     u.set(key, v[i] )
                                 }
@@ -88,12 +88,26 @@ MUENTModDef : UENTModDef {
 }
 
 ImmMod : UEvNetTMod {
+	var sliderValues;
 	var <sliderProxys;
+
+	*new { |def, sliderValues|
+		^super.new(def).initImmMod(def, sliderValues)
+    }
+
+	initImmMod { |def, sliderValuesArgs|
+		var temp = sliderValuesArgs.asArray.clump(2).collect{ |xs| xs[0].asSymbol -> xs[1] }.asIdentDictFromAssocs;
+		sliderValues = def.sliderSpecs.clump(2).collect{ |xs|
+			var key = xs[0];
+			var x = temp.at(key);
+			if( x.isNil) { xs[1].default}{ x }
+		};
+	}
 
 	asUModFor { |unit|
         var tESM;
         timer = ENTimer(desc.delta);
-		sliderProxys = desc.sliderValues.collect{ |v| FRPGUIProxy(nil, v) };
+		sliderProxys = sliderValues.collect{ |v|  FRPGUIProxy(nil, v) };
         tESM = timer.asENInput;
         tES = tESM.a;
 		eventNetwork = EventNetwork( desc.createDesc(unit, tESM, sliderProxys.collect(_.asENInput) ) );
@@ -101,42 +115,76 @@ ImmMod : UEvNetTMod {
     }
 
 	sliderWindow {
-		var sliders = desc.sliderValues.collect{ |v| Slider().value_(v) };
-		var ezsliders = [sliders, desc.sliderLabels, ].flopWith{ |sl, label, val|
-			VLayout( StaticText().string_(label), sl )
+		var specspairs = desc.sliderSpecs.clump(2).flop;
+		var labels = specspairs[0];
+		var specs = specspairs[1];
+		var sliders = [this.sliderValues, specs].flopWith{ |v, spec| Slider().value_(spec.unmap(v)) };
+		var numboxes = [sliders, specs].flopWith{ |sl, spec|
+			var x = NumberBox();
+			sl.addAction{ |v| x.value_(spec.map(v.value)) };
+			x
+		};
+		var ezsliders = [sliders, labels, numboxes ].flopWith{ |sl, l, numbox|
+			VLayout( StaticText().string_(l), sl, numbox )
 		};
 		[sliders, sliderProxys].flopWith{ |sl, proxy| proxy.view_(sl) };
 		^Window().layout_(HLayout(*ezsliders)).front
 	}
+
+	sliderValues {
+		^if(sliderProxys.isNil){
+			sliderValues
+		} {
+			sliderProxys.collect( _.value )
+		}
+	}
+
+	gui { |parent, bounds|
+		if( desc.sliderSpecs.size > 0) {
+			var specspairs = desc.sliderSpecs.clump(2).flop;
+			var labels = specspairs[0];
+			var specs = specspairs[1];
+			var viewHeight = 14;
+			[this.sliderValues, specs, labels, sliderProxys].flopWith{ |v, spec, label, proxy|
+				var bounds2 = (bounds.width @ ((spec.viewNumLines * viewHeight) + ((spec.viewNumLines-1) * 4)));
+				var composite = CompositeView( parent, bounds2 ).resize_(2);
+				var viewDict = spec.makeView( composite, bounds2, "*"++label,
+					{ |vw, value| }, 5
+				);
+				viewDict[ \valueView ].value = v;
+				proxy.view_(viewDict[ \valueView ])
+			}
+		}
+	}
+
+	viewNumLines{
+		^sliderValues.size;
+	}
+
+	storeArgs {
+		^[desc, [this.desc.sliderSpecs.clump(2).flop[0], this.sliderValues].flop.flatten ]
+    }
 }
 
 ImmDef : MUENTModDef {
 	classvar <currentSurface;
 	classvar <currentTimeES;
 	var <surface;
-	var <sliderLabels, <sliderValues, <sliderSpecs, <slidersPresets;
+	var <sliderSpecs;
 	/*
-	it's easier to enter the values with this notation
-	slidersDescArg = [ "slider1", 0.1, "slider"2, 0.2, "slider3", 0.7 ]
-
-	internally gets saved as:
-	sliderLabels = [ "slider1", "slider"2, "slider3" ]
-	sliderValues = [ 0.1, 0.2, 0.7 ]
-
-	slidersPresets = [ [1.0,0.5,0.2], [0.4,0.2,0.1] ]
+	sliderSpecs:
+	[ "slider1", \freq, "slider"2, [1,5] , "slider3", nil ]
 	*/
 
 	*new { |descFunc, surface = (PSurface.geodesicSphere), delta = 0.1,
-		slidersDescArg = #[], sliderSpecs=#[], slidersPresets=#[] |
-		var check1 = if(slidersDescArg.size.odd){ Error("ImmDef - slidersDescArg: array size must be even").throw };
-		var x = slidersDescArg.clump(2).flop;
-		var sliderLabels = x[0] ? [];
-		var sliderValues = x[1] ? [];
-		var sliderSpecs2 = sliderSpecs.collect(_.asSpec);
-		this.checkArgs(\ImmDef, \new, [descFunc, surface, delta, sliderLabels,
-			sliderValues, sliderSpecs2, slidersPresets],
-			[Function, PSurface, SimpleNumber, Array, Array, Array, Array] );
-        ^super.newCopyArgs(descFunc, delta, surface, sliderLabels, sliderValues, sliderSpecs2, slidersPresets)
+		sliderSpecs=#[] |
+		var check1 = if(sliderSpecs.size.odd){ Error("ImmDef - sliderSpecs: array size must be even").throw };
+		var sliderSpecs2 = sliderSpecs.clump(2).collect{ |xs| [xs[0].asSymbol, xs[1].asControlSpec] }.flatten;
+
+		this.checkArgs(\ImmDef, \new, [descFunc, surface, delta, sliderSpecs2],
+			[Function, PSurface, SimpleNumber, Array] );
+
+        ^super.newCopyArgs(descFunc, delta, surface, sliderSpecs2)
     }
 
     createDesc { |unit, tESM, slidersM|
@@ -146,10 +194,11 @@ ImmDef : MUENTModDef {
 			currentSurface = surface;
 			currentTimeES = tEventSource;
 			slidersM.sequence(EventNetwork) >>= { |sliderSigs|
-				var mappedSigs = [sliderSigs, sliderSpecs].flopWith{ |sig, spec|
+				/*var justSpecs = sliderSpecs.clump(2).collect(_[1]);
+				var mappedSigs = [sliderSigs, justSpecs].flopWith{ |sig, spec|
 					sig.collect{ |v| spec.map(v) }
-				};
-				ENDef.evaluate( descFunc, [tSignal]++mappedSigs )
+				};*/
+				ENDef.evaluate( descFunc, [tSignal]++sliderSigs )
 				>>= this.addReactimatesFunc(unit, tEventSource)
 			}
         }
@@ -179,7 +228,7 @@ ImmDef : MUENTModDef {
     }
 
 	storeArgs {
-		^[descFunc, surface, delta,  [sliderLabels, sliderValues].flop.flatten, sliderSpecs, slidersPresets]
+		^[descFunc, surface, delta,  sliderSpecs ]
     }
 
 }

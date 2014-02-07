@@ -390,6 +390,24 @@ PField : AbstractFunction {
 		}
 	}
 
+	//temp
+	*expandContract3{
+		^PField( this.expandContractFunc3(ImmDef.currentSurface) )
+	}
+
+	//this is kind of unique to closed surfaces.
+	*expandContractFunc3 { |surface|
+		var f = PField.spotlightFunc(surface);
+		^{|u1, v1, t, u2, v2, c|
+			if(c < 0.5){
+				f.(u1, v1, t, u2, v2, (c*2) )
+			} {
+				f.(u1, v1, t, u2+pi, v2.neg, c.linlin(0.5,1.0, 1.0, 0.0) )
+			}
+		}
+	}
+	//temp
+
 	*expandContract2{
 		^PField( this.expandContract2Func( ImmDef.currentSurface ) )
 	}
@@ -526,6 +544,7 @@ PField : AbstractFunction {
 
 			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig, r;
 			#oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb = xs;
+			nextnumHills = nextnumHills.asInteger;
 			//"Running switch function again realt: %".format(t.now).postln;
 			//we create a new set of hills to morph to:
 			newState = T( oldState.at2, generateHillsFunc.(nextnumHills, surface, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb) );
@@ -548,7 +567,7 @@ PField : AbstractFunction {
 		//event switching
 		//calling .now is not pure...
 		var startValues = [numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig].collect(_.now);
-		var startValues2 = [startValues[1], surface]++startValues[2..];
+		var startValues2 = [startValues[1].asInteger, surface]++startValues[2..];
 		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues );
 	}
 

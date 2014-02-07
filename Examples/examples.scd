@@ -425,8 +425,8 @@ Udef(\standardLSin, {
 (
 q = ();
 
-//q.surface = PSurface.sphere(40);
-q.surface = PSurface.sphericalGeometry([[0,pi/2]]);
+q.surface = PSurface.sphere(40);
+//q.surface = PSurface.sphericalGeometry([[0,pi/2]]);
 
 q[\f] = { |t|
 
