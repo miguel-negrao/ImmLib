@@ -3,6 +3,8 @@ A Library for immersive spatialization
 Install
 -------
 
+requires SuperCollider 3.7dev with at least commit 8a2d5919e73bf98f02b67da6977bc04dc3bbd07b
+
 * Cluster: https://github.com/miguel-negrao/Cluster
 * UEvNetMod: https://github.com/miguel-negrao/UEvNetMod
 * Modality: https://github.com/ModalityTeam/Modality-toolkit
