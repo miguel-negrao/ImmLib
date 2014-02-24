@@ -475,6 +475,20 @@ PField : AbstractFunction {
 		}
 	}
 
+	*gradientEnv { |env|
+		^PField( this.gradientEnvFunc( ImmDef.currentSurface, env ) )
+	}
+
+	*gradientEnvFunc { |surface, env|
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+		var array = env.asMultichannelArray[0];
+		^{ |u, v, t, u2, v2, a, b, curve|
+			var x = distFunc.(u, v, u2, v2)/maxDist;
+			array.envAt(x).linlin(0.0,1.0,a,b)
+		}
+	}
+
 	//double factorial
 	*sphericalHarmonic{ |m,l|
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
@@ -681,32 +695,33 @@ PField : AbstractFunction {
 	//y = x + ct
 	//sin(2pi * f* (x + ct) )
 	//sin(2pi * ( (f*x) + (f*c*t) ) )
+	//SinOsc.ar( f*c, f*x
 
-	*waveUSin {  |t, l, f, plot = false|
+	*waveUSin {  |t, l, freq, plot = false|
 
 		var pf = PField({ |u,v, t, l|
 			sin( 2pi * ( (l*u) + t) )
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(f), l).postln
+			PSmoothPlot(pf, t.changeRate(freq), l).postln
 		} {
-			pf.(t.changeRate(f), l)
+			pf.(t.changeRate(freq), l)
 		}
 
 	 }
 
-	*waveVSin { |t, l, f, plot = false|
+	*waveVSin { |t, l, freq, plot = false|
 		var pf = PField({ |u,v, t, l|
 			sin( 2pi * ( (l*v) + t) )
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(f), l)
+			PSmoothPlot(pf, t.changeRate(freq), l)
 		} {
-			pf.(t.changeRate(f), l)
+			pf.(t.changeRate(freq), l)
 		}
 	}
 
-	*wave2DSin { |t, u0, v0, l, f, plot = false|
+	*wave2DSin { |t, u0, v0, l, freq, plot = false|
 		var surface = ImmDef.currentSurface;
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
@@ -714,13 +729,13 @@ PField : AbstractFunction {
 			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) + t) )
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
 		} {
-			pf.(t.changeRate(f), u0, v0, l)
+			pf.(t.changeRate(freq), u0, v0, l)
 		}
 	}
 
-	*wave2DSaw { |t, u0, v0, l, f, plot = false|
+	*wave2DSaw { |t, u0, v0, l, freq, plot = false|
 		var surface = ImmDef.currentSurface;
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
@@ -728,13 +743,13 @@ PField : AbstractFunction {
 			( (l*distFunc.(u,v,u0,v0)/maxDist) + t) % 1.0
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
 		} {
-			pf.(t.changeRate(f), u0, v0, l)
+			pf.(t.changeRate(freq), u0, v0, l)
 		}
 	}
 
-	*wave2D { |t, u0, v0, l, f, g, plot = false|
+	*wave2D { |t, u0, v0, l, freq, g, plot = false|
 		var surface = ImmDef.currentSurface;
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
@@ -742,9 +757,9 @@ PField : AbstractFunction {
 			g.( (l*distFunc.(u,v,u0,v0)/maxDist) + t)
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(f), u0, v0, l)
+			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
 		} {
-			pf.(t.changeRate(f), u0, v0, l)
+			pf.(t.changeRate(freq), u0, v0, l)
 		}
 	}
 
