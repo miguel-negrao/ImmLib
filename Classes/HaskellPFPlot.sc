@@ -96,6 +96,10 @@ PSmoothPlot : HaskellPFPlot {
 		^super.basicNew( NetAddr("localhost", currentPort), label ?? "" ).init( faces, surface )
     }
 
+	*off{ |pf...args|
+		^pf.(*args)
+	}
+
     *animate{ |pf...args|
         var plot = this.basicNew;
         ^Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|

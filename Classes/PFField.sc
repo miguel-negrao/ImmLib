@@ -105,6 +105,11 @@ PField : AbstractFunction {
 		^this.valueS(*[ImmDef.currentSurface]++args)
 	}
 
+	//to make it easy to turn on and off animation
+	animate{ |...args|
+		^PSmoothPlot(*args.prependI(this))
+	}
+
 	valuePlot{ |...args|
 		^PSmoothPlot(*[this]++args)
 	}
