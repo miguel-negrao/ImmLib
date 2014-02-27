@@ -32,21 +32,24 @@ x.pointsRV3D
 */
 
 //A parametrized surface
-PSurface {
-	//points [ [ Float ] ]
-	// these are the u,v coordinates in the range rangeU X rangeV
-	//array of floats because it's fast to prepend to the rest of arguments in function.
-	var <points;
-	//pointsWrapped - points in some other arbitrary class as long as the panners, etc know what to do with them
-	//UnitSpherical, RealVector2D, etc
-	var <pointsWrapped;
+//names inspired on https://en.wikipedia.org/wiki/Riemannian_manifold
+PAtlas {
 	//function to send coordinates pairs u,v into RealVector3D,
 	var <toFunc;
 	//function to get coordinates from RealVector3D.
 	var <fromFunc;
 	//geodesic distance function - distance along the shortest path between two points on surface.
 	var <distFunc;
-	//maximum geodesic distancef
+
+	*new { |toFunc, fromFunc, distFunc|
+		^super.newCopyArgs(toFunc, fromFunc, distFunc)
+	}
+}
+
+
+PRiemannianManifold {
+	var <atlas;//:: PAtlas
+	//maximum geodesic distance
 	var <maxDist;
 	var <rangeU; //e.g. [0, 2*pi]
 	var <rangeV; //e.g. [-pi, pi]
@@ -54,85 +57,50 @@ PSurface {
 	//closed surface: edges wrap around, e.g. torus, sphere
 	var <isClosed;
 
-	//the points in RealVector3D calculated from toFunc for convenience
-	var <pointsRV3D;
+	*new { |atlas, maxDist, rangeU, rangeV, isClosed|
+		^super.newCopyArgs(atlas, maxDist, rangeU, rangeV, isClosed)
+	}
 
-	*new { |points, pointsWrapped, toFunc, fromFunc, distFunc, maxDist, rangeU, rangeV, isClosed|
-		^super.newCopyArgs(points, pointsWrapped, toFunc, fromFunc, distFunc, maxDist,
-			rangeU, rangeV, isClosed, points.collect{ |x| toFunc.(*x) })
+	du {
+		^rangeU.at(1)-rangeU.at(0)
+	}
+
+	dv {
+		^rangeV.at(1)-rangeV.at(0)
+	}
+
+	ucenter {
+		^rangeU.sum / 2
+	}
+
+	vcenter {
+		^rangeV.sum / 2
+	}
+}
+
+PSurface {
+	var <manifold;//:: PRiemannianManifold
+	//points
+	// these are the u,v coordinates in the range rangeU X rangeV
+	//array of floats because it's fast to prepend to the rest of arguments in function.
+	var <points;//:: [ [ Float ] ]
+	//pointsWrapped - points in some other arbitrary class as long as the panners, etc know what to do with them
+	//UnitSpherical, RealVector2D, etc
+	var <pointsWrapped;// :: [A]
+
+	//the points in RealVector3D calculated from toFunc for convenience
+	var <pointsRV3D;// :: [RealVector3D]
+
+	*new { |manifold, points, pointsWrapped|
+		^super.newCopyArgs(manifold, points, pointsWrapped, points.collect{ |x| manifold.atlas.toFunc.(*x) })
 	}
 
 	storeArgs {
-		^[points, pointsWrapped, toFunc, fromFunc, distFunc, maxDist, rangeU, rangeV, isClosed]
-	}
-
-	*sphericalGeometry { |points|
-		//points :  [ [0,0], ... ]
-		^this.new(
-			points,
-			points.collect{ |xs| UnitSpherical(*xs) },
-			{ |u,v| UnitSpherical(u,v).asRealVector3D },
-			{ |p| p.asUnitSpherical.storeArgs },
-			{ |theta1, phi1, theta2, phi2|
-				acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
-			},
-			pi,
-			[0, 2 * pi],
-			[-pi, pi],
-			true
-		)
-
+		^[manifold, points, pointsWrapped]
 	}
 
 	*prToSphericalRange{ |theta, phi|
-
 		^[theta.mod(2pi), (phi+pi).mod(2pi)-pi ]
-
-	}
-
-	// PSurface.sphere(40).plot
-	*sphere{ | n = 10 |
-		var h = { |k| (2*k-1)/n - 1 };
-		var phi = h.acos;
-		var theta = sqrt(n*pi)*phi;
-		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) };
-		^this.sphericalGeometry( points )
-	}
-
-	// PSurface.sphereSelect(300, { |x| x[1] > (pi/2*0.3) }).plot
-	*sphereSelect{ | n = 10 , f|
-		var h = { |k| (2*k-1)/n - 1 };
-		var phi = h.acos;
-		var theta = sqrt(n*pi)*phi;
-		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) }.select(f);
-		^this.sphericalGeometry( points )
-	}
-
-	// PSurface.geodesicSphere.plot
-	// best simmetry for 42 points
-	*geodesicSphere {
-		var points = PSurface.sphereFaces(1).flatten.as(Set).as(Array).collect{ |xs|
-			this.prToSphericalRange(*xs.asUnitSpherical.storeArgs) };
-		^this.sphericalGeometry( points )
-	}
-
-	//PSurface.plane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ).plot
-	*plane { |origin, dx, dy, n=6, m=6| //origin, dx, d : RealVector3D
-		var xs = all {: [ [ i/(n-1), j/(m-1) ], origin + (dx * i/(n-1) ) + ( dy * j/(m-1) )],
-			i <- (0..(n-1)), j <- (0..(m-1)) };
-		var dxNorm = dx.norm;
-		var dyNorm = dy.norm;
-		^this.new( *(xs.flop++
-			[
-				{ |u,v| origin + (dx * u ) + ( dy * v ) },
-				{ |p| [ dx.proj(p-origin).norm / dx.norm, dy.proj(p-origin).norm / dy.norm ] },
-				{ |u1, v1, u2, v2| ( (u2 - u1).abs * dxNorm ).hypot( (v2 - v1).abs*dyNorm) },
-				dxNorm.hypot(dyNorm),
-				[0, 1],
-				[0, 1],
-				false
-
-		]) )
 	}
 
 	/*
@@ -156,24 +124,145 @@ PSurface {
 		^points.size
 	}
 
+	distFunc {
+		^manifold.atlas.distFunc
+	}
+
+	maxDist {
+		^manifold.maxDist
+	}
+
 	plot {
 		Plotter3D( pointsRV3D )
 	}
 
 	du {
-		^rangeU.at(1)-rangeU.at(0)
+		^manifold.du
 	}
 
 	dv {
-		^rangeV.at(1)-rangeV.at(0)
+		^manifold.dv
 	}
 
 	ucenter {
-		^rangeU.sum / 2
+		^manifold.ucenter
 	}
 
 	vcenter {
-		^rangeV.sum / 2
+		^manifold.vcenter
+	}
+
+}
+
+
+PSphericalAtlas : PAtlas {
+	*new {
+		^super.new(
+			{ |u,v| UnitSpherical(u,v).asRealVector3D },
+			{ |p| p.asUnitSpherical.storeArgs },
+			{ |theta1, phi1, theta2, phi2|
+				acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
+			}
+		)
+	}
+}
+
+PFullSphereM : PRiemannianManifold {
+	*new {
+		^super.new(
+			PSphericalAtlas(),
+			pi,
+			[0, 2pi],
+			[-pi, pi],
+			true
+		)
+	}
+}
+
+PSphericalSurface  : PSurface {
+
+	*new{ | points |
+		^super.new(
+			PFullSphereM(),
+			points,
+			points.collect{ |xs| UnitSpherical(*xs) }
+		)
+	}
+
+}
+
+// PSphere(40).plot
+PSphere : PSphericalSurface {
+	var <n;
+
+	*new{ | n = 10 |
+		var h = { |k| (2*k-1)/n - 1 };
+		var phi = h.acos;
+		var theta = sqrt(n*pi)*phi;
+		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) };
+		^super.new(
+			points
+		).initSphere(n)
+	}
+
+	initSphere{ |an|
+		n = an
+	}
+
+	storeArgs {
+		^[n]
+	}
+
+}
+
+// PSphereSelect(300, { |x| x[1] > (pi/2*0.3) }).plot
+PSphereSelect : PSphericalSurface {
+	var <n, <f;
+
+	*new{ | n = 10, f |
+		var h = { |k| (2*k-1)/n - 1 };
+		var phi = h.acos;
+		var theta = sqrt(n*pi)*phi;
+		var toSphericalRange = { |theta, phi|
+			^[theta.mod(2pi), (phi+pi).mod(2pi)-pi ]
+		};
+		var points = (1..n).collect{ |k| this.prToSphericalRange( theta.(k), pi/2-phi.(k) ) }.select(f);
+		^super.new(
+			points
+		).initPSphereSelect(n,f)
+	}
+
+	initPSphereSelect{ |an, af|
+		n = an;
+		f = af;
+	}
+
+	storeArgs {
+		^[n, f]
+	}
+
+}
+
+// PGeodesicSphere().plot
+// best simmetry for 42 points
+PGeodesicSphere : PSphericalSurface {
+	var <n;
+
+	*new{ |n=1|
+		var points = this.sphereFaces(n).flatten.as(Set).as(Array).collect{ |xs|
+			this.prToSphericalRange(*xs.asUnitSpherical.storeArgs) };
+		^super.new(
+			points,
+			points.collect{ |xs| UnitSpherical(*xs) }
+		).initPGeodesicSphere(n)
+	}
+
+	initPGeodesicSphere{ |an|
+		n = an;
+	}
+
+	storeArgs {
+		^[n]
 	}
 
 	*icosahedronFaces { |transforms, emissive, ambient=0.5, specular=0.5, diffuse=0.5, shininess = 0.5, width|
@@ -256,45 +345,77 @@ PSurface {
         ^splitTriangles.(triangles,n)
     }
 
-    *cubeFaces {
+}
 
-        [
-        // Front face
-        [[-1.0, -1.0,  1.0],
-        [1.0, -1.0,  1.0],
-        [1.0,  1.0,  1.0],
-        [-1.0,  1.0,  1.0]],
+PGeodesicSphereDual : PSphericalSurface {
+	var <n;
 
-        // Back face
-        [[-1.0, -1.0, -1.0],
-        [-1.0,  1.0, -1.0],
-        [1.0,  1.0, -1.0],
-        [1.0, -1.0, -1.0]],
+	*new{ |n = 1|
+		var faces = PGeodesicSphere.sphereFaces(n);
+        var points = faces.collect{ |vertices|
+			(vertices.sum / 3).asUnitSpherical.storeArgs
+		};
+		^super.new(
+			points
+		).initPGeodesicSphereDual(n)
+	}
 
-        // Top face
-        [[-1.0,  1.0, -1.0],
-        [-1.0,  1.0,  1.0],
-        [1.0,  1.0,  1.0],
-        [1.0,  1.0, -1.0]],
+	initPGeodesicSphereDual{ |an|
+		n = an;
+	}
 
-        // Bottom face
-        [[-1.0, -1.0, -1.0],
-        [1.0, -1.0, -1.0],
-        [1.0, -1.0,  1.0],
-        [-1.0, -1.0,  1.0]],
+	storeArgs {
+		^[n]
+	}
 
-        // Right face
-        [[1.0, -1.0, -1.0],
-        [1.0,  1.0, -1.0],
-        [1.0,  1.0,  1.0],
-        [1.0, -1.0,  1.0]],
+}
 
-        // Left face
-        [[-1.0, -1.0, -1.0],
-        [-1.0, -1.0,  1.0],
-        [-1.0,  1.0,  1.0],
-        [-1.0,  1.0, -1.0]]];
+//Plane
+PPlaneAtlas : PAtlas {
 
-    }
+	*new { |origin, dx, dy| //origin, dx, d : RealVector3D
+		var dxNorm = dx.norm;
+		var dyNorm = dy.norm;
+		^super.new(
+			{ |u,v| origin + (dx * u ) + ( dy * v ) },
+			{ |p| [ dx.proj(p-origin).norm / dx.norm, dy.proj(p-origin).norm / dy.norm ] },
+			{ |u1, v1, u2, v2| ( (u2 - u1).abs * dxNorm ).hypot( (v2 - v1).abs*dyNorm) }
+		)
+	}
+
+}
+
+PPlaneM : PRiemannianManifold {
+
+	*new { |origin, dx, dy|
+		^super.new(
+			PPlaneAtlas(origin, dx, dy),
+			dx.norm.hypot(dy.norm),
+			[0, 1],
+			[0, 1],
+			false
+		)
+	}
+
+}
+
+
+//PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ).plot
+PPlane : PSurface {
+	var <origin, <dx, <dy, <n, <m;
+
+	*new { |origin, dx, dy, n=6, m=6| //origin, dx, d : RealVector3D
+		var xs = all {: [ [ i/(n-1), j/(m-1) ], origin + (dx * i/(n-1) ) + ( dy * j/(m-1) )],
+			i <- (0..(n-1)), j <- (0..(m-1)) };
+		^super.new( *xs.flop.prependI( PPlaneM(origin, dx, dy) ) ).initPPlane(origin, dx, dy, n, m)
+	}
+
+	initPPlane{ |...args|
+		#origin, dx, dy, n, m = args;
+	}
+
+	storeArgs {
+		^[origin, dx, dy, n, m]
+	}
 
 }

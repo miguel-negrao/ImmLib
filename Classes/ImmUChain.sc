@@ -40,13 +40,13 @@ ImmU : MassEditU { // mimicks a real U, but in fact edits multiple instances of 
 }
 
 
-ImmUChain : MassEditUChain {
+ImmMassUChain : MassEditUChain {
 
 	*new { |uchains, mods|
-		^super.newCopyArgs( uchains ).initImmUChain(mods);
+		^super.newCopyArgs( uchains ).initImmMassUChain(mods);
 	}
 
-	initImmUChain { |mods|
+	initImmMassUChain { |mods|
 		if(mods.notNil) {
 			units = [mods, uchains.collect(_.units).flop].flopWith{ |modOption, units|
 				ImmU( units, modOption.orNil )

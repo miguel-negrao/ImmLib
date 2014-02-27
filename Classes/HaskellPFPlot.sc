@@ -82,9 +82,6 @@ HaskellPFPlot {
 x = ParameterFieldPlot2( \sphere, "test"  );
 x.startRenderer
 x.stopRenderer
-*/
-PSmoothPlot : HaskellPFPlot {
-    var <faces, <surface;
 
     *basicNew { |type = \sphere, label|
         var faces = PSurface.sphereFaces(2);
@@ -92,6 +89,13 @@ PSmoothPlot : HaskellPFPlot {
         var surface = PSurface.sphericalGeometry( points.collect{ |p|
             p.asUnitSpherical.storeArgs
         } );
+*/
+PSmoothPlot : HaskellPFPlot {
+    var <faces, <surface;
+
+    *basicNew { |type = \sphere, label|
+		var faces = PGeodesicSphere.sphereFaces(2);
+		var surface = PGeodesicSphereDual(2);
         currentPort = currentPort + 1;
 		^super.basicNew( NetAddr("localhost", currentPort), label ?? "" ).init( faces, surface )
     }
