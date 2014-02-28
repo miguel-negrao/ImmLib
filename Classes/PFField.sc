@@ -353,9 +353,9 @@ PField : AbstractFunction {
 	}
 
 	*barFuncU { |surface|
-		var d = surface.du/2;
-		^{ |u, v, t, widness|
-			if( (surface.ucenter - u).abs < (widness * d) ) {
+		var d = surface.du;
+		^{ |u, v, t, wideness|
+			if( u < (wideness * d) ) {
 				1.0
 			} {
 				0.0
