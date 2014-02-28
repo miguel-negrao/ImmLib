@@ -58,10 +58,16 @@ ImmLib {
 	}
 
 	*startupSonicLab {
-		var options = VBAPOptions.fromPreset(\soniclab)
-		.extraDefFolders_( this.extraDefs );
+		var options;
+		options = VBAPOptions
+		.fromPreset(\soniclabSingle)
+		.device_("JackRouter")
+		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
 		VBAPLib.startupR( options );
+		"VBAPLib started".postln;
+		"sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal;
+		Server.default.latency = 0.25;
 	}
 
 	*recWindow {
