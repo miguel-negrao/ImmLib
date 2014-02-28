@@ -17,9 +17,11 @@
 */
 
 
-+ UScore {
+ImmUScore : UScore {
 
-	*immNew { |surface ... events|
+	var <surface;
+
+	*new { |surface ... events|
 		var m = surface.points.size;
 		//^switch(ImmLib.mode)
 		//vbap already has the preview modes:
@@ -32,9 +34,9 @@
 
 		panners = MUChain([\vbap3D_Simple_Panner,
 			[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
-		]).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
+		]).private_(true).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
 
-		^UScore(*(events++panners) )
+		^super.new(*(events++panners) ).initImmUScore(surface)
 		/*}
 		{\previewStereo}{
 		UScore( *events ).cleanOverlaps
@@ -54,6 +56,27 @@
 		UScore(*(events++panners) ).cleanOverlaps
 		}*/
 	}
+
+	initImmUScore{ |asurface|
+		surface = asurface
+	}
+
+	getInitArgs {
+		var numPreArgs = -1;
+
+		if( track != 0 ) {
+			numPreArgs = 1
+		} {
+			if( startTime != 0 ) {
+				numPreArgs = 0
+			}
+		};
+
+		^([surface] ++ [ startTime, track ][..numPreArgs]) ++ events.select{ |ev|
+			((ev.class == MUChain ) and: { ev.private }).not
+		};
+	}
+
 }
 
 /*

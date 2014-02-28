@@ -164,6 +164,7 @@ MUChain : ClusterBasic {
     var storeArgs; // [symbol, argValueList, UInteraction]
     var <mods; //[ UInteraction ]
     var <eventNetwork; // Option[ EventNetwork ]
+	var <>private = false;
     *oclass{ ^UChain }
 
 
@@ -231,48 +232,6 @@ MUChain : ClusterBasic {
 			MU.fromArrayWithMod(xs, modOption.orNil)
 		}
     }
-	/*
-	From U
-
-	getInitArgs {
-		var defArgs;
-		defArgs = (this.def.args( this ) ? []).clump(2);
-		^args.clump(2).select({ |item, i|
-			(item.postln != defArgs[i]) && { this.dontStoreArgNames.includes( item[0] ).not };
-		 }).collect({ |item|
-			 var umapArgs;
-			 if( item[1].isUMap ) {
-				 umapArgs = item[1].storeArgs;
-				 if( umapArgs.size == 1 ) {
-				 	[ item[0], umapArgs[0] ]
-				 } {
-					 [ item[0], umapArgs ]
-				 };
-			 } {
-				 item
-			 };
-		 }).flatten(1);
-	}
-
-	storeArgs {
-		var initArgs, initDef;
-		initArgs = this.getInitArgs;
-		initDef = if( this.def.class.callByName ) {
-		    this.defName
-		} {
-		    this.def
-		};
-		if( mod.notNil ) {
-			^[ initDef, initArgs, mod ];
-		} {
-			if( (initArgs.size > 0) ) {
-				^[ initDef, initArgs ];
-			} {
-				^[ initDef ];
-			};
-		};
-	}
-	*/
 
 	getInitArgs {
 		var numPreArgs = -1;
@@ -332,51 +291,22 @@ MUChain : ClusterBasic {
 				[def, args, mod.get]
 			} {
 				[def, args]
-			}
+			};
 		};
 
 		^([ this.startTime, this.track, this.duration, this.releaseSelf ][..numPreArgs]) ++
-			[items.collect(_.units).flop, mods, (1..items.size)-1].flopWith( unitStoreArgs )
+		[items.collect(_.units).flop, mods, (1..mods.size)-1].flopWith( unitStoreArgs )
+		.select{ |xs| xs[0].postln != 'pannerout' }
+		.collect{ |xs|
+			if(xs[1].size == 0) {
+				xs[0]
+			}{
+				xs
+			}
+		}
 	}
 
 	storeArgs { ^this.getInitArgs }
-
-
-	/*getInitArgs {
-		var defArgs;
-		defArgs = (this.def.args( this ) ? []).clump(2);
-		^args.clump(2).select({ |item, i|
-			(item != defArgs[i]) && { this.dontStoreArgNames.includes( item[0] ).not };
-		 }).collect({ |item|
-			 var umapArgs;
-			 if( item[1].isUMap ) {
-				 umapArgs = item[1].storeArgs;
-				 if( umapArgs.size == 1 ) {
-				 	[ item[0], umapArgs[0] ]
-				 } {
-					 [ item[0], umapArgs ]
-				 };
-			 } {
-				 item
-			 };
-		 }).flatten(1);
-	}
-
-	storeArgs {
-		var initArgs, initDef;
-		initArgs = this.getInitArgs;
-		initDef = if( this.def.class.callByName ) {
-		    this.defName
-		} {
-		    this.def
-		};
-		if( (initArgs.size > 0) ) {
-			^[ initDef, initArgs ];
-		} {
-			^[ initDef ];
-		};
-		};
-	}*/
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
 		mods.catOptions.do(_.start(nil, startPos) );

@@ -16,13 +16,14 @@
     along with GameOfLife Unit Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-+ MUChain {
+ImmUChain : MUChain {
+	var <surface;
 
-	*immNew { |surface...args|
+	*new { |surface...args|
 		var f = {
 			//var ssa = "surface.size = %".format(surface.size).postln;
 			var busses = ClusterArg( surface.size.collect(500 + _) );
-			MUChain( *( args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ) ).releaseSelf_(false)
+			super.new( *( args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ) ).releaseSelf_(false).initImmMUChain(surface)
 		};
 		if(surface.isKindOf(PSurface).not) {
 			Error("First argument of MUChain must be a PSurface").throw
@@ -36,8 +37,16 @@
 		}
 		{\previewStereo}{
 			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
-			MUChain( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) )
+			super.new( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) ).initImmMUChain(surface)
 		}
+	}
+
+	initImmMUChain { |asurface|
+		surface = asurface
+	}
+
+	storeArgs {
+		^[surface]++super.storeArgs
 	}
 
 }
