@@ -177,6 +177,7 @@ MUChain : ClusterBasic {
 		//need to extract the umods from the args.
         //sorry about the lack of pattern matching...
 		//version of arguments without umods
+		//could have been done with higher order functions, but well...
         var stripUMods = { |xs| xs.match(LazyListEmpty.constf,{ |head,tail|
             if( head.isNumber || head.isKindOf(Boolean) ) {
                 head %% stripUMods.(tail)
@@ -225,6 +226,33 @@ MUChain : ClusterBasic {
 
 		storeArgs = args;
     }
+
+	/*modAt_{ |i,mod|
+		var mu = MU.fromArray(this.items.collect({ |x| x.units[i] }) );
+		var oldmod = mods[i];
+		var t = oldmod >>= { |x|
+			if( x.isKindOf(UEvNetTMod) ) {
+				Some(x.timer.t.postln)
+			} { None }
+		};
+		old.do{ |x|
+			x.disconnect
+		};
+		mod.asUModFor(mu);
+		oldmod >>= { |x|
+			if( x.isKindOf(UEvNetTMod) ) {
+				Some(x.timer.t)
+			} { None }
+		}.do{ |t|
+			mod.timer.t = t.postln
+
+
+		};
+		oldmod.do{ |x|
+			if(x.isPlaying) {
+
+		mods[i] = Some(mod);
+	}*/
 
     //temporary fix ?
     units {
