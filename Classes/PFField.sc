@@ -545,7 +545,7 @@ PField : AbstractFunction {
 			t, numSecs, numHills, sizeA, sizeB, bumpSize )
 	}
 
-	*continousRandomSpotlight{ |t, numSecs|
+	*continousRandomSpotlight{ |t, numSecs, curve = 0|
 		var check = this.checkArgs(\PField, \continousRandomSpotlight,
 			[t, numSecs], [FPSignal, SimpleNumber] );
 		var surface = ImmDef.currentSurface;
@@ -554,7 +554,7 @@ PField : AbstractFunction {
 		var randomSpotLight = {
 			PField.spotlightFixedFunc( surface, rrand(0, 2pi), rrand(pi.neg,pi) )
 		};
-
+		var env = Env([0,1],[1],curve).asMultichannelArray[0];
 		var changefuncEvent = t2
 		.changes
 		.storePrevious
@@ -564,9 +564,9 @@ PField : AbstractFunction {
 		var f = { |h|
 			PField({ |u, v, t|
 				if(t < 0.5) {
-					h.(u,v,0,1-(t*2),0.2)
+					h.(u,v,0,env.envAt(1-(t*2)),0.2)
 				} {
-					h.(u,v,0,(t-0.5)*2,0.2)
+					h.(u,v,0,env.envAt((t-0.5)*2),0.2)
 				}
 			}).(t2)
 		};

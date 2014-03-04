@@ -62,6 +62,7 @@ MUENTModDef : UENTModDef {
     */
 	addReactimatesFunc { |unit, tEventSource|
         ^{ |dict|
+			var items = unit.items;
              if( dict.isEmpty ) {
                 EventNetwork.returnUnit
             } {
@@ -69,13 +70,13 @@ MUENTModDef : UENTModDef {
 					Object.checkArgs(MUENTModDef, \addReactimatesFunc, [uarg,key], [UModArg, Symbol]);
                     uarg.match({ |sig|
                         (sig <@ tEventSource).collect{ |v| IO{
-                            unit.items.do{ |u,i|
+                            items.do{ |u,i|
                                 u.mapSet(key, v[i])
                             }
                         } }.reactimate
                         },{ |sig|
                             (sig <@ tEventSource).collect{ |v| IO{
-                                unit.items.do{ |u,i|
+                                items.do{ |u,i|
                                     u.set(key, v[i] )
                                 }
                             } }.reactimate
