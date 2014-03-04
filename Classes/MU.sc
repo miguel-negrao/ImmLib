@@ -227,32 +227,24 @@ MUChain : ClusterBasic {
 		storeArgs = args;
     }
 
-	/*modAt_{ |i,mod|
+	modAt_{ |i,mod|
+		var check = this.checkArgs(\MUChain,\modAt_,[i,mod],[Integer, UEvNetTMod]);
 		var mu = MU.fromArray(this.items.collect({ |x| x.units[i] }) );
 		var oldmod = mods[i];
-		var t = oldmod >>= { |x|
-			if( x.isKindOf(UEvNetTMod) ) {
-				Some(x.timer.t.postln)
-			} { None }
-		};
-		old.do{ |x|
+		var t = (oldmod >>= { |x|
+			if( x.isKindOf(UEvNetTMod) and: { x.playing } ) {
+				Some( x.timer.t )
+			} { None() }
+		});
+		oldmod.do{ |x|
 			x.disconnect
 		};
 		mod.asUModFor(mu);
-		oldmod >>= { |x|
-			if( x.isKindOf(UEvNetTMod) ) {
-				Some(x.timer.t)
-			} { None }
-		}.do{ |t|
-			mod.timer.t = t.postln
-
-
+		t.postln.do{ |t|
+			mod.start(nil, t)
 		};
-		oldmod.do{ |x|
-			if(x.isPlaying) {
-
 		mods[i] = Some(mod);
-	}*/
+	}
 
     //temporary fix ?
     units {

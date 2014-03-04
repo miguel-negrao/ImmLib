@@ -194,10 +194,6 @@ ImmDef : MUENTModDef {
 			currentSurface = surface;
 			currentTimeES = tEventSource;
 			slidersM.sequence(EventNetwork) >>= { |sliderSigs|
-				/*var justSpecs = sliderSpecs.clump(2).collect(_[1]);
-				var mappedSigs = [sliderSigs, justSpecs].flopWith{ |sig, spec|
-					sig.collect{ |v| spec.map(v) }
-				};*/
 				ENDef.evaluate( descFunc, [tSignal]++sliderSigs )
 				>>= this.addReactimatesFunc(unit, tEventSource)
 			}

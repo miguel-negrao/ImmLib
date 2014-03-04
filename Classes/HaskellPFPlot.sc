@@ -45,11 +45,17 @@ HaskellPFPlot {
     }
 
     startRenderer { |closeOnCmdPeriod = true|
-        this.startCommand.postln.unixCmd;
-        if( closeOnCmdPeriod ) {
-            CmdPeriod.doOnce({ this.stopRenderer })
-        };
+        fork{
+			this.startCommand.unixCmd;
+			if( closeOnCmdPeriod ) {
+				CmdPeriod.doOnce({ this.stopRenderer })
+			};
+            1.wait;
+            this.sendGeometry
+        }
     }
+
+	sendGeometry { }
 
     startRendererIO {
         ^this.startCommand.unixCmdIO
@@ -91,7 +97,14 @@ x.stopRenderer
         } );
 */
 PSmoothPlot : HaskellPFPlot {
+	classvar <all;//:: IdentityDictionary Symbol HaskellPFPlot
+
     var <faces, <surface;
+
+	*initClass {
+		all = IdentityDictionary()
+	}
+
 
     *basicNew { |type = \sphere, label|
 		var faces = PGeodesicSphere.sphereFaces(2);
@@ -102,6 +115,21 @@ PSmoothPlot : HaskellPFPlot {
 
 	*off{ |pf...args|
 		^pf.(*args)
+	}
+
+	*proxy{ |key, pf...args|
+		var x = all.at(key);
+		var result = if( x.isNil ) {
+			var plot = this.basicNew;
+			all.put(key, plot);
+			CmdPeriod.doOnce({ all.put(key,nil) });
+			Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
+			plot.animate(pf, *args)
+		} {
+			x.sendGeometry;
+			x.animate(pf, *args)
+		};
+		^ENDef.appendToResult( result )
 	}
 
     *animate{ |pf...args|
@@ -121,15 +149,12 @@ PSmoothPlot : HaskellPFPlot {
         surface = aSurface;
     }
 
-    startRenderer { |closeOnCmdPeriod = true|
-        fork{
-            super.startRenderer(closeOnCmdPeriod);
-            1.wait;
-            faces.clump(150).do{ |faces,i|
-                rendererAddr.sendMsg(* ([if(i==0){"/triangles"}{"/add_triangles"}]++faces.flat))
-            };
-        }
-    }
+	sendGeometry {
+		faces.clump(150).do{ |faces,i|
+			rendererAddr.sendMsg(* ([if(i==0){"/triangles"}{"/add_triangles"}]++faces.flat))
+		};
+	}
+
 
     startRendererIO {
         ^IO{ this.startRenderer }
@@ -170,12 +195,33 @@ x.startRenderer
 x.stopRenderer
 */
 PGridPlot : HaskellPFPlot {
-    var <points;
+	classvar <all;//:: IdentityDictionary Symbol HaskellPFPlot
+
+	var <points;
+
+	*initClass {
+		all = IdentityDictionary()
+	}
 
     *basicNew { |surface, label|
         var points = surface.pointsRV3D.collect{ |x| x.asArray }.flat;
         ^super.basicNew( NetAddr("localhost", currentPort), label ).init( points )
     }
+
+	*proxy{ |key, sig, label|
+		var x = all.at(key);
+		var result = if( x.isNil ) {
+			var plot = this.basicNew(ImmDef.currentSurface, label);
+			all.put(key, plot);
+			CmdPeriod.doOnce({ all.put(key,nil) });
+			Writer(Unit, T([],[],[ plot.startRendererIO ]) ) >>=|
+			plot.animate(sig)
+		} {
+			x.sendGeometry;
+			x.animate(sig)
+		};
+		ENDef.appendToResult( result );
+	}
 
     *animate{ | sig, label|
         var plot = this.basicNew(ImmDef.currentSurface, label);
@@ -194,9 +240,13 @@ PGridPlot : HaskellPFPlot {
 
             1.wait;
 
-            rendererAddr.sendMsg(* (["/cubes"]++points) )
+            this.sendGeometry
         }
     }
+
+	sendGeometry {
+		rendererAddr.sendMsg(* (["/cubes"]++points) )
+	}
 
     startRendererIO {
         ^IO{ this.startRenderer }

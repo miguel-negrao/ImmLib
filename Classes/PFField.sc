@@ -176,6 +176,7 @@ PField : AbstractFunction {
 		^PField(func <> pf.func)
 	}
 
+	//very slow...
 	plotImage{ |surface, hsize=10, contrast=1, color=#[247,145,30], t=0...args|
 
 		var min, max, image, rgbs, valArray, xmap, ymap, vsize, w;
@@ -223,56 +224,6 @@ PField : AbstractFunction {
 
 	}
 
-	//I don't think this is working currentl
-	/*
-	test { |...specs|
-	var plot = Param(\sphere, "" );
-	^if(specs.size > 0 ) {
-	var sliders = specs.collect{ LayoutSlider("") };
-	var plot = PFieldPlot(\sphere, "Test PField" );
-
-	var w = Window().layout_(
-	VLayout(* sliders.collect(_[0]) )
-	);
-
-	var descFunc = { |t|
-	[sliders,specs].flopWith{|x,spec|
-	x[1].asENInput.collect{ |es| es.linlin(0.0,1.0,spec[0],spec[1]) }
-	}.sequence( Writer( _, Tuple3([  ], [  ], [ ]) ) ).postln >>= { |slevs|
-	plot.animateOnly(* ( [this,t]++slevs) )
-	}.postln
-	};
-
-	//"sliders are : %".format(sliders).postln;
-	//"specs are : %".format(spec).postln;
-
-	UEvNetTModDef(descFunc, 0.1).test >>= { |n|
-	n.actuate
-	} >>=| plot.startRendererIO >>=| w.frontIO >>=| IO{
-	CmdPeriod.doOnce({
-	w.close;
-	})
-	};
-
-
-	} {
-	MUAnimatedInteraction({ |t| plot.animateOnly(this,t) }, 0.1).test >>= { |n|
-	n.actuate
-	} >>=| plot.startRendererIO >>=| IO{
-	CmdPeriod.doOnce({
-	plot.stopRenderer;
-	})
-	};
-	}
-	}*/
-
-	/*test2 {
-	^MUENTModDef.test({ |tSig|
-	PFieldPlot.animateOnly(this, tsig)
-
-	}, 0.1)
-	}*/
-
 	//bulti-in functions
 	//for fixed rotations I could rotate the points before using them
 	rotate { //angle1, 2, 3 -pi/2, pi/2
@@ -281,19 +232,9 @@ PField : AbstractFunction {
 			this.func.valueArray( [newP.theta, newP.phi, t]++args )
 		}
 	}
+
 	*prBump{ ^{ |x| 2**((1-x.squared).reciprocal.neg)*2 } }
 
-	*prGeodesicDist { |theta1, phi1|
-		^{ | theta2, phi2|
-			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
-		}
-	}
-
-	*prGeodesicDist2 {
-		^{ |theta1, phi1, theta2, phi2|
-			acos( cos(phi1)*cos(phi2)*cos(theta1-theta2) + (sin(phi1)*sin(phi2) ) )
-		}
-	}
 
 	*spotlightFixed{ | u, v|
 		^PField( this.spotlightFixedFunc( ImmDef.currentSurface, u, v ) )
