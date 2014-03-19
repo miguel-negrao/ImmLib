@@ -173,7 +173,7 @@ PFullSphereM : PRiemannianManifold {
 			PSphericalAtlas(),
 			pi,
 			[0, 2pi],
-			[-pi, pi],
+			[-pi/2, pi/2],
 			true
 		)
 	}
@@ -353,7 +353,8 @@ PGeodesicSphereDual : PSphericalSurface {
 	*new{ |n = 1|
 		var faces = PGeodesicSphere.sphereFaces(n);
         var points = faces.collect{ |vertices|
-			(vertices.sum / 3).asUnitSpherical.storeArgs
+			var x = (vertices.sum / 3).asUnitSpherical.storeArgs;
+			[ x[0].wrap(0, 2pi), x[1].wrap(-pi/2, pi/2) ]
 		};
 		^super.new(
 			points

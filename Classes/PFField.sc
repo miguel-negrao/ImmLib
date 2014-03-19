@@ -50,6 +50,14 @@ x.valueArray( p, [ Var(0.1), Var(0.3) ] ).do(postln(_))
 PField : AbstractFunction {
 	var <func;
 
+	*initClass {
+		Class.initClassTree(Warp);
+		ControlSpec.specs = ControlSpec.specs.addAll([
+			\azimuth -> ControlSpec(0, 2pi,\lin,0,0," rad"),
+			\elevation -> ControlSpec(pi.neg/2, pi/2, \lin, 0, 0, " rad")
+		]);
+	}
+
 	*new{ |f| // f = { |u, v, t, c1, c2, ...| ...}
 		^super.newCopyArgs(f)
 	}
@@ -70,13 +78,7 @@ PField : AbstractFunction {
 
 	g = { |...args| surface.points.collect{ |p| f.( *args.prependI(p) ) } }
 
-	would this be easier or less easy ?
-
-	Perhaps, assum that PField operates on signals and lift all the operations into signals.
-
-	[1,2][..0]
-
-	*/
+*/
 	valueS{ |surface...args|
 		var points, f;
 
@@ -139,7 +141,6 @@ PField : AbstractFunction {
 		surface = newArgs[0];
 		args = newArgs[1..];
 
-		//only accepting numbers for the moment
 		args.do{ |x|
 			if( (x.isKindOf(SimpleNumber) || x.isKindOf(FPSignal) ).not ) {
 				Error("PField - arguments must be either SimpleNumbers or FPSignals").throw }
@@ -193,8 +194,8 @@ PField : AbstractFunction {
 		image.interpolation = 'smooth';
 		//image.accelerated_(true);
 
-		xmap = { |x| x.linlin(0, hsize-1, surface.rangeU[0], surface.rangeU[1]) };
-		ymap = { |y| y.linlin(0, vsize-1, surface.rangeV[0], surface.rangeV[1])};
+		xmap = { |x| x.linlin(0, hsize-1, surface.manifold.rangeU[0], surface.manifold.rangeU[1]) };
+		ymap = { |y| y.linlin(0, vsize-1, surface.manifold.rangeV[0], surface.manifold.rangeV[1])};
 
 		w = image.plot(freeOnClose:true, showInfo:false);
 
@@ -224,6 +225,26 @@ PField : AbstractFunction {
 
 	}
 
+	*selfSwitchPeriodically { |t, g, numSecsSig ...signals|
+		var allSignals = signals.prependI( numSecsSig );
+
+		var f = { |valuesAtLastSwitchTime|
+			//we create a new local time signal starting from 0;
+			var numSecs = valuesAtLastSwitchTime[0];
+			var localT = t.integral1;
+			var output = g.(*[localT]++valuesAtLastSwitchTime);
+
+			{ |x, t...sigCurrentValues|
+
+				T(x,  if( t>=numSecs ){Some(sigCurrentValues)}{None()} )
+
+			}.lift.(*[output, localT]++allSignals);
+		};
+
+		var startValues = allSignals.collect(_.now);
+		^f.selfSwitch( startValues );
+	}
+
 	//bulti-in functions
 	//for fixed rotations I could rotate the points before using them
 	rotate { //angle1, 2, 3 -pi/2, pi/2
@@ -235,7 +256,7 @@ PField : AbstractFunction {
 
 	*prBump{ ^{ |x| 2**((1-x.squared).reciprocal.neg)*2 } }
 
-
+	//SPOTLIGHT
 	*spotlightFixed{ | u, v|
 		^PField( this.spotlightFixedFunc( ImmDef.currentSurface, u, v ) )
 	}
@@ -289,6 +310,7 @@ PField : AbstractFunction {
 
 	}
 
+	//BAR
 	*barU{
 		^PField( this.barFuncU( ImmDef.currentSurface ) )
 	}
@@ -310,8 +332,9 @@ PField : AbstractFunction {
 
 	*barFuncV { |surface|
 		var d = surface.dv/2;
+		var center = surface.vcenter;
 		^{ |u, v, t, widness|
-			if( (surface.vcenter - v).abs < (widness * d) ) {
+			if( (center - v).abs < (widness * d) ) {
 				1.0
 			} {
 				0.0
@@ -319,58 +342,25 @@ PField : AbstractFunction {
 		}
 	}
 
+	//EXPAND CONTRACT
 	*expandContract{
 		^PField( this.expandContractFunc(ImmDef.currentSurface) )
 	}
 
 	//this is kind of unique to closed surfaces.
 	*expandContractFunc { |surface|
-		var scale = { |x| var k = 15; k**x/k };
 		var f = PField.spotlightFunc(surface);
-		^{|u1, v1, t, u2, v2, c|
+		^{|u1, v1, t, u2, v2, c, curve|
+			var xs = [ 0, 1, -99, -99, 1, 1, 5, curve ];
 			if(c < 0.5){
-				f.(u1, v1, t, u2, v2, scale.( (c*2) ) )
+				f.(u1, v1, t, u2, v2, xs.envAt( c*2 ) )
 			} {
-				f.(u1, v1, t, u2+pi, v2.neg, scale.( c.linlin(0.5,1.0, 1.0, 0.0) ) )
+				f.(u1, v1, t, u2+pi, v2.neg, xs.envAt( 1 - (2*(c-0.5)) ) ) //optimized linlin
 			}
 		}
 	}
 
-	//temp
-	*expandContract3{
-		^PField( this.expandContractFunc3(ImmDef.currentSurface) )
-	}
-
-	//this is kind of unique to closed surfaces.
-	*expandContractFunc3 { |surface|
-		var f = PField.spotlightFunc(surface);
-		^{|u1, v1, t, u2, v2, c|
-			if(c < 0.5){
-				f.(u1, v1, t, u2, v2, (c*2) )
-			} {
-				f.(u1, v1, t, u2+pi, v2.neg, c.linlin(0.5,1.0, 1.0, 0.0) )
-			}
-		}
-	}
-	//temp
-
-	*expandContract2{
-		^PField( this.expandContract2Func( ImmDef.currentSurface ) )
-	}
-
-	//this is kind of unique to closed surfaces.
-	*expandContract2Func { |surface|
-		var scale = { |x| var k = 15; k**x/k };
-		var f = PField.spotlightFunc(surface);
-		^{|u1, v1, t, u2, v2, u3, v3, c|
-			if(c < 0.5){
-				f.(u1, v1, t, u2, v2, scale.( (c*2) ) )
-			} {
-				f.(u1, v1, t, u3, v3, scale.( c.linlin(0.5,1.0, 1.0, 0.0) ) )
-			}
-		}
-	}
-
+	//GRADIENT
 	*gradient {
 		^PField( this.gradientFunc( ImmDef.currentSurface ) )
 	}
@@ -378,28 +368,11 @@ PField : AbstractFunction {
 	*gradientFunc { |surface|
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
-		^{ |u, v, t, u2, v2, a, b|
-			var x = distFunc.(u, v, u2, v2)/maxDist;
+
+		^{ |u, v, t, u2=0.0, v2=0.0, a=0.0, b=1.0, curve=0|
+			var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
+			var x = env.envAt( distFunc.(u, v, u2, v2)/maxDist );
 			(a*(1-x)) + (b*x)
-		}
-	}
-
-	*gradientC {
-		^PField( this.gradientCFunc( ImmDef.currentSurface ) )
-	}
-
-	*gradientCFunc { |surface|
-		var distFunc = surface.distFunc;
-		var maxDist = surface.maxDist;
-		^{ |u, v, t, u2, v2, a, b, curve|
-			var x = distFunc.(u, v, u2, v2)/maxDist;
-			if( curve.abs < 0.0001) {
-				(a*(1-x)) + (b*x)
-			} {
-				var denom = 1.0 - exp(curve);
-				var  numer = 1.0 - exp(x * curve);
-				a + ((b - a) * (numer/denom))
-			}
 		}
 	}
 
@@ -410,28 +383,16 @@ PField : AbstractFunction {
 	*gradientFFunc { |surface, f|
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
-		^{ |u, v, t, u2, v2, a, b|
+
+		^{ |u, v, t, u2=0.0, v2=0.0, a=0.0, b=1.0|
 			var x = distFunc.(u, v, u2, v2)/maxDist;
-			f.(x, a, b)
+			f.(x).linlin(0.0,1.0,a,b)
 		}
 	}
 
-	*gradientEnv { |env|
-		^PField( this.gradientEnvFunc( ImmDef.currentSurface, env ) )
-	}
-
-	*gradientEnvFunc { |surface, env|
-		var distFunc = surface.distFunc;
-		var maxDist = surface.maxDist;
-		var array = env.asMultichannelArray[0];
-		^{ |u, v, t, u2, v2, a, b, curve|
-			var x = distFunc.(u, v, u2, v2)/maxDist;
-			array.envAt(x).linlin(0.0,1.0,a,b)
-		}
-	}
-
-	//double factorial
+	//SPHERICAL HARMONICS
 	*sphericalHarmonic{ |m,l|
+		//double factorial
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
 		//Legendre polynomials
 		var legendrepol = { |m,l|
@@ -456,13 +417,14 @@ PField : AbstractFunction {
 	}
 
 	//reactive fields (i.e. using FRP switching)
-	//Random Hills
+
+	//RANDOM HILLS
 	*generateHillsFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5, heightA=1.0, heightB=1.0|
 			n.collect{
 				var tau = 2*pi;
-				var u2 = rrand(s.rangeU[0], s.rangeU[1]);
-				var v2 = rrand(s.rangeV[0], s.rangeV[1]);
+				var u2 = rrand(s.manifold.rangeU[0], s.manifold.rangeU[1]);
+				var v2 = rrand(s.manifold.rangeV[0], s.manifold.rangeV[1]);
 				var size = rrand(sizeA, sizeB);
 				var height = rrand(heightA, heightB);
 				var f = PField.spotlightFixedFunc(s, u2, v2);
@@ -478,8 +440,8 @@ PField : AbstractFunction {
 	*generateHillsBipolarFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5| (n.collect{
 			var tau = 2*pi;
-			var u2 = rrand(s.rangeU[0], s.rangeU[1]);
-			var v2 = rrand(s.rangeV[0], s.rangeV[1]);
+			var u2 = rrand(s.manifold.rangeU[0], s.manifold.rangeU[1]);
+			var v2 = rrand(s.manifold.rangeV[0], s.manifold.rangeV[1]);
 			var size = rrand(sizeA, sizeB);
 			var sig = [-1,1].choose;
 			var f = PField.spotlightFixedFunc(s, u2, v2);
@@ -538,6 +500,15 @@ PField : AbstractFunction {
 			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
 	}
 
+	*randomHills2 { | t, numSecsLo=0.5, numSecsHi=4, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+		//this.checkArgs(\PField, \randomHills,
+			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
+		var numSecs = { |t, lo, hi| rrand(lo, hi) }.lift.(t, numSecsLo, numSecsHi);
+
+		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
+	}
+
 	*randomHillsBipolar {| t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
 		//this.checkArgs(\PField, \randomHillsBipolar,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
@@ -545,7 +516,7 @@ PField : AbstractFunction {
 			t, numSecs, numHills, sizeA, sizeB, bumpSize )
 	}
 
-	*continousRandomSpotlight{ |t, numSecs, curve = 0|
+	*continousRandomSpotlight3{ |t, numSecs, curve = 0|
 		var check = this.checkArgs(\PField, \continousRandomSpotlight,
 			[t, numSecs], [FPSignal, SimpleNumber] );
 		var surface = ImmDef.currentSurface;
@@ -572,62 +543,99 @@ PField : AbstractFunction {
 		};
 
 		//event switching
-		^changefuncEvent.switch( f )
+		^T(changefuncEvent.switch( f ), changefuncEvent)
 	}
 
+	//Continous Random Spotlight
+	*continousRandomSpotlight{ |t, numSecs, curve = 0|
+		var check = this.checkArgs(\PField, \continousRandomSpotlight,
+			[t, numSecs, curve], [FPSignal, [SimpleNumber, FPSignal], [SimpleNumber, FPSignal]] );
+
+		var surface = ImmDef.currentSurface;
+
+		var g = { |t, numSecs|
+			var h = PField.spotlightFixedFunc( surface, rrand(0, 2pi), rrand(pi/2.neg,pi/2) );
+			PField({ |u, v, t, curve|
+				var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
+				if(t < 0.5) {
+					h.(u,v,0,env.envAt(1-(t*2)),0.2)
+				} {
+					h.(u,v,0,env.envAt((t-0.5)*2),0.2)
+				}
+			}).(t / numSecs, curve.asFPSignal)
+		};
+
+		^this.selfSwitchPeriodically(t, g, numSecs.asFPSignal)
+	}
+
+	*continousRandomSpotlight2{ |t, numSecsLo, numSecsHi, curve = 0|
+		var check = this.checkArgs(\PField, \continousRandomSpotlight,
+			[t, numSecsLo, numSecsHi, curve],
+			[FPSignal, [SimpleNumber, FPSignal], [SimpleNumber, FPSignal],[SimpleNumber, FPSignal]] );
+
+		var numSecs = { |t, lo, hi| rrand(lo, hi) }.lift.(t, numSecsLo, numSecsHi);
+		^this.continousRandomSpotlight(t, numSecs, curve)
+
+	}
+
+	//Move Hills
 	*moveHills { |t, numSecs, numHills = 5, size = 0.4, step = 0.4, startInSamePlace = true|
+
+		var numSecsSig = numSecs.asFPSignal;
+		var numHillsSig = numHills.asFPSignal;
+		var sizeSig = size.asFPSignal;
+		var stepSig = step.asFPSignal;
 
 		var surface = ImmDef.currentSurface;
 		var crossfade = { |x, a, b| ( a * (1-x) ) + (b * x) };
 		var iteratePoints = { |ps, r=0.4| ps.collect{ |t| t |+| T( rrand( r.neg, r), rrand( r.neg, r) ) }};
 		var genPoints = { |n| T( rrand(0, 2pi), rrand(-pi, pi) ) ! n };
 		var genPoints2 = { |n| { T( rrand(0, 2pi), rrand(-pi, pi) ) } ! n };
-		var newState = { |oldPoints, step = 0.4|  T( oldPoints, iteratePoints.(oldPoints, step) ) };
-
-		//time wrapping around numSecs
-		var t2 = t.collect(_.mod(numSecs));
-
-		//Point :: T[Float, Float]
-		//state :: T[ Point, Point ]
-		var initFs = newState.( if(startInSamePlace) {
-			genPoints
-		} {
-			genPoints2
-		}.(numHills),
-		step );
-
-		//this generates an event every numSecs containing the from and to functions
-		//to be morphed
-		var changefuncEvent = t2
-		.changes
-		.storePrevious
-		.select{ |tup| (tup.at2 < 0.2) && (tup.at1 > (numSecs-0.2) ) }
-		.hold(0.0).inject( initFs, { |state,x|
-			newState.( state.at2, step )
-		});
+		var updateState = { |oldPoints, step = 0.4|  T( oldPoints, iteratePoints.(oldPoints, step) ) };
 
 		//this morphs from function A to function B
-		var f = { |tup|
+		var f = { |xs|
 
-			t2.collect{ |time|
+			var oldState, nextNumSecs, nextNumHills, nextStep, newState, localTSig, g;
+			#oldState, nextNumSecs, nextNumHills, nextStep = xs;
+			nextNumHills = nextNumHills.asInteger;
+			//"Running switch function again realt: %".format(t.now).postln;
 
-				var pos = crossfade.(time/numSecs, tup.at1, tup.at2);
+			newState = updateState.( oldState.at2, nextStep );
+
+			//we create a new local time signal starting from 0;
+			localTSig = t.integral1;
+
+			g = { |time, numSecs, numHills, size, step|
+				var pos = crossfade.(time/nextNumSecs, newState.at1, newState.at2);
 
 				var funcs = pos.collect{ |p|
 					PField.spotlightFixedFunc(surface, p.at1, p.at2)
 				};
 
-				surface.points.collect{ |v|
+				var output = surface.points.collect{ |v|
 					funcs.collect{ |f|
-						f.(v[0], v[1], t, size, 0.5)
+						f.(v[0], v[1], time, size, 0.5)
 					}.sum.min(1.0)
-				}
-			}
+				};
+
+				T(output, if((time>=nextNumSecs)){Some([newState, numSecs, numHills, step])}{None()})
+			};
+
+			g.lift.(localTSig, numSecsSig, numHillsSig, sizeSig, stepSig);
 		};
 
 		//event switching
-		^changefuncEvent.switch( f )
+		//calling .now is not pure...
+		var startValues = [numSecsSig, numHillsSig, stepSig].collect(_.now);
+		var initFs = updateState.( if(startInSamePlace) {
+			genPoints
+		} {
+			genPoints2
+		}.(numHillsSig.now),
+		stepSig.now );
 
+		^f.selfSwitch( [initFs]++startValues );
 	}
 
 
@@ -705,31 +713,3 @@ PField : AbstractFunction {
 	}
 
 }
-
-
-
-
-/*
-PFieldDef {
-classvar <all;
-var <key, <func;
-
-*new{ |key, f|  // f = { |p,t, c1, c2, ...| ...}
-
-var obj = super.newCopyArgs(key, f);
-if(all.isNil) { all = IdentityDictionary.new };
-all.put(key, obj);
-^obj
-}
-
-*value{ |key,surface...args| //args should all be FPSignals or EventStreams
-var f = { |args2|
-surface.points.collect{ |p|
-all.at(key) !? { |pfdef| pfdef.func.(*([p]++args2)) } ?? { 0 }
-}
-};
-^f <%> args.sequence;
-}
-}
-*/
-

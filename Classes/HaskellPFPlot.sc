@@ -253,6 +253,7 @@ PGridPlot : HaskellPFPlot {
     }
 
     animate{ |sig|
+		this.checkArgs("PGridPlot","animate",[sig],[FPSignal]);
 		^sig.sampleOn(ImmDef.currentTimeES).collect{ |vs|
             IO{
                 rendererAddr.sendMsg(*(["/colors"]++vs.collect{ |v|

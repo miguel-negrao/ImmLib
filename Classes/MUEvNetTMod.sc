@@ -177,7 +177,7 @@ ImmDef : MUENTModDef {
 	[ "slider1", \freq, "slider"2, [1,5] , "slider3", nil ]
 	*/
 
-	*new { |descFunc, surface = (PSurface.geodesicSphere), delta = 0.1,
+	*new { |descFunc, surface = (PGeodesicSphere()), delta = 0.1,
 		sliderSpecs=#[] |
 		var check1 = if(sliderSpecs.size.odd){ Error("ImmDef - sliderSpecs: array size must be even").throw };
 		var sliderSpecs2 = sliderSpecs.clump(2).collect{ |xs| [xs[0].asSymbol, xs[1].asControlSpec] }.flatten;
