@@ -79,6 +79,13 @@ PRiemannianManifold {
 }
 
 PSurface {
+	/*
+	In order to allocate buses for the panners in VBAP each surface is given a unique number stored in the 'num' variable
+	This number is used to create a unique bus name for each point of the surface like 'psurface_surfacenum_pointnum'
+	the bus name is used to assing a UBus to each panner which in turn automatically grabs a Bus at prepare time
+	*/
+	classvar <counter = 0;
+
 	var <manifold;//:: PRiemannianManifold
 	//points
 	// these are the u,v coordinates in the range rangeU X rangeV
@@ -91,12 +98,24 @@ PSurface {
 	//the points in RealVector3D calculated from toFunc for convenience
 	var <pointsRV3D;// :: [RealVector3D]
 
+	var <num;
+
 	*new { |manifold, points, pointsWrapped|
-		^super.newCopyArgs(manifold, points, pointsWrapped, points.collect{ |x| manifold.atlas.toFunc.(*x) })
+		var res = super.newCopyArgs(manifold, points, pointsWrapped, points.collect{ |x| manifold.atlas.toFunc.(*x) }, PSurface.counter);
+		PSurface.incrementCounter;
+		^res
+	}
+
+	*incrementCounter {
+		counter = counter + 1
 	}
 
 	storeArgs {
 		^[manifold, points, pointsWrapped]
+	}
+
+	ubuses{
+		^this.size.collect{ |i| UBus("psurface_%_%".format(num,i).asSymbol,1) }.carg
 	}
 
 	*prToSphericalRange{ |theta, phi|

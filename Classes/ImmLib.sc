@@ -19,6 +19,18 @@
 ImmLib {
 	//previewStereo, previewHRTF
 	classvar <>mode = \vbap;
+	classvar <>options; //are we using this or mode ???
+
+	/*
+	options: dictionary
+	(\type: \vbap)
+	(\type: \vbapTest)
+	(\type: \direct, \spkIndxs: [0,1,2,3,4,5,6,7,8])
+	*/
+
+	*initClass {
+		options = (\type: \vbap)
+	}
 
 	*baseDirectory{
 		^ImmLib.filenameSymbol.asString.dirname++"/.."
@@ -28,43 +40,49 @@ ImmLib {
 		^[this.baseDirectory++"/UnitDefs"]
 	}
 
-	*startupStereo { |numServers = 1|
 
-			var options = VBAPOptions(
+
+	*startupStereo { |numServers = 1, serverOptions|
+
+		var options = VBAPOptions(
 			serverDescs: numServers.collect{ |i| ["ImmLib"++(i+1),"localhost", 57456+i] },
-				device: nil,
-				numOutputChannels: 48,
-				angles: VBAPOptions.speakerPresets[\soniclab][\angles],
-				distances: VBAPOptions.speakerPresets[\soniclab][\dists],
-				loadDefsAtStartup: true,
-				sendSynthDefsAtStartup: false,
-				loadUdefViaRemoteFolder: false,
-				remoteFolderForLoading: "",
-				isSlave: false,
-				extraDefFolders: false
-			).extraDefFolders_( this.extraDefs );
-			VBAPLib.previewMode = \stereo;
-			Udef.loadOnInit = true;
-			VBAPLib.startupR( options );
+			device: nil,
+			numOutputChannels: 48,
+			angles: VBAPOptions.speakerPresets[\soniclab][\angles],
+			distances: VBAPOptions.speakerPresets[\soniclab][\dists],
+			loadDefsAtStartup: true,
+			sendSynthDefsAtStartup: false,
+			loadUdefViaRemoteFolder: false,
+			remoteFolderForLoading: "",
+			isSlave: false,
+			extraDefFolders: false
+		).extraDefFolders_( this.extraDefs );
+		VBAPLib.previewMode = \stereo;
+		mode = \previewStereo;
+		Udef.loadOnInit = true;
+		GenericDef.errorOnNotFound = true;
+		VBAPLib.startupR( options, serverOptions );
 
 	}
 
-	*startupSonicLabTest {
+	*startupSonicLabTest { |serverOptions|
 		var options;
 		options = VBAPOptions.fromPreset(\soniclabTest)
 		.extraDefFolders_( this.extraDefs );
 		Udef.loadOnInit = true;
-		VBAPLib.startupR( options );
+		GenericDef.errorOnNotFound = true;
+		VBAPLib.startupR( options, serverOptions );
 	}
 
-	*startupSonicLab {
+	*startupSonicLab { |serverOptions|
 		var options;
 		options = VBAPOptions
 		.fromPreset(\soniclabSingle)
 		.device_("JackRouter")
 		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
-		VBAPLib.startupR( options );
+		GenericDef.errorOnNotFound = true;
+		VBAPLib.startupR( options, serverOptions );
 		"VBAPLib started".postln;
 		"sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal;
 		Server.default.latency = 0.25;

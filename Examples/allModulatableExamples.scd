@@ -97,6 +97,8 @@ q.chain.gui
 )
 
 //spotlight
+PSphere(20).plot
+
 (
 q = ();
 q.m = 20;
@@ -216,7 +218,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, f|
                                           //  -l <= m <= l
-	var pf1 = PSmoothPlot( PField.sphericalHarmonic(2,2), t, f );
+	var pf1 = PSmoothPlot( PField.sphericalHarmonic(2,3), t, f );
 
 	( amp: USpecArg( pf1 ) )
 

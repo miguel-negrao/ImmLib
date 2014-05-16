@@ -22,39 +22,52 @@ ImmUScore : UScore {
 	var <surface;
 
 	*new { |surface ... events|
-		var m = surface.points.size;
-		//^switch(ImmLib.mode)
-		//vbap already has the preview modes:
-		//{\vbap} {
-		var busses = ClusterArg( m.collect(500 + _) );
+		var m = surface.size;
+
+		//var busses = ClusterArg( m.collect(500 + _) );
+		var busses = surface.ubuses;
 		var ugroups = ClusterArg( m.collect({ |i| ("immGroup"++i).asSymbol }) );
 		var panners;
+		var allEvents;
+		var duration = events.collect(_.endTime).maxItem;
 
-		events.do( _.ugroup_( ugroups ) );
+		events.do{ |e|
+			if(e.items[0].ugroup.isNil){
+				e.ugroup_( ugroups )
+			}
+		};
 
-		panners = MUChain([\vbap3D_Simple_Panner,
-			[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
-		]).private_(true).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
+		allEvents = if( (ImmLib.mode == \vbap) ) {
+			panners = MUChain([\vbap3D_Simple_Panner,
+				[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
+			])
+			.private_(true)
+			.ugroup_(ugroups)
+			.addAction_('addToTail')
+			.hideInGUI_(true)
+			.duration_(duration);
+			events.postln++panners;
+		} {
+			if( ImmLib.mode == \vbapTest ) {
+				var pos = ClusterArg( surface.pointsWrapped.collect{ |p,i|
+					p.theta.linlin(0,2pi,-1,1)
+				});
+				panners = MUChain([\fakeVBAP,
+					[\pos, pos, \u_i_ar_0_bus, busses ]
+				])
+				.private_(true)
+				.ugroup_(ugroups)
+				.addAction_('addToTail')
+				.hideInGUI_(true)
+				.duration_(duration);
+				events.postln++panners;
+			} {
+			 events
+			}
+		};
 
-		^super.new(*(events++panners) ).initImmUScore(surface)
-		/*}
-		{\previewStereo}{
-		UScore( *events ).cleanOverlaps
-		}
-		{\previewHRTF} {
-		//not working yet.
-		var busses = ClusterArg( m.collect(500 + _) );
-		var ugroups = ClusterArg( m.collect({ |i| ("immGroup"++i).asSymbol }) );
-		var panners, decoder;
+		^super.new(*allEvents).initImmUScore(surface)
 
-		events.do( _.ugroup_( ugroups ) );
-
-		panners = MUChain([\ambiEncode,
-		[\angles, surface.pointsDegrees, \u_i_ar_0_bus, busses ]
-		]).ugroup_(ugroups).addAction_('addToTail').hideInGUI_(true);
-
-		UScore(*(events++panners) ).cleanOverlaps
-		}*/
 	}
 
 	initImmUScore{ |asurface|

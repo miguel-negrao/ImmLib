@@ -543,7 +543,7 @@ PField : AbstractFunction {
 		};
 
 		//event switching
-		^T(changefuncEvent.switch( f ), changefuncEvent)
+		^T(changefuncEvent.switch2( f ), changefuncEvent)
 	}
 
 	//Continous Random Spotlight

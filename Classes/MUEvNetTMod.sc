@@ -112,7 +112,7 @@ ImmMod : UEvNetTMod {
         tESM = timer.asENInput;
         tES = tESM.a;
 		eventNetwork = EventNetwork( desc.createDesc(unit, tESM, sliderProxys.collect(_.asENInput) ) );
-        eventNetwork.actuateNow;
+        eventNetwork.start;
     }
 
 	sliderWindow {
@@ -212,7 +212,7 @@ ImmDef : MUENTModDef {
 			currentSurface = surface;
 			ENDef.evaluate( descFunc, [tSignal] )
         } );
-        eventNetwork.actuateNow;
+        eventNetwork.start;
 		timer.start(startTime).unsafePerformIO;
 		^eventNetwork
 	}

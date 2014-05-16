@@ -22,7 +22,8 @@ ImmUChain : MUChain {
 	*new { |surface...args|
 		var f = {
 			//var ssa = "surface.size = %".format(surface.size).postln;
-			var busses = ClusterArg( surface.size.collect(500 + _) );
+			//var busses = ClusterArg( surface.size.collect(500 + _) );
+			var busses = surface.ubuses;
 			super.new( *( args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ) ).releaseSelf_(false).initImmMUChain(surface)
 		};
 		if(surface.isKindOf(PSurface).not) {
@@ -32,12 +33,21 @@ ImmUChain : MUChain {
 		{\vbap} {
 			f.()
 		}
+		{\vbapTest} {
+			f.()
+		}
 		{\previewHRTF}{
 			f.()
 		}
 		{\previewStereo}{
 			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
 			super.new( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) ).initImmMUChain(surface)
+		}
+		{\direct}{
+			var busses = ClusterArg( ImmLib.options.spkIndxs );
+			super.new( *( args ++ [ [\output, [\bus, busses] ] ] ) )
+			.releaseSelf_(false)
+			.initImmMUChain(surface)
 		}
 	}
 
