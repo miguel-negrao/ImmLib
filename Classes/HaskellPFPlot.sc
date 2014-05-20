@@ -42,17 +42,27 @@ HaskellPFPlot {
 
     startCommand {
 		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label;
+		//^"/home/miguel/Development/Haskell/projects/phD/pfVisualizer/dist/build/pfVisualizer/pfVisualizer".shellQuote++" "++rendererAddr.port++" "++label;
     }
 
     startRenderer { |closeOnCmdPeriod = true|
-        fork{
-			this.startCommand.unixCmd;
-			if( closeOnCmdPeriod ) {
-				CmdPeriod.doOnce({ this.stopRenderer })
-			};
-            1.wait;
-            this.sendGeometry
-        }
+		var t, f;
+		this.startCommand.unixCmd;
+		t = Process.elapsedTime;
+		f = { |n|
+			try{
+				rendererAddr.connect;
+				n.postln;
+				"Connected to pfVisualizer at port %, waited %s.".format(rendererAddr.port, (Process.elapsedTime-t).round(0.001)).postln;
+				this.sendGeometry;
+				if( closeOnCmdPeriod ) {
+					CmdPeriod.doOnce({ this.stopRenderer })
+				};
+			}{
+				if(n>0){ 0.01.wait; f.(n-1) } { "Couldn't connect via tcp to pfVisualizer at port %".postln }
+			}
+		};
+		fork{ f.(1000) };
     }
 
 	sendGeometry { }
@@ -63,10 +73,11 @@ HaskellPFPlot {
 
     stopRenderer {
         rendererAddr.sendMsg("/quit");
+		rendererAddr.disconnect;
     }
 
     stopRendererIO {
-        ^rendererAddr.sendMsgIO("/quit")
+		^rendererAddr.sendMsgIO("/quit") >>=| IO{ rendererAddr.disconnect }
     }
 
     *killall {
@@ -105,12 +116,11 @@ PSmoothPlot : HaskellPFPlot {
 		all = IdentityDictionary()
 	}
 
-
-    *basicNew { |type = \sphere, label|
+    *basicNew { |type = \sphere, label, port|
 		var faces = PGeodesicSphere.sphereFaces(2);
 		var surface = PGeodesicSphereDual(2);
-        currentPort = currentPort + 1;
-		^super.basicNew( NetAddr("localhost", currentPort), label ?? "" ).init( faces, surface )
+		port = port ?? { var x = currentPort; currentPort = currentPort + 1; x };
+		^super.basicNew( NetAddr("localhost", port), label ?? "" ).init( faces, surface )
     }
 
 	*off{ |pf...args|
@@ -150,11 +160,11 @@ PSmoothPlot : HaskellPFPlot {
     }
 
 	sendGeometry {
-		faces.clump(150).do{ |faces,i|
-			rendererAddr.sendMsg(* ([if(i==0){"/triangles"}{"/add_triangles"}]++faces.flat))
-		};
+		rendererAddr.sendBundle(nil,
+			["/colors"]++(surface.pointsRV3D.collect{ |v| [0.0, v[2].linlin(-1.0,1.0,0.3,0.7), 0.0] }.flat),
+			["/triangles"]++faces.flat,
+		);
 	}
-
 
     startRendererIO {
         ^IO{ this.startRenderer }
@@ -178,7 +188,7 @@ PSmoothPlot : HaskellPFPlot {
         var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
             var msg = ["/colors"]++v.collect{ |v2|
-                //set greem to corresponding intensity
+                //set green to corresponding intensity
                 [0.0, v2.linlin(0.0,1.0,0.3,1.0), 0.0]
             }.flat;
             rendererAddr.sendMsg( *msg )
