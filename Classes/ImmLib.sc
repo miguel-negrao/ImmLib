@@ -65,6 +65,16 @@ ImmLib {
 
 	}
 
+	*startupDirect { |numServers = 1, serverOptions, spkIndxs|
+
+		var spkIndxs2 = spkIndxs ?? { 10.collect{ |i| i } ++ 12.collect{ |i| i + 12 } ++ [26,27,24] };
+		options = (\type: \direct, \spkIndxs:  spkIndxs2);
+		mode = \direct;
+		GenericDef.errorOnNotFound = true;
+		ULib.startup(false, true, 4, serverOptions);
+		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
+	}
+
 	*startupSonicLabTest { |serverOptions|
 		var options;
 		options = VBAPOptions.fromPreset(\soniclabTest)
@@ -74,7 +84,7 @@ ImmLib {
 		VBAPLib.startupR( options, serverOptions );
 	}
 
-	*startupSonicLab { |serverOptions|
+	*startupSonicLab { |serverOptions, connectServersInJack = false|
 		var options;
 		options = VBAPOptions
 		.fromPreset(\soniclabSingle)
@@ -84,7 +94,7 @@ ImmLib {
 		GenericDef.errorOnNotFound = true;
 		VBAPLib.startupR( options, serverOptions );
 		"VBAPLib started".postln;
-		"sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal;
+		if( connectServersInJack) { "sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal };
 		Server.default.latency = 0.25;
 	}
 

@@ -60,6 +60,9 @@ q.score.prepareAndStart;
 q.chain.gui
 )
 
+UScore().gui
+
+q.score.gui
 //GradientF
 (
 q = ();
