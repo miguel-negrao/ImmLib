@@ -108,7 +108,7 @@ PField : AbstractFunction {
 	}
 
 	//to make it easy to turn on and off animation
-	animate{ |...args|
+	plot{ |...args|
 		^PSmoothPlot(*args.prependI(this))
 	}
 
