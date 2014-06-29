@@ -210,6 +210,7 @@ ImmDef : MUENTModDef {
 			tESM >>= { |tEventSource|
             var tSignal = tEventSource.hold(0.0);
 			currentSurface = surface;
+			currentTimeES = tEventSource;
 			ENDef.evaluate( descFunc, [tSignal] )
         } );
         eventNetwork.start;
