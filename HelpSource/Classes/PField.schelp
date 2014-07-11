@@ -572,8 +572,8 @@ The PField has arguments t, f where f is the frequency of the monocromatic sourc
 ARGUMENT:: m
 Integer - range: -l <= m <= l
 
-ARGUMENT:: l - range 0,1,...
-Integer
+ARGUMENT:: l
+Integer - range 0,1,...
 
 returns:: PField
 
@@ -1093,6 +1093,15 @@ SimpleNumber
 
 ARGUMENT:: numHills
 Integer
+
+ARGUMENT:: sizeA
+Float (0-1)
+
+ARGUMENT:: sizeB
+Float (0-1)
+
+ARGUMENT:: bumpSize
+Float (0-1)
 
 returns::  FPSignal[ [Float] ]
 

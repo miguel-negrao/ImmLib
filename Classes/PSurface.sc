@@ -100,8 +100,11 @@ PSurface {
 
 	var <num;
 
-	*new { |manifold, points, pointsWrapped|
-		var res = super.newCopyArgs(manifold, points, pointsWrapped, points.collect{ |x| manifold.atlas.toFunc.(*x) }, PSurface.counter);
+	var <>renderMethod;
+	var <>renderOptions;
+
+	*new { |manifold, points, pointsWrapped, renderMethod=\vbap, renderOptions|
+		var res = super.newCopyArgs(manifold, points, pointsWrapped, points.collect{ |x| manifold.atlas.toFunc.(*x) }, PSurface.counter, renderMethod, renderOptions);
 		PSurface.incrementCounter;
 		^res
 	}
@@ -111,7 +114,7 @@ PSurface {
 	}
 
 	storeArgs {
-		^[manifold, points, pointsWrapped]
+		^[manifold, points, pointsWrapped, renderMethod, renderOptions]
 	}
 
 	ubuses{
@@ -169,6 +172,16 @@ PSurface {
 
 	vcenter {
 		^manifold.vcenter
+	}
+
+
+	storeModifiersOn { |stream|
+		if( renderMethod != \vbap ) {
+			stream << ".renderMethod_(" <<< renderMethod << ")";
+		};
+		if( renderOptions.notNil ) {
+			stream << ".renderOptions_(" <<< renderOptions << ")";
+		}
 	}
 
 }

@@ -36,7 +36,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, u2, v2, a, b, curve|
 
-	var pf1 = PSmoothPlot( PField.gradient, t, u2, v2, a, b, curve );
+	var pf1 = PField.gradient.(t, u2, v2, a, b, curve );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -60,9 +60,6 @@ q.score.prepareAndStart;
 q.chain.gui
 )
 
-UScore().gui
-
-q.score.gui
 //GradientF
 (
 q = ();
@@ -76,7 +73,7 @@ q.def = ImmDef({ |t, u2, v2, a, b, curve|
 
 	var f = { |c| x.envAt(c) };
 
-	var pf1 = PSmoothPlot( PField.gradientF(f), t, u2, v2, a, b );
+	var pf1 = PField.gradientF(f).plot( t, u2, v2, a, b );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -109,7 +106,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, u0, v0, c, d|
 
-	var pf1 = PSmoothPlot( PField.spotlight, t, u0, v0, c, d );
+	var pf1 = PField.spotlight.plot( t, u0, v0, c, d );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -139,7 +136,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, c, d|
 
-	var pf1 = PSmoothPlot( PField.spotlightFixed(0.0,pi/2), t, c, d );
+	var pf1 = PField.spotlightFixed(0.0,pi/2).plot( t, c, d );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -167,7 +164,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, wideness|
 
-	var pf1 = PSmoothPlot( PField.barU, t, wideness );
+	var pf1 = PField.barU.plot( t, wideness );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -194,7 +191,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, wideness|
 
-	var pf1 = PSmoothPlot( PField.barV, t, wideness );
+	var pf1 = PField.barV.plot( t, wideness );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -221,7 +218,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, f|
                                           //  -l <= m <= l
-	var pf1 = PSmoothPlot( PField.sphericalHarmonic(2,3), t, f );
+	var pf1 = PField.sphericalHarmonic(2,3).plot( t, f );
 
 	( amp: USpecArg( pf1 ) )
 
@@ -249,7 +246,7 @@ q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, u0, v0, c, curve|
 
-	var pf1 = PSmoothPlot( PField.expandContract, t,  u0, v0, c, curve);
+	var pf1 = PField.expandContract.plot( t,  u0, v0, c, curve );
 
 	PGridPlot( pf1);
 
@@ -447,7 +444,6 @@ q.m = 20;
 q.surface = PSphere(q.m);
 
 q.def = ImmDef({ |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
-
 
 	var pf1 = PField.randomHills2(t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
 

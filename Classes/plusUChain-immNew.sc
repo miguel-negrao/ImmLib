@@ -30,33 +30,124 @@ ImmUChain : MUChain {
 			Error("First argument of MUChain must be a PSurface").throw
 		};
 		^switch(ImmLib.mode)
-		{\vbap} {
-			f.()
-		}
-		{\vbapTest} {
-			f.()
-		}
-		{\previewHRTF}{
-			f.()
+		{\normal}{
+			^switch(surface.renderMethod)
+			{\vbap} {
+				f.()
+			}
+			{\vbapTest} {
+				f.()
+			}
+			{\direct}{
+				var busses = ClusterArg( surface.renderOptions.spkIndxs );
+				super.new( *( args ++ [ [\output, [\bus, busses] ] ] ) )
+				.releaseSelf_(false)
+				.initImmMUChain(surface)
+			}
+			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
 		{\previewStereo}{
 			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
 			super.new( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) ).initImmMUChain(surface)
 		}
-		{\direct}{
-			var busses = ClusterArg( ImmLib.options.spkIndxs );
-			super.new( *( args ++ [ [\output, [\bus, busses] ] ] ) )
-			.releaseSelf_(false)
-			.initImmMUChain(surface)
-		}
+		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
+
+
 	}
 
 	initImmMUChain { |asurface|
 		surface = asurface
 	}
 
-	storeArgs {
-		^[surface]++super.storeArgs
+	getInitArgs {
+		var numPreArgs = -1;
+		var unitStoreArgs;
+		"getInitArgs".postln;
+
+		if( this.releaseSelf != true ) {
+			numPreArgs = 3
+		} {
+			if( this.duration != inf ) {
+				numPreArgs = 2
+			} {
+				if( this.track != 0 ) {
+					numPreArgs = 1
+				} {
+					if( this.startTime != 0 ) {
+						numPreArgs = 0
+					}
+				}
+			}
+		};
+
+		unitStoreArgs =  { |unitArray, mod, i|
+			var unit = unitArray[0];
+
+			var def = if( unit.def.class.callByName ) {
+				unit.defName
+			} {
+				unit.def
+			};
+
+			var defArgs = (unit.def.args( unit ) ? []).clump(2);
+
+			var args = unitArray.collect{ |x| x.args.clump(2) }.flop.collect{ |uargArray|
+				var values = uargArray.flop.at(1);
+				if( (values.as(Set).as(Array).size == 1) ) {
+					uargArray[0]
+				} {
+					[uargArray[0][0], values.carg]
+				}
+			}.select({ |item, i|
+				(item != defArgs[i]) && { unit.dontStoreArgNames.includes( item[0] ).not };
+			}).collect({ |item|
+				var umapArgs;
+				if( item[1].isUMap ) {
+					umapArgs = item[1].storeArgs;
+					if( umapArgs.size == 1 ) {
+						[ item[0], umapArgs[0] ]
+					} {
+						[ item[0], umapArgs ]
+					};
+				} {
+					item
+				};
+			}).flatten(1);
+
+			if(mod.isDefined){
+				[def, args, mod.get]
+			} {
+				[def, args]
+			};
+		};
+
+		^([ surface, this.startTime, this.track, this.duration, this.releaseSelf ][..(numPreArgs+1)]) ++
+		[items.collect(_.units).flop, mods, (1..mods.size)-1]
+		.flopWith( unitStoreArgs )
+		//very hacky !
+		.select{ |xs| ['pannerout','output'].includes(xs[0].postln).not }
+		.collect{ |xs|
+			if(xs[1].size == 0) {
+				xs[0]
+			}{
+				xs
+			}
+		}
+	}
+
+	storeModifiersOn { |stream|
+		items[0].storeTags( stream );
+		items[0].storeDisplayColor( stream );
+		items[0].storeDisabledStateOn( stream );
+		if( items[0].global != false ) {
+			stream << ".global_(" <<< items[0].global << ")";
+		};
+		if( items[0].fadeIn != 0.0 ) {
+			stream << ".fadeIn_(" <<< items[0].fadeIn << ")";
+		};
+		if( items[0].fadeOut != 0.0 ) {
+			stream << ".fadeOut_(" <<< items[0].fadeOut << ")";
+		};
 	}
 
 }

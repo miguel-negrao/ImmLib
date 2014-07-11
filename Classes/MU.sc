@@ -165,6 +165,7 @@ MUChain : ClusterBasic {
     var <mods; //[ UInteraction ]
     var <eventNetwork; // Option[ EventNetwork ]
 	var <>private = false;
+	var <freeController;
     *oclass{ ^UChain }
 
 
@@ -223,7 +224,11 @@ MUChain : ClusterBasic {
         };
 
 		//"mods : %".format(mods).s;
-
+		freeController = SimpleController(items.first);
+		freeController.put(\end, {
+			//"MUChain end % %".format(this.asString, this.hash ).postln;
+			mods.catOptions.do(_.stop);
+		});
 		storeArgs = args;
     }
 
@@ -316,7 +321,7 @@ MUChain : ClusterBasic {
 
 		^([ this.startTime, this.track, this.duration, this.releaseSelf ][..numPreArgs]) ++
 		[items.collect(_.units).flop, mods, (1..mods.size)-1].flopWith( unitStoreArgs )
-		.select{ |xs| xs[0].postln != 'pannerout' }
+		.select{ |xs| xs[0] != 'pannerout' }
 		.collect{ |xs|
 			if(xs[1].size == 0) {
 				xs[0]
@@ -327,6 +332,34 @@ MUChain : ClusterBasic {
 	}
 
 	storeArgs { ^this.getInitArgs }
+
+	storeModifiersOn { |stream|
+		items[0].storeTags( stream );
+		items[0].storeDisplayColor( stream );
+		items[0].storeDisabledStateOn( stream );
+		if( items[0].ugroup.notNil ) {
+			stream << ".ugroup_(" <<< this.ugroup << ")";
+		};
+		if( items[0].serverName.notNil ) {
+			stream << ".serverName_(" <<< items[0].serverName << ")";
+		};
+		if( items[0].addAction != \addToHead ) {
+			stream << ".addAction_(" <<< items[0].addAction << ")";
+		};
+		if( items[0].global != false ) {
+			stream << ".global_(" <<< items[0].global << ")";
+		};
+		if( items[0].fadeIn != 0.0 ) {
+			stream << ".fadeIn_(" <<< items[0].fadeIn << ")";
+		};
+		if( items[0].fadeOut != 0.0 ) {
+			stream << ".fadeOut_(" <<< items[0].fadeOut << ")";
+		};
+	}
+
+	collectOSCBundleFuncs { |server, startOffset = 0, infdur = 60|
+		^this.doesNotUnderstand(\collectOSCBundleFuncs, server, startOffset, infdur).items.reduce('++').postln
+	}
 
     prStartBasic { |target, startPos = 0, latency, withRelease = false|
 		mods.catOptions.do(_.start(nil, startPos) );
@@ -422,6 +455,11 @@ MUChain : ClusterBasic {
     }
 
     //methods for which we shouldn't return a ClusterArg
+
+	canFreeSynth {
+        ^items[0].canFreeSynth
+    }
+
     releaseSelf {
         ^items[0].releaseSelf
     }
@@ -460,6 +498,14 @@ MUChain : ClusterBasic {
 
 	finiteDuration {
 		^items[0].finiteDuration
+	}
+
+	getGain {
+		^items[0].getGain
+	}
+
+	muted {
+		^items[0].muted
 	}
 
     <= { |b|
@@ -501,7 +547,7 @@ MUChain : ClusterBasic {
 	}
 
 	duplicate{
-	    ^this.deepCopy;
+	    ^this.cs.interpret;
 	}
 
 	lockStartTime {

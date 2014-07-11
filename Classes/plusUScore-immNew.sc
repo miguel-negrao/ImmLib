@@ -20,16 +20,34 @@
 ImmUScore : UScore {
 
 	var <surface;
-
-	*new { |surface ... events|
+	//have to fix this to allow start times and
+	*new { |surface ... args|
 		var m = surface.size;
 
-		//var busses = ClusterArg( m.collect(500 + _) );
 		var busses = surface.ubuses;
 		var ugroups = ClusterArg( m.collect({ |i| ("immGroup"++i).asSymbol }) );
 		var panners;
 		var allEvents;
-		var duration = events.collect(_.endTime).maxItem;
+		var initArgs = [];
+		var events;
+		var duration;
+
+		if( args[0].isNumber ) {
+			initArgs = initArgs.add(args[0]);
+			args = args[1..];
+			if( args[0].isNumber ) {
+				initArgs = initArgs.add(args[0]);
+				args = args[1..];
+				if( args[0].isArray ) {
+					initArgs = initArgs.add(args[0]);
+					args = args[1..];
+				}
+			}
+		};
+
+		events = args;
+
+		duration = events.collect(_.endTime).maxItem;
 
 		events.do{ |e|
 			if(e.items[0].ugroup.isNil){
@@ -37,7 +55,7 @@ ImmUScore : UScore {
 			}
 		};
 
-		allEvents = if( (ImmLib.mode == \vbap) ) {
+		allEvents = if( (surface.renderMethod == \vbap) ) {
 			panners = MUChain([\vbap3D_Simple_Panner,
 				[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, busses ]
 			])
@@ -48,7 +66,7 @@ ImmUScore : UScore {
 			.duration_(duration);
 			events.postln++panners;
 		} {
-			if( ImmLib.mode == \vbapTest ) {
+			if( surface.renderMethod == \vbapTest ) {
 				var pos = ClusterArg( surface.pointsWrapped.collect{ |p,i|
 					p.theta.linlin(0,2pi,-1,1)
 				});
@@ -66,7 +84,7 @@ ImmUScore : UScore {
 			}
 		};
 
-		^super.new(*allEvents).initImmUScore(surface)
+		^super.new(*(initArgs++allEvents).postln).initImmUScore(surface)
 
 	}
 
@@ -77,15 +95,19 @@ ImmUScore : UScore {
 	getInitArgs {
 		var numPreArgs = -1;
 
-		if( track != 0 ) {
-			numPreArgs = 1
+		if( extraResources.size > 0 ) {
+			numPreArgs = 2
 		} {
-			if( startTime != 0 ) {
-				numPreArgs = 0
+			if( track != 0 ) {
+				numPreArgs = 1
+			} {
+				if( startTime != 0 ) {
+					numPreArgs = 0
+				}
 			}
 		};
 
-		^([surface] ++ [ startTime, track ][..numPreArgs]) ++ events.select{ |ev|
+		^([surface] ++ [ startTime, track, extraResources ][..numPreArgs]) ++ events.select{ |ev|
 			((ev.class == MUChain ) and: { ev.private }).not
 		};
 	}

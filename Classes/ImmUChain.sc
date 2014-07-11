@@ -37,6 +37,14 @@ ImmU : MassEditU { // mimicks a real U, but in fact edits multiple instances of 
 			"MassEditU:init - not all units are of the same Udef".warn;
 		};
 	}
+
+	def {
+		^units[0].defName
+	}
+
+	defName {
+		^units[0].defName
+	}
 }
 
 

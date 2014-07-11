@@ -88,6 +88,7 @@ MUENTModDef : UENTModDef {
 
 }
 
+//why is this just not part of UEvNetTMod ??
 ImmMod : UEvNetTMod {
 	var sliderValues;
 	var <sliderProxys;
@@ -168,8 +169,8 @@ ImmMod : UEvNetTMod {
 }
 
 ImmDef : MUENTModDef {
-	classvar <currentSurface;
-	classvar <currentTimeES;
+	classvar <>currentSurface;
+	classvar <>currentTimeES;
 	var <surface;
 	var <sliderSpecs;
 	/*

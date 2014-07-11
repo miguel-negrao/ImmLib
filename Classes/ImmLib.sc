@@ -17,20 +17,8 @@
 */
 
 ImmLib {
-	//previewStereo, previewHRTF
-	classvar <>mode = \vbap;
-	classvar <>options; //are we using this or mode ???
-
-	/*
-	options: dictionary
-	(\type: \vbap)
-	(\type: \vbapTest)
-	(\type: \direct, \spkIndxs: [0,1,2,3,4,5,6,7,8])
-	*/
-
-	*initClass {
-		options = (\type: \vbap)
-	}
+	//normal or previewStereo
+	classvar <>mode = \normal;
 
 	*baseDirectory{
 		^ImmLib.filenameSymbol.asString.dirname++"/.."
@@ -40,10 +28,7 @@ ImmLib {
 		^[this.baseDirectory++"/UnitDefs"]
 	}
 
-
-
 	*startupStereo { |numServers = 1, serverOptions|
-
 		var options = VBAPOptions(
 			serverDescs: numServers.collect{ |i| ["ImmLib"++(i+1),"localhost", 57456+i] },
 			device: nil,
@@ -65,11 +50,7 @@ ImmLib {
 
 	}
 
-	*startupDirect { |numServers = 1, serverOptions, spkIndxs|
-
-		var spkIndxs2 = spkIndxs ?? { 10.collect{ |i| i } ++ 12.collect{ |i| i + 12 } ++ [26,27,24] };
-		options = (\type: \direct, \spkIndxs:  spkIndxs2);
-		mode = \direct;
+	*startupDirect { |numServers = 1, serverOptions|
 		GenericDef.errorOnNotFound = true;
 		ULib.startup(false, true, 4, serverOptions);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
