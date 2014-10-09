@@ -360,6 +360,10 @@ PField : AbstractFunction {
 		}
 	}
 
+	*constant { |value|
+		^PField({ value })
+	}
+
 	//GRADIENT
 	*gradient {
 		^PField( this.gradientFunc( ImmDef.currentSurface ) )
