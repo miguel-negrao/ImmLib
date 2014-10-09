@@ -99,7 +99,7 @@ ImmUChain : MUChain {
 					[uargArray[0][0], values.carg]
 				}
 			}.select({ |item, i|
-				(item != defArgs[i]) && { unit.dontStoreArgNames.includes( item[0] ).not };
+				(item[1].class != ClusterArg) && (item != defArgs[i]) && { unit.dontStoreArgNames.includes( item[0] ).not };
 			}).collect({ |item|
 				var umapArgs;
 				if( item[1].isUMap ) {
@@ -125,7 +125,7 @@ ImmUChain : MUChain {
 		[items.collect(_.units).flop, mods, (1..mods.size)-1]
 		.flopWith( unitStoreArgs )
 		//very hacky !
-		.select{ |xs| ['pannerout','output'].includes(xs[0].postln).not }
+		.select{ |xs| ['pannerout','output','stereoOutput'].includes(xs[0].postln).not }
 		.collect{ |xs|
 			if(xs[1].size == 0) {
 				xs[0]
