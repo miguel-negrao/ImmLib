@@ -423,10 +423,10 @@ PField : AbstractFunction {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5, heightA=1.0, heightB=1.0|
 			n.collect{
 				var tau = 2*pi;
-				var u2 = rrand(s.manifold.rangeU[0], s.manifold.rangeU[1]);
-				var v2 = rrand(s.manifold.rangeV[0], s.manifold.rangeV[1]);
-				var size = rrand(sizeA, sizeB);
-				var height = rrand(heightA, heightB);
+				var u2 = rrand(s.manifold.rangeU[0].asFloat, s.manifold.rangeU[1].asFloat);
+				var v2 = rrand(s.manifold.rangeV[0].asFloat, s.manifold.rangeV[1].asFloat);
+				var size = rrand(sizeA.asFloat, sizeB.asFloat);
+				var height = rrand(heightA.asFloat, heightB.asFloat);
 				var f = PField.spotlightFixedFunc(s, u2, v2);
 				{ |u,v,t|
 					//PFFuncs.growArea(UnitSpherical(theta, phi)).(p,size,0.5)
@@ -440,9 +440,9 @@ PField : AbstractFunction {
 	*generateHillsBipolarFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5| (n.collect{
 			var tau = 2*pi;
-			var u2 = rrand(s.manifold.rangeU[0], s.manifold.rangeU[1]);
-			var v2 = rrand(s.manifold.rangeV[0], s.manifold.rangeV[1]);
-			var size = rrand(sizeA, sizeB);
+			var u2 = rrand(s.manifold.rangeU[0].asFloat, s.manifold.rangeU[1].asFloat);
+			var v2 = rrand(s.manifold.rangeV[0].asFloat, s.manifold.rangeV[1].asFloat);
+			var size = rrand(sizeA.asFloat, sizeB.asFloat);
 			var sig = [-1,1].choose;
 			var f = PField.spotlightFixedFunc(s, u2, v2);
 			{ |u,v,t|
@@ -503,7 +503,7 @@ PField : AbstractFunction {
 	*randomHills2 { | t, numSecsLo=0.5, numSecsHi=4, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
-		var numSecs = { |t, lo, hi| rrand(lo, hi) }.lift.(t, numSecsLo, numSecsHi);
+		var numSecs = { |t, lo, hi| rrand(lo.asFloat, hi.asFloat) }.lift.(t, numSecsLo, numSecsHi);
 
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
 			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
