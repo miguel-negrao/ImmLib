@@ -538,6 +538,16 @@ MUChain : ClusterBasic {
 		^items[0].fadeOut
     }
 
+
+	fadeInCurve {
+		^items[0].fadeInCurve
+    }
+
+	fadeOutCurve {
+		^items[0].fadeOutCurve
+    }
+
+
 	name {
 		^"M "++items[0].name
     }
