@@ -20,8 +20,11 @@
 ImmUScore : UScore {
 
 	var <surface;
+	var <surfaceKey;
+
 	//have to fix this to allow start times and
-	*new { |surface ... args|
+	*new { |surfaceKey ... args|
+		var surface = PSurfaceDef.get(surfaceKey);
 		var m = surface.size;
 
 		var busses = surface.ubuses;
@@ -84,12 +87,52 @@ ImmUScore : UScore {
 			}
 		};
 
-		^super.new(*(initArgs++allEvents).postln).initImmUScore(surface)
+		^super.new(*(initArgs++allEvents)).initImmUScore(surface, surfaceKey)
 
 	}
 
-	initImmUScore{ |asurface|
-		surface = asurface
+	*getStringWithAllDefs {
+		^"(\n"++
+		PSurfaceDef.all.toTupleArray
+		.collect{ |t| "PSurfaceDef("++t.at1.cs++","++t.at2.cs++");\n\n" }
+		.mreduce++
+		UScore.current.allEvents.collect{ |x| x.units.collect{ |y| y.mod } }
+		.flat.select(_.notNil).collect(_.defName)
+		.removeDups
+		.collect{ |x| UEvNetModDef.all[x] }
+		.select(_.notNil).collect{ |x| x.cs++";\n\n" }
+		.mreduce++
+		UScore.current
+		.allEvents.collect{ |x| x.units.collect{ |y| y.def.name } }
+		.flat
+		.select{ |name|
+			[\vbap3D_Simple_Panner, \stereoOutput, \pannerout]
+			.includes(name).not
+		}
+		.removeDups.collect{ |x| Udef.all.at(x) }
+		.select{ |y| y.notNil }
+		.collect{ |x| x.cs++";\n\n" }
+		.mreduce
+		++"\n)"
+	}
+
+	/*saveAs { |path, successAction, cancelAction|
+		var g = { |path|
+			^super.saveAs(path, successAction, cancelAction);
+			File.checkDo( path++".defs", { |f|
+				f.write( ImmUScore.getStringWithAllDefs );
+			}, overwrite, ask);
+		};
+		if( path.isNil ) {
+			Dialog.savePanel(g);
+		} {
+			g.(path);
+		};
+	}*/
+
+	initImmUScore{ |asurface, asurfaceKey|
+		surface = asurface;
+		surfaceKey = asurfaceKey;
 	}
 
 	getInitArgs {
@@ -107,7 +150,7 @@ ImmUScore : UScore {
 			}
 		};
 
-		^([surface] ++ [ startTime, track, extraResources ][..numPreArgs]) ++ events.select{ |ev|
+		^([surfaceKey] ++ [ startTime, track, extraResources ][..numPreArgs]) ++ events.select{ |ev|
 			((ev.class == MUChain ) and: { ev.private }).not
 		};
 	}

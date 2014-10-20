@@ -18,21 +18,21 @@
 
 ImmUChain : MUChain {
 	var <surface;
+	var <surfaceKey;
 
-	*new { |surface...args|
-		var g = { arg surface, args;
-			"g: surface: %".format(surface).postln;
+	*new { |surfaceKey...args|
+		var surface = PSurfaceDef.get(surfaceKey);
+		var g = { arg surface, surfaceKey, args;
+			//"g: surface: %".format(surface).postln;
 			this.doesNotUnderstand(*[\new]++this.prStripUMods(args) )
-			.initImmUChain( args, this.prGetUmods(args), surface )
+			.initImmUChain( args, this.prGetUmods(args), surface, surfaceKey )
 		};
 		var f = {
 			//var ssa = "surface.size = %".format(surface.size).postln;
 			//var busses = ClusterArg( surface.size.collect(500 + _) );
 			var busses = surface.ubuses;
-			g.(surface, args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ).releaseSelf_(false)
-		};
-		if(surface.isKindOf(PSurface).not) {
-			Error("First argument of MUChain must be a PSurface").throw
+			g.(surface, surfaceKey, args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] )//.releaseSelf_(false)
+			//why are we forcing release self ??
 		};
 		^switch(ImmLib.mode)
 		{\normal}{
@@ -45,20 +45,20 @@ ImmUChain : MUChain {
 			}
 			{\direct}{
 				var busses = ClusterArg( surface.renderOptions.spkIndxs );
-				g.(surface, args ++ [ [\output, [\bus, busses] ] ] )
-				.releaseSelf_(false)
+				g.(surface, surfaceKey, args ++ [ [\output, [\bus, busses] ] ] )
+				//.releaseSelf_(false)
 			}
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
 		{\previewStereo}{
 			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
-			g.(surface, args ++ [ [\stereoOutput, [\point, points ] ] ] )
+			g.(surface, surfaceKey, args ++ [ [\stereoOutput, [\point, points ] ] ] )
 		}
 		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
 
 	}
 
-	initImmUChain { |args, inUMods, asurface|
+	initImmUChain { |args, inUMods, asurface, asurfaceKey|
 
         //connect each UMod with the corresponding ImmU
 		var mus = this.doesNotUnderstand(\units).items
@@ -75,6 +75,7 @@ ImmUChain : MUChain {
 		});
 		storeArgs = args;
 		surface = asurface;
+		surfaceKey = asurfaceKey;
     }
 
 	getInitArgs {
@@ -144,7 +145,7 @@ ImmUChain : MUChain {
 			};
 		};
 
-		^([ surface, this.startTime, this.track, this.duration, this.releaseSelf ][..(numPreArgs+1)]) ++
+		^([ surfaceKey, this.startTime, this.track, this.duration, this.releaseSelf ][..(numPreArgs+1)]) ++
 		//[[units1],[units2],...] :: [[U]]
 		[items.collect(_.units).flop, mods, (1..mods.size)-1]
 		.flopWith( unitStoreArgs )

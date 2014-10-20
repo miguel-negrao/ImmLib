@@ -78,6 +78,23 @@ PRiemannianManifold {
 	}
 }
 
+PSurfaceDef {
+	classvar <all;
+
+	*initClass {
+		all = IdentityDictionary.new
+	}
+
+	*new { |key,surface|
+		this.checkArgs(\PSurface, \global, [key, surface], [Symbol, PSurface]);
+		all.put(key, surface)
+	}
+
+	*get { |key|
+		^all[key]
+	}
+}
+
 PSurface {
 	/*
 	In order to allocate buses for the panners in VBAP each surface is given a unique number stored in the 'num' variable
