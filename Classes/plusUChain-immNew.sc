@@ -20,11 +20,16 @@ ImmUChain : MUChain {
 	var <surface;
 
 	*new { |surface...args|
+		var g = { arg surface, args;
+			"g: surface: %".format(surface).postln;
+			this.doesNotUnderstand(*[\new]++this.prStripUMods(args) )
+			.initImmUChain( args, this.prGetUmods(args), surface )
+		};
 		var f = {
 			//var ssa = "surface.size = %".format(surface.size).postln;
 			//var busses = ClusterArg( surface.size.collect(500 + _) );
 			var busses = surface.ubuses;
-			super.new( *( args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ) ).releaseSelf_(false).initImmMUChain(surface)
+			g.(surface, args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] ).releaseSelf_(false)
 		};
 		if(surface.isKindOf(PSurface).not) {
 			Error("First argument of MUChain must be a PSurface").throw
@@ -40,29 +45,41 @@ ImmUChain : MUChain {
 			}
 			{\direct}{
 				var busses = ClusterArg( surface.renderOptions.spkIndxs );
-				super.new( *( args ++ [ [\output, [\bus, busses] ] ] ) )
+				g.(surface, args ++ [ [\output, [\bus, busses] ] ] )
 				.releaseSelf_(false)
-				.initImmMUChain(surface)
 			}
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
 		{\previewStereo}{
 			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
-			super.new( *( args ++ [ [\stereoOutput, [\point, points ] ] ] ) ).initImmMUChain(surface)
+			g.(surface, args ++ [ [\stereoOutput, [\point, points ] ] ] )
 		}
 		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
 
-
 	}
 
-	initImmMUChain { |asurface|
-		surface = asurface
-	}
+	initImmUChain { |args, inUMods, asurface|
+
+        //connect each UMod with the corresponding ImmU
+		var mus = this.doesNotUnderstand(\units).items
+		.flop.collect({ |xs| ImmMU.fromArray(xs).surface_(asurface) });
+        mods = [inUMods, mus].flopWith{ |uModOption,mu|
+            uModOption.collect{ |uMod| uMod.asUModFor(mu) }
+        };
+
+		//"mods : %".format(mods).s;
+		freeController = SimpleController(items.first);
+		freeController.put(\end, {
+			//"MUChain end % %".format(this.asString, this.hash ).postln;
+			mods.catOptions.do(_.stop);
+		});
+		storeArgs = args;
+		surface = asurface;
+    }
 
 	getInitArgs {
 		var numPreArgs = -1;
 		var unitStoreArgs;
-		"getInitArgs".postln;
 
 		if( this.releaseSelf != true ) {
 			numPreArgs = 3
@@ -90,8 +107,11 @@ ImmUChain : MUChain {
 			};
 
 			var defArgs = (unit.def.args( unit ) ? []).clump(2);
-
-			var args = unitArray.collect{ |x| x.args.clump(2) }.flop.collect{ |uargArray|
+			//[U]                 //~[ [(key,val)] ]
+			var args = unitArray.collect{ |x| x.args.clump(2) }
+			.flop //[ [(key1,val)], [(key2,val)] ]
+			.collect{ |uargArray|
+				    //[values] for key i and for all units
 				var values = uargArray.flop.at(1);
 				if( (values.as(Set).as(Array).size == 1) ) {
 					uargArray[0]
@@ -99,7 +119,9 @@ ImmUChain : MUChain {
 					[uargArray[0][0], values.carg]
 				}
 			}.select({ |item, i|
-				(item[1].class != ClusterArg) && (item != defArgs[i]) && { unit.dontStoreArgNames.includes( item[0] ).not };
+				/*(item[1].class != ClusterArg) &&*/
+				(item != defArgs[i]) and:
+				{ unit.dontStoreArgNames.includes( item[0] ).not };
 			}).collect({ |item|
 				var umapArgs;
 				if( item[1].isUMap ) {
@@ -111,6 +133,7 @@ ImmUChain : MUChain {
 					};
 				} {
 					item
+					//[item[0],item[1].asFloat.asStringPrec(6).interpret]
 				};
 			}).flatten(1);
 
@@ -122,14 +145,19 @@ ImmUChain : MUChain {
 		};
 
 		^([ surface, this.startTime, this.track, this.duration, this.releaseSelf ][..(numPreArgs+1)]) ++
+		//[[units1],[units2],...] :: [[U]]
 		[items.collect(_.units).flop, mods, (1..mods.size)-1]
 		.flopWith( unitStoreArgs )
 		//very hacky !
-		.select{ |xs| ['pannerout','output','stereoOutput'].includes(xs[0].postln).not }
+		.select{ |xs| ['pannerout','output','stereoOutput'].includes(xs[0]).not }
 		.collect{ |xs|
-			if(xs[1].size == 0) {
+			var noArgs = xs[1].size == 0;
+			var noMod = xs[2].isNil;
+			if( noArgs && noMod ) {
+				//print just name
 				xs[0]
 			}{
+				//print all
 				xs
 			}
 		}
@@ -148,6 +176,16 @@ ImmUChain : MUChain {
 		if( items[0].fadeOut != 0.0 ) {
 			stream << ".fadeOut_(" <<< items[0].fadeOut << ")";
 		};
+		if( items[0].fadeInCurve != 0.0 ) {
+			stream << ".fadeInCurve_(" <<< items[0].fadeInCurve << ")";
+		};
+		if( items[0].fadeOutCurve != 0.0 ) {
+			stream << ".fadeOutCurve_(" <<< items[0].fadeOutCurve << ")";
+		};
+		if( items[0].gain != 0.0 ) {
+			stream << ".gain_(" <<< items[0].gain << ")";
+		};
+
 	}
 
 }

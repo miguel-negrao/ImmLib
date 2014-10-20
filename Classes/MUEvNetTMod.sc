@@ -93,11 +93,11 @@ ImmMod : UEvNetTMod {
 	var sliderValues;
 	var <sliderProxys;
 
-	*new { |def, sliderValues|
-		^super.new(def).initImmMod(def, sliderValues)
+	*new { |defName, sliderValues|
+		^super.new(defName).initImmMod(sliderValues)
     }
 
-	initImmMod { |def, sliderValuesArgs|
+	initImmMod { |sliderValuesArgs|
 		var temp = sliderValuesArgs.asArray.clump(2).collect{ |xs| xs[0].asSymbol -> xs[1] }.asIdentDictFromAssocs;
 		sliderValues = def.sliderSpecs.clump(2).collect{ |xs|
 			var key = xs[0];
@@ -107,17 +107,17 @@ ImmMod : UEvNetTMod {
 	}
 
 	asUModFor { |unit|
-        var tESM;
-        timer = ENTimer(desc.delta);
+        var tESM, s;
+        timer = ENTimer(def.delta);
 		sliderProxys = sliderValues.collect{ |v|  FRPGUIProxy(nil, v) };
         tESM = timer.asENInput;
         tES = tESM.a;
-		eventNetwork = EventNetwork( desc.createDesc(unit, tESM, sliderProxys.collect(_.asENInput) ) );
+		eventNetwork = EventNetwork( def.createDesc(unit, tESM, sliderProxys.collect(_.asENInput) ));
         eventNetwork.start;
     }
 
 	sliderWindow {
-		var specspairs = desc.sliderSpecs.clump(2).flop;
+		var specspairs = def.sliderSpecs.clump(2).flop;
 		var labels = specspairs[0];
 		var specs = specspairs[1];
 		var sliders = [this.sliderValues, specs].flopWith{ |v, spec| Slider().value_(spec.unmap(v)) };
@@ -142,8 +142,8 @@ ImmMod : UEvNetTMod {
 	}
 
 	gui { |parent, bounds|
-		if( desc.sliderSpecs.size > 0) {
-			var specspairs = desc.sliderSpecs.clump(2).flop;
+		if( def.sliderSpecs.size > 0) {
+			var specspairs = def.sliderSpecs.clump(2).flop;
 			var labels = specspairs[0];
 			var specs = specspairs[1];
 			var viewHeight = 14;
@@ -164,36 +164,39 @@ ImmMod : UEvNetTMod {
 	}
 
 	storeArgs {
-		^[desc, [this.desc.sliderSpecs.clump(2).flop[0], this.sliderValues].flop.flatten ]
+		^if(this.def.sliderSpecs.size == 0) {
+			[defName]
+		} {
+			[defName, [this.def.sliderSpecs.clump(2).flop[0], this.sliderValues].flop.flatten ]
+		}
     }
 }
 
 ImmDef : MUENTModDef {
 	classvar <>currentSurface;
 	classvar <>currentTimeES;
-	var <surface;
 	var <sliderSpecs;
 	/*
 	sliderSpecs:
 	[ "slider1", \freq, "slider"2, [1,5] , "slider3", nil ]
 	*/
 
-	*new { |descFunc, surface = (PGeodesicSphere()), delta = 0.1,
-		sliderSpecs=#[] |
+	*new { |name, descFunc, delta = 0.1, sliderSpecs=#[] |
+		var check0 = this.checkArgs(\ImmDef, \new, [name, descFunc, delta, sliderSpecs],
+			[Symbol, Function, SimpleNumber, [Array,Nil]] );
 		var check1 = if(sliderSpecs.size.odd){ Error("ImmDef - sliderSpecs: array size must be even").throw };
 		var sliderSpecs2 = sliderSpecs.clump(2).collect{ |xs| [xs[0].asSymbol, xs[1].asControlSpec] }.flatten;
 
-		this.checkArgs(\ImmDef, \new, [descFunc, surface, delta, sliderSpecs2],
-			[Function, PSurface, SimpleNumber, Array] );
-
-        ^super.newCopyArgs(descFunc, delta, surface, sliderSpecs2)
+        var x = super.newCopyArgs(name, descFunc, delta, sliderSpecs2);
+		x.addToAll;
+		^x
     }
 
     createDesc { |unit, tESM, slidersM|
 		this.checkArgs(\ImmDef, \createDesc, [unit, tESM], [MU, Writer] );
         ^tESM >>= { |tEventSource|
             var tSignal = tEventSource.hold(0.0);
-			currentSurface = surface;
+			currentSurface = unit.surface;
 			currentTimeES = tEventSource;
 			slidersM.sequence(EventNetwork) >>= { |sliderSigs|
 				ENDef.evaluate( descFunc, [tSignal]++sliderSigs )
@@ -202,7 +205,7 @@ ImmDef : MUENTModDef {
         }
     }
 
-	test{ |startTime = 0|
+	test{ |startTime = 0, surface|
 		var tESM, eventNetwork, timer;
 		this.checkArgs(\ImmDef, \test, [startTime], [SimpleNumber] );
         timer = ENTimer(delta);
@@ -222,12 +225,12 @@ ImmDef : MUENTModDef {
 
 	asUModFor { |unit|
 
-        ^ImmMod(this).asUModFor(unit, delta)
+        ^ImmMod(name).asUModFor(unit, delta)
 
     }
 
 	storeArgs {
-		^[descFunc, surface, delta,  sliderSpecs ]
+		^[name, descFunc, delta,  sliderSpecs ]
     }
 
 }

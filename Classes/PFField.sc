@@ -469,7 +469,9 @@ PField : AbstractFunction {
 		var f = { |xs|
 
 			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig, r;
+			var ndffdgd = rrand(0,1000);
 			#oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb = xs;
+
 			nextnumHills = nextnumHills.asInteger;
 			//"Running switch function again realt: %".format(t.now).postln;
 			//we create a new set of hills to morph to:
@@ -479,6 +481,7 @@ PField : AbstractFunction {
 
 			//we create a new local time signal starting from 0;
 			localT = t.integral1;
+			//localT.collect{ |t| "% : %".format(ndffdgd,t).postln };
 
 			pfSig = PField({ |u, v, t|
 				var t2 = t/n;
@@ -494,7 +497,7 @@ PField : AbstractFunction {
 		//calling .now is not pure...
 		var startValues = [numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig].collect(_.now);
 		var startValues2 = [startValues[1].asInteger, surface]++startValues[2..];
-		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues );
+		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues )/*.enDebug("self")*/;
 	}
 
 	*randomHills { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
@@ -681,10 +684,11 @@ PField : AbstractFunction {
 		var pf = PField({ |u,v, t, u0, v0, l|
 			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) + t) )
 		});
+		var vrateT = t.changeRate(freq.asFPSignal);
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
+			PSmoothPlot(pf, vrateT, u0, v0, l)
 		} {
-			pf.(t.changeRate(freq), u0, v0, l)
+			pf.(vrateT, u0, v0, l)
 		}
 	}
 

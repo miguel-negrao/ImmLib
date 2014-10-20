@@ -62,6 +62,12 @@ apxCPU { |target|
 }
 */
 
+ImmMU : MU {
+
+	var <>surface;
+
+}
+
 MU : ClusterBasic {
     var <muDef;
     var <muArgs;
