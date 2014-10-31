@@ -51,11 +51,18 @@ ImmUChain : MUChain {
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
 		{\previewStereo}{
-			var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
-			g.(surface, surfaceKey, args ++ [ [\stereoOutput, [\point, points ] ] ] )
+			//var points = ClusterArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
+			//g.(surface, surfaceKey, args ++ [ [\stereoOutput, [\point, points ] ] ] )
+			f.()
 		}
 		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
 
+	}
+
+	*newNoPanner { |surfaceKey...args|
+		var surface = PSurfaceDef.get(surfaceKey);
+		^this.doesNotUnderstand(*[\new]++this.prStripUMods(args) )
+		.initImmUChain( args, this.prGetUmods(args), surface, surfaceKey )
 	}
 
 	initImmUChain { |args, inUMods, asurface, asurfaceKey|
@@ -187,6 +194,26 @@ ImmUChain : MUChain {
 			stream << ".gain_(" <<< items[0].gain << ")";
 		};
 
+	}
+
+	modAt_{ |i,mod|
+		var check = this.checkArgs(\MUChain,\modAt_,[i,mod],[Integer, UEvNetTMod]);
+		var xs = this.items.collect({ |x| x.units[i] });
+		var mu = ImmMU.fromArray(xs).surface_(surface);
+		var oldmod = mods[i];
+		var t = (oldmod >>= { |x|
+			if( x.isKindOf(UEvNetTMod) and: { x.playing } ) {
+				Some( x.timer.t )
+			} { None() }
+		});
+		oldmod.do{ |x|
+			x.disconnect
+		};
+		mod.asUModFor(mu);
+		t.postln.do{ |t|
+			mod.start(nil, t)
+		};
+		mods[i] = Some(mod);
 	}
 
 }

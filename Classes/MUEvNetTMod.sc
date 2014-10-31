@@ -107,7 +107,7 @@ ImmMod : UEvNetTMod {
 	}
 
 	asUModFor { |unit|
-        var tESM, s;
+        var tESM;
         timer = ENTimer(def.delta);
 		sliderProxys = sliderValues.collect{ |v|  FRPGUIProxy(nil, v) };
         tESM = timer.asENInput;
@@ -142,11 +142,13 @@ ImmMod : UEvNetTMod {
 	}
 
 	gui { |parent, bounds|
+		var viewHeight = 14;
+		StaticText(parent, bounds.width@viewHeight).string_(this.defName);
 		if( def.sliderSpecs.size > 0) {
 			var specspairs = def.sliderSpecs.clump(2).flop;
 			var labels = specspairs[0];
 			var specs = specspairs[1];
-			var viewHeight = 14;
+
 			[this.sliderValues, specs, labels, sliderProxys].flopWith{ |v, spec, label, proxy|
 				var bounds2 = (bounds.width @ ((spec.viewNumLines * viewHeight) + ((spec.viewNumLines-1) * 4)));
 				var composite = CompositeView( parent, bounds2 ).resize_(2);
@@ -160,7 +162,7 @@ ImmMod : UEvNetTMod {
 	}
 
 	viewNumLines{
-		^sliderValues.size;
+		^sliderValues.size+1;
 	}
 
 	storeArgs {

@@ -22,7 +22,6 @@ ImmUScore : UScore {
 	var <surface;
 	var <surfaceKey;
 
-	//have to fix this to allow start times and
 	*new { |surfaceKey ... args|
 		var surface = PSurfaceDef.get(surfaceKey);
 		var m = surface.size;
@@ -67,7 +66,7 @@ ImmUScore : UScore {
 			.addAction_('addToTail')
 			.hideInGUI_(true)
 			.duration_(duration);
-			events.postln++panners;
+			events++panners;
 		} {
 			if( surface.renderMethod == \vbapTest ) {
 				var pos = ClusterArg( surface.pointsWrapped.collect{ |p,i|
@@ -81,7 +80,7 @@ ImmUScore : UScore {
 				.addAction_('addToTail')
 				.hideInGUI_(true)
 				.duration_(duration);
-				events.postln++panners;
+				events++panners;
 			} {
 			 events
 			}
@@ -153,6 +152,17 @@ ImmUScore : UScore {
 		^([surfaceKey] ++ [ startTime, track, extraResources ][..numPreArgs]) ++ events.select{ |ev|
 			((ev.class == MUChain ) and: { ev.private }).not
 		};
+	}
+
+	add{ |events|
+		var m = surface.size;
+		var ugroups = ClusterArg( m.collect({ |i| ("immGroup"++i).asSymbol }) );
+		events.do{ |e|
+			if(e.items[0].ugroup.isNil){
+				e.ugroup_( ugroups )
+			}
+		};
+		super.add(events)
 	}
 
 }

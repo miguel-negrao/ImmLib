@@ -427,13 +427,13 @@ MUChain : ClusterBasic {
         mods.catOptions.collect( _.stopIO ).sequence
     }
 
-    release { |time|
+    release { |time, keepFadeOutIfInf = true|
 		mods.catOptions.do(_.stop);
-        this.doesNotUnderstand(\stop, time);
+        this.doesNotUnderstand(\release, time, keepFadeOutIfInf);
     }
 
-    releaseIO { |time|
-        ^IO{ this.doesNotUnderstand(\stop, time) } >>=|
+    releaseIO { |time, keepFadeOutIfInf = true|
+        ^IO{ this.doesNotUnderstand(\release, time, keepFadeOutIfInf) } >>=|
         mods.catOptions.collect( _.stopIO ).sequence
     }
 
@@ -563,7 +563,7 @@ MUChain : ClusterBasic {
 	}
 
 	duplicate{
-	    ^this.cs.interpret;
+	    ^this.deepCopy;
 	}
 
 	lockStartTime {
