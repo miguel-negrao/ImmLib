@@ -415,8 +415,9 @@ q.chain.gui;
 q = ();
 q.m = 20;
 q.surface = PSphere(q.m);
+PSurfaceDef(\surface, q.surface);
 
-q.def = ImmDef({ |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
+q.def = ImmDef(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
 
 
 	var pf1 = PField.randomHills(t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
@@ -425,17 +426,47 @@ q.def = ImmDef({ |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\numSecs, [0.5,10], \numHills, ControlSpec(1,6,step:1), \sizeA, nil, \sizeB, nil, \bumpSize, [0,0.5], \heightA, nil, \heightB, nil]);
+}, 0.1, [\numSecs, [0.5,10], \numHills, ControlSpec(1,6,step:1), \sizeA, nil, \sizeB, nil, \bumpSize, [0,0.5], \heightA, nil, \heightB, nil]);
 
-q.mod = ImmMod(q.def, [\numSecs, 4, \numHills, 3, \sizeA, 0.3, \sizeB, 0.5, \bumpSize, 0.5, \heightA, 1.0, \heightB, 1.0]);
+q.mod = ImmMod(\randomHills, [\numSecs, 4, \numHills, 3, \sizeA, 0.3, \sizeB, 0.5, \bumpSize, 0.5, \heightA, 1.0, \heightB, 1.0]);
 
 q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
 
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
+q.chain = ImmUChain(\surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
 
-q.score = ImmUScore(q.surface, q.chain);
+q.score = ImmUScore(\surface, q.chain);
 q.score.gui
 )
+
+//randomHills deterministic
+
+(
+q = ();
+q.m = 20;
+q.surface = PSphere(q.m);
+PSurfaceDef(\surface, q.surface);
+
+ImmDef(\randomHillsDeterministic, { |t, numSecs, numHills, bumpSize|
+
+	var randomValuesArray = PField.makeArrayForRandHillDeterm(q.surface, 3, 0.2,0.3,1,1);
+	var pf1 = PField.randomHillsDeterministic(t, randomValuesArray, numSecs, numHills, bumpSize);
+
+	PGridPlot( pf1);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [\numSecs, [0.5,10], \numHills, ControlSpec(1,6,step:1), \bumpSize, [0,0.5] ]);
+
+q.mod = ImmMod(\randomHillsDeterministic, [\numSecs, 1, \numHills, 1, \bumpSize, 0]);
+
+q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
+
+q.chain = ImmUChain(\surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
+
+q.score = ImmUScore(\surface, q.chain);
+q.score.gui
+)
+
 
 //randomHills2
 (

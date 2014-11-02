@@ -426,7 +426,6 @@ PField : AbstractFunction {
 	*generateHillsFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5, heightA=1.0, heightB=1.0|
 			n.collect{
-				var tau = 2*pi;
 				var u2 = rrand(s.manifold.rangeU[0].asFloat, s.manifold.rangeU[1].asFloat);
 				var v2 = rrand(s.manifold.rangeV[0].asFloat, s.manifold.rangeV[1].asFloat);
 				var size = rrand(sizeA.asFloat, sizeB.asFloat);
@@ -436,14 +435,13 @@ PField : AbstractFunction {
 					//PFFuncs.growArea(UnitSpherical(theta, phi)).(p,size,0.5)
 					f.(u,v,nil,size, bumpSize) * height
 				}
-			}.sum / n
+			}.sum / n //this is also a function
 		}
 	}
 
 	//Random Hills bipolar
 	*generateHillsBipolarFunc {
 		^{ |n, s, sizeA=0.3, sizeB=0.5, bumpSize=0.5| (n.collect{
-			var tau = 2*pi;
 			var u2 = rrand(s.manifold.rangeU[0].asFloat, s.manifold.rangeU[1].asFloat);
 			var v2 = rrand(s.manifold.rangeV[0].asFloat, s.manifold.rangeV[1].asFloat);
 			var size = rrand(sizeA.asFloat, sizeB.asFloat);
@@ -452,7 +450,18 @@ PField : AbstractFunction {
 			{ |u,v,t|
 				f.(u,v,nil,size, bumpSize) * sig
 			}
-		}.sum / n)*0.5 + 0.5
+		}.sum / n)*0.5 + 0.5 //this is also a function
+		}
+	}
+
+	*generateHillsFuncDeterministic {
+		^{ |s, n, bumpSize=0.5, u2, v2, size, height|
+			n.collect{
+				var f = PField.spotlightFixedFunc(s, u2, v2);
+				{ |u,v,t|
+					f.(u,v,nil,size, bumpSize) * height
+				}
+			}.sum / n //this is also a function
 		}
 	}
 
@@ -500,11 +509,88 @@ PField : AbstractFunction {
 		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues )/*.enDebug("self")*/;
 	}
 
+
+	*randomPatchDeterministic { |surface, randomValuesArray, generateHillsFunc, t, numSecs,
+		numHills = 5, bumpSize = 0.5|
+
+		var numSecsSig = numSecs.asFPSignal;
+		var numHillsSig = numHills.asFPSignal;
+		var bumpSizeSig = bumpSize.asFPSignal;
+		var sizeOfRandoms = randomValuesArray.size;
+
+		//this morphs from function A to function B
+		var f = { |xs|
+
+			var oldState, n, nextnumHills, nextbumpSize, newState,
+			localT, pfSig, r, newHills, oldHills, u2, v2, size, height, counter, rand;
+			#oldState, n, nextnumHills, nextbumpSize, counter = xs;
+
+			//very very very bad and ugly !!!
+			//fix this somehow
+			//prorbably should recompile network every time we press play ? Then we lose state, is that good ?
+			t.collect{
+				if( t.now == 0.0 ) {
+					//"time back to zero".postln;
+					counter = 0;
+				}
+			};
+
+			rand = rrand(0,100000);
+			nextnumHills = nextnumHills.asInteger;
+			//"Running switch function again realt: %".format(t.now).postln;
+			//we create a new set of hills to morph to:
+			oldHills = oldState.at2;
+				//|n, s, u2, v2, size, height|
+			#u2, v2, size, height = randomValuesArray[counter];
+			newHills = generateHillsFunc.(surface, nextnumHills, nextbumpSize, u2, v2, size, height);
+			newState = T( oldHills, newHills );
+
+			//we create a new local time signal starting from 0;
+			localT = t.integral1;
+			//localT.collect{ |t| "% : %".format(ndffdgd,t).postln };
+			pfSig = PField({ |u, v, t|
+				var t2 = t/n;
+				( (1-t2) * oldHills.(u,v)  ) + (t2 * newHills.(u,v))
+			}).(localT);
+
+			//"counter: % %".format(counter, rand).postln;
+
+			{ |x, t, nnumSecs, nnumHills, nbumpSize|
+				T(x, if((t>=n)){Some([newState, nnumSecs, nnumHills, nbumpSize, (counter+1).mod(sizeOfRandoms)])}{None()}) }
+			.lift.(pfSig, localT, numSecsSig, numHillsSig, bumpSizeSig);
+		};
+
+		//event switching
+		//calling .now is not pure...
+		var startValues = [numSecsSig.now.asInteger, numHillsSig.now.asInteger, bumpSizeSig.now];
+		var startHills = generateHillsFunc.(*[surface]++startValues[1..]++randomValuesArray[0]);
+		^f.selfSwitch( [ T( nil, startHills ) ]++startValues++[1] );//.enDebug("self");
+	}
+
 	*randomHills { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
 			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
+	}
+
+	//randomValuesArray -> [ [u, v, size, height] ]
+	//                     all of the same size, obviously
+	*randomHillsDeterministic { | t, randomValuesArray, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+		//this.checkArgs(\PField, \randomHills,
+			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
+		^this.randomPatchDeterministic( ImmDef.currentSurface, randomValuesArray, this.generateHillsFuncDeterministic, t,
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
+	}
+
+	*makeArrayForRandHillDeterm { |s, n, sizeA, sizeB, heightA, heightB|
+		^n.collect{
+			var u2 = rrand(s.manifold.rangeU[0].asFloat, s.manifold.rangeU[1].asFloat);
+			var v2 = rrand(s.manifold.rangeV[0].asFloat, s.manifold.rangeV[1].asFloat);
+			var size = rrand(sizeA.asFloat, sizeB.asFloat);
+			var height = rrand(heightA.asFloat, heightB.asFloat);
+			[u2, v2, size, height]
+		}
 	}
 
 	*randomHills2 { | t, numSecsLo=0.5, numSecsHi=4, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
