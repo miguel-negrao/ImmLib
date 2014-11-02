@@ -456,7 +456,7 @@ PField : AbstractFunction {
 
 	*generateHillsFuncDeterministic {
 		^{ |s, n, bumpSize=0.5, u2, v2, size, height|
-			n.collect{
+			n.asInteger.collect{
 				var f = PField.spotlightFixedFunc(s, u2, v2);
 				{ |u,v,t|
 					f.(u,v,nil,size, bumpSize) * height
@@ -528,14 +528,18 @@ PField : AbstractFunction {
 			//very very very bad and ugly !!!
 			//fix this somehow
 			//prorbably should recompile network every time we press play ? Then we lose state, is that good ?
-			t.collect{
-				if( t.now == 0.0 ) {
+			t.collect{ |t|
+				if( t == 0.0 ) {
 					//"time back to zero".postln;
 					counter = 0;
+					/*#u2, v2, size, height = randomValuesArray[0];
+					oldHills =  generateHillsFunc.(surface, nextnumHills, nextbumpSize, u2, v2, size, height);
+					#u2, v2, size, height = randomValuesArray[1];
+					newHills = generateHillsFunc.(surface, nextnumHills, nextbumpSize, u2, v2, size, height);
+					newState = T( oldHills, newHills );*/
 				}
 			};
 
-			rand = rrand(0,100000);
 			nextnumHills = nextnumHills.asInteger;
 			//"Running switch function again realt: %".format(t.now).postln;
 			//we create a new set of hills to morph to:
@@ -553,6 +557,7 @@ PField : AbstractFunction {
 				( (1-t2) * oldHills.(u,v)  ) + (t2 * newHills.(u,v))
 			}).(localT);
 
+			//rand = rrand(0,100000);
 			//"counter: % %".format(counter, rand).postln;
 
 			{ |x, t, nnumSecs, nnumHills, nbumpSize|
