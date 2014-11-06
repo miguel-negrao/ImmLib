@@ -52,8 +52,10 @@ ImmUScore : UScore {
 		duration = events.collect(_.endTime).maxItem;
 
 		events.do{ |e|
-			if(e.items[0].ugroup.isNil){
-				e.ugroup_( ugroups )
+			if(e.isKindOf(MUChain)) {
+				if(e.items[0].ugroup.isNil){
+					e.ugroup_( ugroups )
+				}
 			}
 		};
 
