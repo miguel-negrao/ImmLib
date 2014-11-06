@@ -683,6 +683,8 @@ PField : AbstractFunction {
 
 		var numSecsSig = numSecs.asFPSignal;
 		var numHillsSig = numHills.asFPSignal;
+		var numHillsLastValsSig = numHillsSig.inject( Tuple2(numHillsSig.now,numHillsSig.now),
+			{ |state,x| Tuple2( state.at2, x ) });
 		var sizeSig = size.asFPSignal;
 		var stepSig = step.asFPSignal;
 
@@ -691,23 +693,29 @@ PField : AbstractFunction {
 		var iteratePoints = { |ps, r=0.4| ps.collect{ |t| t |+| T( rrand( r.neg, r), rrand( r.neg, r) ) }};
 		var genPoints = { |n| T( rrand(0, 2pi), rrand(-pi, pi) ) ! n };
 		var genPoints2 = { |n| { T( rrand(0, 2pi), rrand(-pi, pi) ) } ! n };
-		var updateState = { |oldPoints, step = 0.4|  T( oldPoints, iteratePoints.(oldPoints, step) ) };
 
 		//this morphs from function A to function B
 		var f = { |xs|
 
-			var oldState, nextNumSecs, nextNumHills, nextStep, newState, localTSig, g;
-			#oldState, nextNumSecs, nextNumHills, nextStep = xs;
+			var oldState, nextNumSecs, nextNumHills, nextStep, oldNumHills, newState, localTSig, g;
+			#oldState, nextNumSecs, nextNumHills, oldNumHills, nextStep = xs;
 			nextNumHills = nextNumHills.asInteger;
 			//"Running switch function again realt: %".format(t.now).postln;
 
-			newState = updateState.( oldState.at2, nextStep );
+			if(nextNumHills != oldNumHills) {
+				oldState = if(startInSamePlace) {
+					genPoints
+				} {
+					genPoints2
+				}.(nextNumHills);
+			};
+			newState = iteratePoints.(oldState, nextStep);
 
 			//we create a new local time signal starting from 0;
 			localTSig = t.integral1;
 
-			g = { |time, numSecs, numHills, size, step|
-				var pos = crossfade.(time/nextNumSecs, newState.at1, newState.at2);
+			{ |time, numSecs, numHills, numHillsLastVals, size, step|
+				var pos = crossfade.(time/nextNumSecs, oldState, newState);
 
 				var funcs = pos.collect{ |p|
 					PField.spotlightFixedFunc(surface, p.at1, p.at2)
@@ -719,21 +727,25 @@ PField : AbstractFunction {
 					}.sum.min(1.0)
 				};
 
-				T(output, if((time>=nextNumSecs)){Some([newState, numSecs, numHills, step])}{None()})
-			};
-
-			g.lift.(localTSig, numSecsSig, numHillsSig, sizeSig, stepSig);
+				T(
+					output,
+					if((time>=nextNumSecs)){
+						Some([newState, numSecs, numHills, nextNumHills, step ])
+					}{
+						None()
+					}
+				)
+			}.lift.(localTSig, numSecsSig, numHillsSig, numHillsLastValsSig, sizeSig, stepSig);
 		};
 
 		//event switching
 		//calling .now is not pure...
-		var startValues = [numSecsSig, numHillsSig, stepSig].collect(_.now);
-		var initFs = updateState.( if(startInSamePlace) {
+		var startValues = [numSecsSig, numHillsSig, numHillsSig, stepSig].collect(_.now);
+		var initFs = if(startInSamePlace) {
 			genPoints
 		} {
 			genPoints2
-		}.(numHillsSig.now),
-		stepSig.now );
+		}.(numHillsSig.now);
 
 		^f.selfSwitch( [initFs]++startValues );
 	}
