@@ -251,7 +251,7 @@ MUChain : ClusterBasic {
 			x.disconnect
 		};
 		mod.asUModFor(mu);
-		t.postln.do{ |t|
+		t.do{ |t|
 			mod.start(nil, t)
 		};
 		mods[i] = Some(mod);
