@@ -46,7 +46,6 @@ ImmUChain : MUChain {
 			{\direct}{
 				var busses = ClusterArg( surface.renderOptions.spkIndxs );
 				g.(surface, surfaceKey, args ++ [ [\output, [\bus, busses] ] ] )
-				//.releaseSelf_(false)
 			}
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
