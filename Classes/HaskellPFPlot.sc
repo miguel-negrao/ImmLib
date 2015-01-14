@@ -20,6 +20,7 @@ HaskellPFPlot {
     classvar <currentPort = 30000,
     <binary = "pfVisualizer";
     var <rendererAddr, <label="";
+	var <connected = false;
 
 	*basicNew{ |addr, label=""|
         currentPort = currentPort + 1;
@@ -52,14 +53,14 @@ HaskellPFPlot {
 		f = { |n|
 			try{
 				rendererAddr.connect;
-				n.postln;
+				this.connected_( true );
 				"Connected to pfVisualizer at port %, waited %s.".format(rendererAddr.port, (Process.elapsedTime-t).round(0.001)).postln;
 				this.sendGeometry;
 				if( closeOnCmdPeriod ) {
 					CmdPeriod.doOnce({ this.stopRenderer })
 				};
 			}{
-				if(n>0){ 0.01.wait; f.(n-1) } { "Couldn't connect via tcp to pfVisualizer at port %".postln }
+				if(n>0){ if(n==1000){0.08}{0.01}.wait; f.(n-1) } { "Couldn't connect via tcp to pfVisualizer at port %".format(rendererAddr.port).postln }
 			}
 		};
 		fork{ f.(1000) };
@@ -67,13 +68,27 @@ HaskellPFPlot {
 
 	sendGeometry { }
 
+	sendBundle { |list|
+		if(connected) {
+			try{ rendererAddr.sendBundle(nil, list) }{ this.connected_( false ) }
+		}
+	}
+
+	sendMsg { |...args|
+		if(connected) {
+			try{ rendererAddr.sendMsg(*args) }{ this.connected_( false ) }
+		}
+	}
+
     startRendererIO {
         ^this.startCommand.unixCmdIO
     }
 
     stopRenderer {
-        rendererAddr.sendMsg("/quit");
-		rendererAddr.disconnect;
+        fork{
+			this.sendMsg("/quit");
+			this.connected_( false );
+		};
     }
 
     stopRendererIO {
@@ -91,6 +106,11 @@ HaskellPFPlot {
     *killAllCommand {
         ^"killall pfVisualizer"
     }
+
+	connected_ { |bool|
+		connected = bool;
+		this.changed(\connected, connected)
+	}
 
 }
 
@@ -160,7 +180,7 @@ PSmoothPlot : HaskellPFPlot {
     }
 
 	sendGeometry {
-		rendererAddr.sendBundle(nil,
+		this.sendBundle(nil,
 			["/colors"]++(surface.pointsRV3D.collect{ |v| [0.0, v[2].linlin(-1.0,1.0,0.3,0.7), 0.0] }.flat),
 			["/triangles"]++faces.flat,
 		);
@@ -173,7 +193,7 @@ PSmoothPlot : HaskellPFPlot {
     animate{ |pf...args| //args t, c1, c2, c3...
         var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
-			rendererAddr.sendMsg(* (["/colors"]++([v,surface.points].flopWith{ |c,xs|
+			this.sendMsg(* (["/colors"]++([v,surface.points].flopWith{ |c,xs|
 				var x  = c.linlin(0.0,1.0,0.3,1.0);
 				[0.0, x, 0.0]
 			}.flat)))
@@ -255,18 +275,23 @@ PGridPlot : HaskellPFPlot {
     }
 
 	sendGeometry {
-		rendererAddr.sendMsg(* (["/cubes"]++points) )
+		this.sendMsg(* (["/cubes"]++points) )
 	}
 
     startRendererIO {
         ^IO{ this.startRenderer }
     }
 
+	quitRenderer {
+		this.sendMsg("/quit");
+		rendererAddr.disconnect
+	}
+
     animate{ |sig|
 		this.checkArgs("PGridPlot","animate",[sig],[FPSignal]);
 		^sig.sampleOn(ImmDef.currentTimeES).collect{ |vs|
             IO{
-                rendererAddr.sendMsg(*(["/colors"]++vs.collect{ |v|
+                this.sendMsg(*(["/colors"]++vs.collect{ |v|
                 [0.0,v.linlin(0.0,1.0,0.3,1.0),0.0]
             }.flat) )
             }
