@@ -28,7 +28,7 @@ ImmLib {
 		^[this.baseDirectory++"/UnitDefs"]
 	}
 
-	*startupStereo { |numServers = 1, serverOptions|
+	*startupStereo { |numServers = 1, serverOptions, startGuis = true|
 		var options = VBAPOptions(
 			serverDescs: numServers.collect{ |i| ["ImmLib"++(i+1),"localhost", 57456+i] },
 			device: nil,
@@ -46,13 +46,13 @@ ImmLib {
 		mode = \previewStereo;
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
-		VBAPLib.startupR( options, serverOptions );
+		VBAPLib.startupR( options, serverOptions, startGuis );
 
 	}
 
-	*startupDirect { |numServers = 1, serverOptions|
+	*startupDirect { |numServers = 1, serverOptions, startGuis = true|
 		GenericDef.errorOnNotFound = true;
-		ULib.startup(false, true, 4, serverOptions);
+		ULib.startup(false, true, numServers, serverOptions, startGuis);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
 	}
 
