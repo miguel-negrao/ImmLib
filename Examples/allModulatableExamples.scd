@@ -277,24 +277,23 @@ q.chain.gui;
 //Wave2DSin
 (
 q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
+PSurfaceDef(\sphere1, PSphere(20) );
 
-q.def = ImmDef({ |t, u0, v0, l, freq|
+ImmDef(\def1, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSin(t, u0, v0, l, freq, true);
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
+}, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
 
-q.mod = ImmMod(q.def, [\l, 0.4, \freq, 1]);
+q.mod = ImmMod(\def1, [\l, 0.4, \freq, 1]);
 
 q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
 
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
+q.chain = ImmUChain(\sphere1, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
 
-q.score = ImmUScore(q.surface, q.chain);
+q.score = ImmUScore(\sphere1, q.chain);
 q.score.prepareAndStart;
 q.chain.gui
 )
