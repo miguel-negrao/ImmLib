@@ -247,10 +247,30 @@ PField : AbstractFunction {
 
 	//bulti-in functions
 	//for fixed rotations I could rotate the points before using them
-	rotate { //angle1, 2, 3 -pi/2, pi/2
+	rotate3D { //angle1, 2, 3 -pi/2, pi/2
 		^PField{ |u, v, t, rotate=0, tilt=0, tumble=0...args|
 			var newP = UnitSpherical(u,v).asCartesian.rotate(rotate).tilt(tilt).tumble(tumble).asSpherical;
 			this.func.valueArray( [newP.theta, newP.phi, t]++args )
+		}
+	}
+
+	rotate2D {
+		^PField{ |u, v, t, angle=0...args|
+			//from Point
+			var sinr = angle.sin;
+			var cosr = angle.cos;
+			this.func.valueArray( [(u * cosr) - (v * sinr), (v * cosr) + (u * sinr), t]++args )
+		}
+	}
+
+	rotScale2D {
+		^PField{ |u, v, t, angle=0, scale=1...args|
+			//from Point
+			var sinr = angle.sin;
+			var cosr = angle.cos;
+			var u2 = scale * u;
+			var v2 = scale * v;
+			this.func.valueArray( [(u2 * cosr) - (v2 * sinr), (v2 * cosr) + (u2 * sinr), t]++args )
 		}
 	}
 
@@ -310,15 +330,43 @@ PField : AbstractFunction {
 
 	}
 
+	*spotlightInverse{
+		^PField( this.spotlightFuncInverse( ImmDef.currentSurface ) )
+	}
+
+	*spotlightFuncInverse{ |surface|
+		var bump = this.prBump;
+		var distFunc = surface.distFunc;
+		var maxDist = surface.maxDist;
+
+		^{ |u1, v1, t, u2, v2, c, d=0.2|
+			var dist = distFunc.(u1, v1, u2, v2);
+			var c2 = c.linlin(0.0,1.0, d.neg, 1.0);
+			var cpi = c2 * maxDist;
+			var cpid = cpi+d;
+			if( dist < cpi ) {
+				0
+			} {
+				if( dist < cpid ) {
+					bump.( dist.linlin(cpi,cpid,1.0,0.0) )
+				} {
+					1
+				}
+			}
+		}
+
+	}
+
 	//BAR
 	*barU{
 		^PField( this.barFuncU( ImmDef.currentSurface ) )
 	}
 
 	*barFuncU { |surface|
-		var d = surface.du;
-		^{ |u, v, t, wideness|
-			if( u < (wideness * d) ) {
+		var d = surface.du/2;
+		var center = surface.ucenter;
+		^{ |u, v, t, wideness=0|
+			if( (center - u).abs <= (wideness * d) ) {
 				1.0
 			} {
 				0.0
@@ -334,7 +382,7 @@ PField : AbstractFunction {
 		var d = surface.dv/2;
 		var center = surface.vcenter;
 		^{ |u, v, t, widness|
-			if( (center - v).abs < (widness * d) ) {
+			if( (center - v).abs <= (widness * d) ) {
 				1.0
 			} {
 				0.0
@@ -343,6 +391,7 @@ PField : AbstractFunction {
 	}
 
 	//EXPAND CONTRACT
+	//spherical only
 	*expandContract{
 		^PField( this.expandContractFunc(ImmDef.currentSurface) )
 	}
@@ -374,9 +423,10 @@ PField : AbstractFunction {
 		var maxDist = surface.maxDist;
 
 		^{ |u, v, t, u2=0.0, v2=0.0, a=0.0, b=1.0, curve=0|
-			var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
-			var x = env.envAt( distFunc.(u, v, u2, v2)/maxDist );
-			(a*(1-x)) + (b*x)
+			//var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
+			//var x = env.envAt( distFunc.(u, v, u2, v2)/maxDist );
+			//(a*(1-x)) + (b*x)
+			[ a, 1, -99, -99, b, maxDist, 5, curve ].envAt( distFunc.(u, v, u2, v2) );
 		}
 	}
 
@@ -394,7 +444,31 @@ PField : AbstractFunction {
 		}
 	}
 
+	//this is only valid for planes
+	*gradient1D {
+		^PField( this.gradient1DFunc( ImmDef.currentSurface ) )
+	}
+
+	*gradient1DFunc { |surface|
+		var maxDist = 1.hypot(1);
+		var halfmaxDist = maxDist / 2;
+		var center = RealVector2D[ 0.5, 0.5 ];
+		^{ |u, v, t, angle=0, vala=0.0, valb=1.0, curve=0|
+			var theta = angle * 2pi;
+			var sina = sin(theta);
+			var cosa = cos(theta);
+			var a = RealVector2D[halfmaxDist * cosa, halfmaxDist * sina ] + center;
+			var p = RealVector2D[ u, v ];
+			var n = RealVector2D[ sina.neg, cosa ];
+			var amp = a - p;
+			var d = ( amp - (n * (amp <|> n)) ).norm;
+			[ vala, 1, -99, -99, valb, maxDist, 5, curve ].envAt( d );
+			//d / maxDist
+		}
+	}
+
 	//SPHERICAL HARMONICS
+	//for spherical range
 	*sphericalHarmonic{ |m,l|
 		//double factorial
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
@@ -418,6 +492,62 @@ PField : AbstractFunction {
 		^PField({ |u, v, t,f=3|
 			(shfunc.( u, (pi/2)-v)*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
 		})
+	}
+
+	//for any range
+	*sphericalHarmonicNormalized{ |m,l|
+		var surface = ImmDef.currentSurface.postln;
+		var manifold = surface.manifold;
+		//double factorial
+		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
+		//Legendre polynomials
+		var legendrepol = { |m,l|
+			case
+			{m>l} { Error("Error, m>l").throw }
+			{l==m } { { |x|  ((-1)**m)*dfact.(2*m-1)*((1-x.squared)**(m/2)) } }
+			{l==(m+1)} { ( _*(2*m+1))*legendrepol.(m,m) }
+			{l>=(m+2) } {  ((_*(2*l-1))*legendrepol.(m,l-1)-((l+m-1)*legendrepol.(m,l-2)))/(l-m) }
+		};
+		var simplifiedsh  = { |m,l|
+			if ( (m>l) || (m<l.neg) ) {  Error("error m< -l or m>l").throw };
+			case
+			{m>0}{ { |phi,theta|  legendrepol.(m.abs,l).(cos(theta))*cos(m*phi) } }
+			{m == 0}{ { |phi,theta| legendrepol.(0,l).(cos(theta)) } }
+			{m <0 }{ { |phi,theta| legendrepol.(m.abs,l).(cos(theta))*sin(m.abs*phi) } }
+		};
+
+		var shfunc = simplifiedsh.(m,l);
+		^PField({ |u, v, t,f=3|
+			(shfunc.( manifold.toNormalizedU(u).linlin(0.0,1.0,0,2pi), (pi/2)-manifold.toNormalizedV(v).linlin(0.0,1.0,-pi/2,pi/2))*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
+		})
+	}
+
+	*sphericalHarmonicNormalizedFunc{
+		var surface = ImmDef.currentSurface;
+		var manifold = surface.manifold;
+		//double factorial
+		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
+		//Legendre polynomials
+		var legendrepol = { |m,l|
+			case
+			{m>l} { Error("Error, m>l").throw }
+			{l==m } { { |x|  ((-1)**m)*dfact.(2*m-1)*((1-x.squared)**(m/2)) } }
+			{l==(m+1)} { ( _*(2*m+1))*legendrepol.(m,m) }
+			{l>=(m+2) } {  ((_*(2*l-1))*legendrepol.(m,l-1)-((l+m-1)*legendrepol.(m,l-2)))/(l-m) }
+		};
+		var simplifiedsh  = { |m,l|
+			if ( (m>l) || (m<l.neg) ) {  Error("error m< -l or m>l").throw };
+			case
+			{m>0}{ { |phi,theta|  legendrepol.(m.abs,l).(cos(theta))*cos(m*phi) } }
+			{m == 0}{ { |phi,theta| legendrepol.(0,l).(cos(theta)) } }
+			{m <0 }{ { |phi,theta| legendrepol.(m.abs,l).(cos(theta))*sin(m.abs*phi) } }
+		};
+		^{ |m,l|
+			var shfunc = simplifiedsh.(m,l);
+			PField({ |u, v, t,f=3|
+			(shfunc.( manifold.toNormalizedU(u).linlin(0.0,1.0,0,2pi), (pi/2)-manifold.toNormalizedV(v).linlin(0.0,1.0,-pi/2,pi/2))*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
+		})
+		}
 	}
 
 	//reactive fields (i.e. using FRP switching)
@@ -652,9 +782,13 @@ PField : AbstractFunction {
 			[t, numSecs, curve], [FPSignal, [SimpleNumber, FPSignal], [SimpleNumber, FPSignal]] );
 
 		var surface = ImmDef.currentSurface;
+		var u_lo = surface.manifold.rangeU[0].asFloat;
+		var u_hi = surface.manifold.rangeU[1].asFloat;
+		var v_lo = surface.manifold.rangeV[0].asFloat;
+		var v_hi = surface.manifold.rangeV[1].asFloat;
 
 		var g = { |t, numSecs|
-			var h = PField.spotlightFixedFunc( surface, rrand(0, 2pi), rrand(pi/2.neg,pi/2) );
+			var h = PField.spotlightFixedFunc( surface, rrand(u_lo, u_hi), rrand(v_lo, v_hi) );
 			PField({ |u, v, t, curve|
 				var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
 				if(t < 0.5) {
@@ -679,8 +813,10 @@ PField : AbstractFunction {
 	}
 
 	//Move Hills
-	*moveHills { |t, numSecs, numHills = 5, size = 0.4, step = 0.4, startInSamePlace = true|
+	//modes = bounce | wrap | noconstrain
+	*moveHills { |t, numSecs, numHills = 5, size = 0.4, step = 0.1, startInSamePlace = true, mode = \noconstrain|
 
+		var t1 = if( [\bounce, \wrap, \noconstrain].includes(mode).not ){ Error("PField#moveHills - mode must be one of [\bounce, \wrap, \noconstrain] ").throw };
 		var numSecsSig = numSecs.asFPSignal;
 		var numHillsSig = numHills.asFPSignal;
 		var numHillsLastValsSig = numHillsSig.inject( Tuple2(numHillsSig.now,numHillsSig.now),
@@ -690,9 +826,59 @@ PField : AbstractFunction {
 
 		var surface = ImmDef.currentSurface;
 		var crossfade = { |x, a, b| ( a * (1-x) ) + (b * x) };
-		var iteratePoints = { |ps, r=0.4| ps.collect{ |t| t |+| T( rrand( r.neg, r), rrand( r.neg, r) ) }};
-		var genPoints = { |n| T( rrand(0, 2pi), rrand(-pi, pi) ) ! n };
-		var genPoints2 = { |n| { T( rrand(0, 2pi), rrand(-pi, pi) ) } ! n };
+		var mod2 = { |lo,hi| var d = hi - lo; { |x| (x - lo).mod(d) + lo } };
+		var u_lo = surface.manifold.rangeU[0].asFloat;
+		var u_hi = surface.manifold.rangeU[1].asFloat;
+		var v_lo = surface.manifold.rangeV[0].asFloat;
+		var v_hi = surface.manifold.rangeV[1].asFloat;
+		var wrapFuncU = switch(mode)
+		{\bounce} { fold(_, u_lo, u_hi) }
+		{\noconstrain}{ I.d }
+		{\wrap} { mod2.(u_lo,u_hi) };
+		var wrapFuncV = switch(mode)
+		{\bounce} { fold(_, v_lo, v_hi) }
+		{\noconstrain}{ I.d}
+		{\wrap} { mod2.(v_lo,v_hi) };
+		var iteratePoints = { |ps, r=0.4|
+			var rneg = r.neg;
+			ps.collect{ |t|	t |+| Tuple2(rrand( rneg, r),rrand( rneg, r)) }
+		};
+		/*var iteratePoints = switch(mode)
+		{\bouce} {
+			{ |ps, r=0.4|
+				var rneg;
+				ps.collect{ |t|
+					Tuple2(
+						(t.at1 + rrand( rneg, r)).fold(u_lo, u_hi),
+						(t.at2 + rrand( rneg, r)).fold(v_lo, v_hi)
+					)
+				}
+			}
+		}
+		{\noconstrain}{
+			{ |ps, r=0.4|
+				var rneg;
+				ps.collect{ |t|	t |+| Tuple2(rrand( rneg, r),rrand( rneg, r)) }
+			}
+		}
+		{\wrap} {
+			var d1= "wrap".postln;
+			var u_mod = mod2.(u_lo,u_hi);
+			var v_mod = mod2.(v_lo,v_hi);
+			{ |ps, r=0.4|
+				var rneg = r.neg;
+				ps.collect{ |t|
+					Tuple2(
+						u_mod.(t.at1 + rrand( rneg, r)),
+						v_mod.(t.at2 + rrand( rneg, r))
+					).postln
+				}
+			}
+		};*/
+		var genPoints = { |n|
+			T( rrand(u_lo, u_hi), rrand(v_lo, v_hi) ) ! n };
+		var genPoints2 = { |n| {
+			T( rrand(u_lo, u_hi), rrand(v_lo, v_hi) ) } ! n };
 
 		//this morphs from function A to function B
 		var f = { |xs|
@@ -717,8 +903,9 @@ PField : AbstractFunction {
 			{ |time, numSecs, numHills, numHillsLastVals, size, step|
 				var pos = crossfade.(time/nextNumSecs, oldState, newState);
 
+				//wrap here
 				var funcs = pos.collect{ |p|
-					PField.spotlightFixedFunc(surface, p.at1, p.at2)
+					PField.spotlightFixedFunc(surface, wrapFuncU.(p.at1), wrapFuncV.(p.at2) )
 				};
 
 				var output = surface.points.collect{ |v|
@@ -761,10 +948,10 @@ PField : AbstractFunction {
 	*waveUSin {  |t, l, freq, plot = false|
 
 		var pf = PField({ |u,v, t, l|
-			sin( 2pi * ( (l*u) + t) )
+			sin( 2pi * ( (l*u) - t) )
 		});
 		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(freq), l).postln
+			PSmoothPlot(pf, t.changeRate(freq), l)
 		} {
 			pf.(t.changeRate(freq), l)
 		}
@@ -773,7 +960,7 @@ PField : AbstractFunction {
 
 	*waveVSin { |t, l, freq, plot = false|
 		var pf = PField({ |u,v, t, l|
-			sin( 2pi * ( (l*v) + t) )
+			sin( 2pi * ( (l*v) - t) )
 		});
 		^if( plot ){
 			PSmoothPlot(pf, t.changeRate(freq), l)
@@ -787,7 +974,7 @@ PField : AbstractFunction {
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
 		var pf = PField({ |u,v, t, u0, v0, l|
-			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) + t) )
+			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) - t) )
 		});
 		var vrateT = t.changeRate(freq.asFPSignal);
 		^if( plot ){
@@ -802,7 +989,7 @@ PField : AbstractFunction {
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
 		var pf = PField({ |u,v, t, u0, v0, l|
-			( (l*distFunc.(u,v,u0,v0)/maxDist) + t) % 1.0
+			( (l*distFunc.(u,v,u0,v0)/maxDist) - t) % 1.0
 		});
 		^if( plot ){
 			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
@@ -816,7 +1003,7 @@ PField : AbstractFunction {
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
 		var pf = PField({ |u,v, t, u0, v0, l|
-			g.( (l*distFunc.(u,v,u0,v0)/maxDist) + t)
+			g.( (l*distFunc.(u,v,u0,v0)/maxDist) - t)
 		});
 		^if( plot ){
 			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
