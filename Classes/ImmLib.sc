@@ -52,8 +52,9 @@ ImmLib {
 
 	*startupDirect { |numServers = 1, serverOptions, startGuis = true|
 		GenericDef.errorOnNotFound = true;
-		ULib.startup(false, true, numServers, serverOptions, startGuis);
+		ULib.startup(false, true, numServers, serverOptions, false);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
+		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
 	}
 
 	*startupSonicLabTest { |serverOptions|
