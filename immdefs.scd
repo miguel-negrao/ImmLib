@@ -1,17 +1,150 @@
 (
 var x;
 
-ImmDef2(\sphericalHarmonic, { |t, f|
+ImmDef(\spotlightForPlane, { |t, u0, v0, c, d|
+	var pf1 = PField.spotlight.(Val(0),u0,v0,c,d);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
+	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\spotlightForSphere, { |t, u0, v0, c, d|
+	var pf1 = PField.spotlight.(Val(0),u0,v0,c,d);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
+	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\barU, { |t, wideness|
+	var pf1 = PField.barU.(Val(0), wideness);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\barV, { |t, wideness|
+	var pf1 = PField.barV.(Val(0), wideness);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
+]);
+
+ImmDef(\gradientForPlane, { |t, u, v, a, b, curve|
+	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\v, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
+]);
+
+ImmDef(\gradient1DForPlane, { |t, angle, a, b, curve|
+	var pf1 = PField.gradient1D.(Val(0), angle, a, b, curve);
+	( amp: USpecArg( pf1 ) )
+}, 0.1, [
+	\angle, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
+]);
+
+ImmDef(\gradientForSphere, { |t, u, v, a, b, curve|
+	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
+	\v, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
+]);
+
+
+//ok
+ImmDef(\sphericalHarmonicForSphere, { |t, m, l, f|
                                           //  -l <= m <= l
-	var pf1 = PField.sphericalHarmonic(2,3).(t,f);
+	var pf1 = (T(_,_) <%> m <*> l).switchTo({ |tup|
+		var l = tup.at2;
+		var m = tup.at1.min(l).max(l.neg);
+		PField.sphericalHarmonic(m,l).(t,f)
+	}, PField.sphericalHarmonic(2,3).(t,f) );
 
 	( amp: USpecArg( pf1 ) )
 
 }, 0.1, [
+	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
+	'l', ControlSpec(0, 4, \lin, 1, 0 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
 ]);
 
-ImmDef2(\sphericalHarmonicPlotted, { |t, f|
+//ok
+ImmDef(\sphericalHarmonicForPlane, { |t, m, l, f|
+	var sh = PField.sphericalHarmonicNormalizedFunc;
+                                          //  -l <= m <= l
+	var pf1 = (T(_,_) <%> m <*> l).switchTo({ |tup|
+		var l = tup.at2;
+		var m = tup.at1.min(l).max(l.neg);
+		sh.(m,l).(t,f)
+	});
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	'm', ControlSpec(-4, 4, \lin, 1, 2 ),
+	'l', ControlSpec(0, 4, \lin, 1, 2 ),
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
+]);
+/*
+ImmDef(\sphericalHarmonicForPlane, { |t, m, l, f|
+                                          //  -l <= m <= l
+	var pf1 = PField.sphericalHarmonicNormalized(2,3).(t,f);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
+	'l', ControlSpec(0, 4, \lin, 1, 0 ),
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
+]);
+*/
+//ok
+ImmDef(\sphericalHarmonicPlottedForSphere, { |t, f|
                                           //  -l <= m <= l
 	var pf1 = PField.sphericalHarmonic(2,3).plot(t,f);
 
@@ -20,16 +153,16 @@ ImmDef2(\sphericalHarmonicPlotted, { |t, f|
 }, 0.1, [
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
 ]);
-
-ImmDef2(\expandContract, { |t, u0, v0, c, curve|
+//ok
+ImmDef(\expandContractForSphere, { |t, u0, v0, c, curve|
 
 	var pf1 = PField.expandContract.( t,  u0, v0, c, curve );
 
 	( amp: USpecArg( pf1 ) )
 
 }, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
-
-ImmDef2(\expandContractPlotted, { |t, u0, v0, c, curve|
+//ok
+ImmDef(\expandContractPlottedForSphere, { |t, u0, v0, c, curve|
 
 	var pf1 = PField.expandContract.plot( t,  u0, v0, c, curve );
 
@@ -39,17 +172,18 @@ ImmDef2(\expandContractPlotted, { |t, u0, v0, c, curve|
 
 
 //wave2DSin
+//ok
 x = [\u0, ControlSpec(0,2pi), \v0, [-pi,pi], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ];
-
-ImmDef2(\wave2DSin, { |t, u0, v0, l, freq|
+//ok
+ImmDef(\wave2DSinForSphere, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSin(t, u0, v0, l, freq, false);
 
 	( amp: USpecArg( pf1 ) )
 
 }, 0.1, x );
-
-ImmDef2(\wave2DSinPlotted, { |t, u0, v0, l, freq|
+//ok
+ImmDef(\wave2DSinPlottedForSphere, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSin(t, u0, v0, l, freq, true);
 
@@ -58,16 +192,16 @@ ImmDef2(\wave2DSinPlotted, { |t, u0, v0, l, freq|
 }, 0.1, x );
 
 //wave2DSaw
-
-ImmDef2(\wave2DSaw, { |t, u0, v0, l, freq|
+//ok
+ImmDef(\wave2DSawForSphere, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSaw(t, u0, v0, l, freq, false);
 
 	( amp: USpecArg( pf1 ) )
 
 }, 0.1, x);
-
-ImmDef2(\wave2DSawPlotted, { |t, u0, v0, l, freq|
+//ok
+ImmDef(\wave2DSawPlottedForSphere, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSaw(t, u0, v0, l, freq, true);
 
@@ -75,8 +209,40 @@ ImmDef2(\wave2DSawPlotted, { |t, u0, v0, l, freq|
 
 }, 0.1, x);
 
+x = [\u0, ControlSpec(0,1.0,default:0.5), \v0, ControlSpec(0,1.0,default:0.5), \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ];
+//ok
+ImmDef(\wave2DSinForPlane, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq, false);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, x );
+
+//ok
+ImmDef(\planeWaveForPlane, { |t, angle, l, freq|
+
+	var pf1 = PField({ |u,v, t, l|
+		sin( 2pi * ( (l*u) - t) )
+	}).rotate2D.(t.changeRate(freq), angle.nlin(0,2pi), l);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1,  [\angle, [0,1], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ]; );
+
+//wave2DSaw
+//ok
+ImmDef(\wave2DSawForPlane, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSaw(t, u0, v0, l, freq, false);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, x);
+
 //continousRandomSpotlight
-ImmDef2(\continousRandomSpotlight, { |t, numSecs, curve|
+//ok
+ImmDef(\continousRandomSpotlight, { |t, numSecs, curve|
 
 	var pf1 = PField.continousRandomSpotlight(t, numSecs, curve);
 
@@ -84,7 +250,8 @@ ImmDef2(\continousRandomSpotlight, { |t, numSecs, curve|
 
 }, 0.1, [\numSecs, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
 
-ImmDef2(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
+//ok
+ImmDef(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
 
 	var pf1 = PField.continousRandomSpotlight2(t, numSecsLo, numSecsHi, curve);
 
@@ -92,7 +259,8 @@ ImmDef2(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
 
 }, 0.1, [\numSecsLo, ControlSpec(0.5,10,default:1), \numSecsHi, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
 
-ImmDef2(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
+//ok
+ImmDef(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
 
 
 	var pf1 = PField.randomHills(t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
@@ -109,7 +277,8 @@ ImmDef2(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, 
 	\heightB, ControlSpec(default:1)
 ]);
 
-ImmDef2(\randomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
+//ok
+ImmDef(\randomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
 
 	var pf1 = PField.randomHills2(t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
 
@@ -128,9 +297,10 @@ ImmDef2(\randomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpS
 ]
 );
 
-ImmDef2(\moveHills, { |t, numSecs, numHills, size, step|
+//ok
+ImmDef(\moveHills, { |t, numSecs, numHills, size, step|
 
-	var pf1 = PField.moveHills(t,  numSecs, numHills, size, step);
+	var pf1 = PField.moveHills(t,  numSecs, numHills, size, step, true, \bounce);
 
 	( amp: USpecArg( pf1 ) )
 

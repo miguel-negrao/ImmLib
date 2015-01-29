@@ -1,4 +1,4 @@
-MultiChannelUdef( \globalBufSoundFile, {
+/*MultiChannelUdef( \globalBufSoundFile, {
     UMixOut.ar( 0, BufSndFilePlayer.ar( Udef.numChannels ), 0, true );
 }, [ [ \soundFile, nil, GlobalBufSndFileSpec(nil) ] ], \soundFile, true )
 .chooseFunc_({ |args|
@@ -14,4 +14,5 @@ MultiChannelUdef( \globalBufSoundFile, {
         "globalBufSoundFile"
     };
 });
+*/
 

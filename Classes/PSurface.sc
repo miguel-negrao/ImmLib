@@ -52,7 +52,7 @@ PRiemannianManifold {
 	//maximum geodesic distance
 	var <maxDist;
 	var <rangeU; //e.g. [0, 2*pi]
-	var <rangeV; //e.g. [-pi, pi]
+	var <rangeV; //e.g. [-pi/2, pi/2]
 	//open surface: edges don't wrap around, e.g. square
 	//closed surface: edges wrap around, e.g. torus, sphere
 	var <isClosed;
@@ -76,6 +76,22 @@ PRiemannianManifold {
 	vcenter {
 		^rangeV.sum / 2
 	}
+
+	//from range [0,1]x[0,1] to range rangeU x rangeV
+	fromNormalized { |xs|
+		^[rangeU[0] + (xs[0]*this.du), rangeV[0] + (xs[1]*this.dv) ]
+	}
+
+	//from rangeU x rangeV to range [0,1]x[0,1]
+	toNormalized { |xs|
+		^[ (xs[0]-rangeU[0]) / this.du, (xs[1] - rangeV[0]) / this.dv ]
+	}
+
+	fromNormalizedU { |u| ^rangeU[0] + (u*this.du) }
+	fromNormalizedV { |v| ^rangeV[0] + (v*this.dv) }
+	toNormalizedU { |u| ^(u-rangeU[0]) / this.du }
+	toNormalizedV { |v| ^(v - rangeV[0]) / this.dv }
+
 }
 
 PSurfaceDef {
@@ -102,6 +118,7 @@ PSurface {
 	the bus name is used to assing a UBus to each panner which in turn automatically grabs a Bus at prepare time
 	*/
 	classvar <counter = 0;
+	classvar <>default;
 
 	var <manifold;//:: PRiemannianManifold
 	//points

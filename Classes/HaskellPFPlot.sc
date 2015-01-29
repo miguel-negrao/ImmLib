@@ -18,9 +18,14 @@
 
 HaskellPFPlot {
     classvar <currentPort = 30000,
-    <binary = "pfVisualizer";
+    <binary = "pfVisualizer",
+	<>zoom = 0.5,
+	<>rotx = 275.0,
+	<>roty = 180.0,
+	<>rotz = 105.0;
     var <rendererAddr, <label="";
 	var <connected = false;
+
 
 	*basicNew{ |addr, label=""|
         currentPort = currentPort + 1;
@@ -42,7 +47,7 @@ HaskellPFPlot {
 	}
 
     startCommand {
-		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label;
+		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label++" "++zoom++" "++rotx++" "++roty++" "++rotz;
 		//^"/home/miguel/Development/Haskell/projects/phD/pfVisualizer/dist/build/pfVisualizer/pfVisualizer".shellQuote++" "++rendererAddr.port++" "++label;
     }
 
@@ -292,7 +297,7 @@ PGridPlot : HaskellPFPlot {
 		^sig.sampleOn(ImmDef.currentTimeES).collect{ |vs|
             IO{
                 this.sendMsg(*(["/colors"]++vs.collect{ |v|
-                [0.0,v.linlin(0.0,1.0,0.3,1.0),0.0]
+                [0.0, v, 1-v]
             }.flat) )
             }
         }.reactimate
