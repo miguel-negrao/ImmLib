@@ -259,18 +259,22 @@ PField : AbstractFunction {
 			//from Point
 			var sinr = angle.sin;
 			var cosr = angle.cos;
-			this.func.valueArray( [(u * cosr) - (v * sinr), (v * cosr) + (u * sinr), t]++args )
+			var u2 = (u * cosr) - (v * sinr);
+			var v2 = (v * cosr) + (u * sinr);
+			this.func.valueArray( [u2+0.5, v2+0.5, t]++args )
 		}
 	}
 
-	rotScale2D {
-		^PField{ |u, v, t, angle=0, scale=1...args|
+	rotTransScale2D {
+		^PField{ |u, v, t, angle=0, scale=1, ut=0, vt=0...args|
 			//from Point
 			var sinr = angle.sin;
 			var cosr = angle.cos;
-			var u2 = scale * u;
-			var v2 = scale * v;
-			this.func.valueArray( [(u2 * cosr) - (v2 * sinr), (v2 * cosr) + (u2 * sinr), t]++args )
+			var u2 = scale * (u-0.5);
+			var v2 = scale * (v-0.5);
+			var u3 = (u2 * cosr) - (v2 * sinr);
+			var v3 = (v2 * cosr) + (u2 * sinr);
+			this.func.valueArray( [u3+0.5-ut, v3+0.5-vt, t]++args )
 		}
 	}
 

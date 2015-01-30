@@ -47,7 +47,7 @@ HaskellPFPlot {
 	}
 
     startCommand {
-		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label++" "++zoom++" "++rotx++" "++roty++" "++rotz;
+		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label.shellQuote++" "++zoom++" "++rotx++" "++roty++" "++rotz;
 		//^"/home/miguel/Development/Haskell/projects/phD/pfVisualizer/dist/build/pfVisualizer/pfVisualizer".shellQuote++" "++rendererAddr.port++" "++label;
     }
 
