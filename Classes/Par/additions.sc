@@ -93,17 +93,21 @@ this interferes with values that are themselves arrays...
 	}
 	asUnitArgPar { |unit, key|
 		var umapdef, umap;
-		if( ( this[0].isMemberOf( Symbol ) or: this[0].isKindOf( UMapDef ) ) && {
+		^if( ( this[0].isMemberOf( Symbol ) or: this[0].isKindOf( UMapDef ) ) && {
 			this[1].isArray
 		} ) {
 			umapdef = this[0].asUdef( UMapDef );
 			if( umapdef.notNil && { unit.canUseUMap( key, umapdef ) } ) {
-				^ParUMap( unit.n, *this ).asUnitArg( unit, key );
+				if( umapdef.category == 'ImmLib' ) {
+					ImmUMap( unit.surface, *this ).asUnitArg( unit, key )
+				} {
+					ParUMap( unit.n, *this ).asUnitArg( unit, key )
+				};
 			} {
-				^unit.getDefault( key );
+				unit.getDefault( key );
 			};
 		} {
-			^this;
+			this;
 		};
 	}
 }

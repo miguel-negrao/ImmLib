@@ -1,4 +1,4 @@
-ImmUMap : UMap {
+ImmUMap2 : UMap {
 	var <surface;
 
 	*new { |surface, def, args, mod|

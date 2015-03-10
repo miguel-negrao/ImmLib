@@ -270,8 +270,49 @@ ParUMap : ParU {
 	    this.unit = nil;
 	}
 
+	startMod { |startPos|
+		this.modPerform( \start, startPos );
+	}
+
 }
 
+ImmUMap : ParUMap {
+
+	var <>surface;
+
+	*new { |surfaceKey, def, args, mod|
+		^super.prNewBasic().initImmUMap(surfaceKey, def, args, mod)
+	}
+
+	initImmUMap { |asurface, in, inArgs, inMod|
+		//surface = PSurfaceDef.get(surfaceKey); //only thing different
+		surface = asurface;
+		n = surface.size; //only thing different
+		if( in.isKindOf( this.class.defClass ) ) {
+			def = in;
+			defName = in.name;
+			if( defName.notNil && { defName.asUdef( this.class.defClass ) == def } ) {
+				def = nil;
+			};
+		} {
+			defName = in.asSymbol;
+			def = nil;
+		};
+		if( this.def.notNil ) {
+			inArgs.pairsDo{ |key, val|
+				val.parMatch({},{|x| (x.size != n).assert("ParArg size % / ParU size % : size mismatch - %".format(x.size,n,val)) });
+			};
+			args = this.def.asArgsArrayPar( inArgs ? [], this );
+		} {
+			args = inArgs;
+			"def '%' not found".format(in).warn;
+		};
+		preparedServers = [];
+		mod = inMod.asUModFor( this );
+		this.changed( \init );
+	}
+
+}
 
 + UMapDef {
 
@@ -319,3 +360,4 @@ ParUMap : ParU {
 	}
 
 }
+

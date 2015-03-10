@@ -110,6 +110,7 @@ ParU : U {
 		synth = this.def.makeSynthPar( this, target, startPos, synthAction );
 		if( synth.notNil ) {
 			this.umapPerform( \makeSynth, synth, startPos );
+			this.umapPerform( \startMod, startPos );
 		};
 	}
 

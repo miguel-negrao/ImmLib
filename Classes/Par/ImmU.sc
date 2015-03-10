@@ -31,6 +31,31 @@ ImmU : ParU {
 		mod = inMod.asUModFor( this );
 		this.changed( \init );
 	}
+
+	insertUMap { |key, umapdef, args|
+		var item;
+		umapdef = umapdef.asUdef( UMapDef );
+		if( umapdef.notNil ) {
+			//hack
+			if( umapdef.category == 'ImmLib' ) {
+				if( umapdef.canInsert ) {
+					item = this.get( key );
+					this.set( key, ImmUMap(surface, umapdef,  args ) );
+					this.get( key ).setConstrain( umapdef.insertArgName, item );
+				} {
+					this.set( key, ImmUMap(surface, umapdef, args ) );
+				}
+			}{
+				if( umapdef.canInsert ) {
+					item = this.get( key );
+					this.set( key, ParUMap(n, umapdef,  args ) );
+					this.get( key ).setConstrain( umapdef.insertArgName, item );
+				} {
+					this.set( key, ParUMap(n, umapdef, args ) );
+				}
+			};
+		};
+	}
 }
 
 + Symbol {

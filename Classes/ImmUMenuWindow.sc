@@ -219,7 +219,11 @@ ImmUMenuWindow {
 					ULib.allServers.do(_.reboot)
 				},
 				'kill all servers', {
-					"killall -9 scsynth;killall -9 supernova".unixCmd
+					ULib.allSevers.do(_.quit);
+					"killall -9 scsynth;killall -9 supernova".unixCmd;
+				},
+				'test speakers', {
+					UChain(\testSpeakers, \output).gui
 				}
 
 			)
