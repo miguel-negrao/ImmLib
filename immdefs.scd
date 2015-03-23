@@ -29,7 +29,7 @@ ImmDef(\spotlightForSphere, { |t, u0, v0, c, d|
 
 }, 0.1, [
 	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
@@ -40,7 +40,7 @@ ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
 
 }, 0.1, [
 	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
@@ -89,7 +89,7 @@ ImmDef(\gradientForSphere, { |t, u, v, a, b, curve|
 
 }, 0.1, [
 	\u, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
@@ -364,7 +364,7 @@ ImmDef(\UMspotlightForSphere, { |t, u0, v0, c, d|
 
 }, 0.1, [
 	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
@@ -375,7 +375,7 @@ ImmDef(\UMspotlightInverseForPlane, { |t, u0, v0, c, d|
 
 }, 0.1, [
 	\u0, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v0, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
@@ -424,7 +424,7 @@ ImmDef(\UMgradientForSphere, { |t, u, v, a, b, curve|
 
 }, 0.1, [
 	\u, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
-	\v, ControlSpec(-pi/2, -pi/2, \lin, 0, 0.0 ),
+	\v, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
