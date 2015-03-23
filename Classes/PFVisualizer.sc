@@ -16,7 +16,7 @@
     along with GameOfLife Unit Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-HaskellPFPlot {
+PFVisualizer {
     classvar <currentPort = 30000,
     <binary = "pfVisualizer",
 	<>zoom = 0.5,
@@ -42,21 +42,21 @@ HaskellPFPlot {
 	}
 
 	*fullBinaryPath {
-		^"%/../pfVisualizer/%/%".format(HaskellPFPlot.filenameSymbol.asString.dirname,
-			thisProcess.platform.name, HaskellPFPlot.binary)
+		^"%/../pfVisualizer/%/%".format(PFVisualizer.filenameSymbol.asString.dirname,
+			thisProcess.platform.name, PFVisualizer.binary)
 	}
 
     startCommand {
-		^HaskellPFPlot.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label.shellQuote++" "++zoom++" "++rotx++" "++roty++" "++rotz;
-		//^"/home/miguel/Development/Haskell/projects/phD/pfVisualizer/dist/build/pfVisualizer/pfVisualizer".shellQuote++" "++rendererAddr.port++" "++label;
+		^PFVisualizer.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label.shellQuote++" "++zoom++" "++rotx++" "++roty++" "++rotz;
     }
 
     startRenderer { |closeOnCmdPeriod = true|
 		var t, f;
 		this.startCommand.unixCmd;
 		t = Process.elapsedTime;
-		f = { |n|
-			try{
+		f = {
+			|attempts|
+			try {
 				rendererAddr.connect;
 				this.connected_( true );
 				"Connected to pfVisualizer at port %, waited %s.".format(rendererAddr.port, (Process.elapsedTime-t).round(0.001)).postln;
@@ -64,18 +64,30 @@ HaskellPFPlot {
 				if( closeOnCmdPeriod ) {
 					CmdPeriod.doOnce({ this.stopRenderer })
 				};
-			}{
-				if(n>0){ if(n==1000){0.08}{0.01}.wait; f.(n-1) } { "Couldn't connect via tcp to pfVisualizer at port %".format(rendererAddr.port).postln }
+			} {
+				|err|
+				if (err.isKindOf(PrimitiveFailedError) and: { err.failedPrimitiveName == '_NetAddr_Connect'}) {
+					if(attempts > 0){
+						0.01.wait;
+						f.value(attempts - 1)
+					}{
+						"PFVisualizer class: could not connect to pfVisualizer process via tcp at port %.".format(rendererAddr.port).warn
+					}
+				} {
+
+					err.throw;
+				}
 			}
 		};
+
 		fork{ f.(1000) };
     }
 
 	sendGeometry { }
 
-	sendBundle { |list|
+	sendBundle { |...args|
 		if(connected) {
-			try{ rendererAddr.sendBundle(nil, list) }{ this.connected_( false ) }
+			try{ rendererAddr.sendBundle(nil, *args) }{ this.connected_( false ) }
 		}
 	}
 
@@ -85,27 +97,16 @@ HaskellPFPlot {
 		}
 	}
 
-    startRendererIO {
-        ^this.startCommand.unixCmdIO
-    }
-
     stopRenderer {
         fork{
 			this.sendMsg("/quit");
+			0.1.wait;
 			this.connected_( false );
 		};
     }
 
-    stopRendererIO {
-		^rendererAddr.sendMsgIO("/quit") >>=| IO{ rendererAddr.disconnect }
-    }
-
     *killall {
        this.killAllCommand.unixCmd
-    }
-
-    *killallIO {
-        ^this.killAllCommand.unixCmdIO
     }
 
     *killAllCommand {
@@ -117,23 +118,30 @@ HaskellPFPlot {
 		this.changed(\connected, connected)
 	}
 
+	//methods returning IO
+    *killallIO {
+        ^this.killAllCommand.unixCmdIO
+    }
+
+	startRendererIO {
+		^IO{ this.startRenderer }
+    }
+
+    stopRendererIO {
+		^IO{
+			fork{
+				this.sendMsg("/quit");
+				0.1.wait;
+				this.connected_( false );
+			};
+		}
+    }
+
+
 }
 
-
-/*
-x = ParameterFieldPlot2( \sphere, "test"  );
-x.startRenderer
-x.stopRenderer
-
-    *basicNew { |type = \sphere, label|
-        var faces = PSurface.sphereFaces(2);
-        var points = faces.collect{ |vertices| vertices.sum / 3 };
-        var surface = PSurface.sphericalGeometry( points.collect{ |p|
-            p.asUnitSpherical.storeArgs
-        } );
-*/
-PSmoothPlot : HaskellPFPlot {
-	classvar <all;//:: IdentityDictionary Symbol HaskellPFPlot
+PSmoothPlot : PFVisualizer {
+	classvar <all;//:: IdentityDictionary Symbol PFVisualizer
 
     var <faces, <surface;
 
@@ -185,15 +193,11 @@ PSmoothPlot : HaskellPFPlot {
     }
 
 	sendGeometry {
-		this.sendBundle(nil,
+		this.sendBundle(
 			["/colors"]++(surface.pointsRV3D.collect{ |v| [0.0, v[2].linlin(-1.0,1.0,0.3,0.7), 0.0] }.flat),
 			["/triangles"]++faces.flat,
 		);
 	}
-
-    startRendererIO {
-        ^IO{ this.startRenderer }
-    }
 
     animate{ |pf...args| //args t, c1, c2, c3...
         var tEventSource = args[0].changes;
@@ -223,14 +227,8 @@ PSmoothPlot : HaskellPFPlot {
 
 }
 
-
-/*
-x = ParameterGridPlot( ParameterSurface.geodesicSphere );
-x.startRenderer
-x.stopRenderer
-*/
-PGridPlot : HaskellPFPlot {
-	classvar <all;//:: IdentityDictionary Symbol HaskellPFPlot
+PGridPlot : PFVisualizer {
+	classvar <all;//:: IdentityDictionary Symbol PFVisualizer
 
 	var <points;
 
@@ -269,27 +267,8 @@ PGridPlot : HaskellPFPlot {
         points = aPoints
     }
 
-    startRenderer { |closeOnCmdPeriod = true|
-        fork{
-            super.startRenderer(closeOnCmdPeriod);
-
-            1.wait;
-
-            this.sendGeometry
-        }
-    }
-
 	sendGeometry {
 		this.sendMsg(* (["/cubes"]++points) )
-	}
-
-    startRendererIO {
-        ^IO{ this.startRenderer }
-    }
-
-	quitRenderer {
-		this.sendMsg("/quit");
-		rendererAddr.disconnect
 	}
 
     animate{ |sig|
