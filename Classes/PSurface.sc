@@ -46,6 +46,39 @@ PAtlas {
 	}
 }
 
+/*
+add this to documentation later
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: points
+Array of floats because it's fast to prepend to the rest of arguments in function.
+
+ARGUMENT:: pointsWrapped
+Points in some other arbitrary class as long as the panners, etc know what to do with them, e.g. UnitSpherical, RealVector2D, etc.
+
+ARGUMENT:: toFunc
+Function to send coordinates pairs u,v into RealVector3D.
+
+ARGUMENT:: fromFunc
+Function to get coordinates from RealVector3D.
+
+ARGUMENT:: distFunc
+Geodesic distance function - distance along the shortest path between two points on surface.
+
+ARGUMENT:: maxDist
+Maximum geodesic distance.
+
+ARGUMENT:: rangeU
+e.g. [0, 2*pi].
+
+ARGUMENT:: rangeV
+e.g. [-pi, pi].
+
+ARGUMENT:: isClosed
+closed surface: edges wrap around, e.g. torus, sphere.
+*/
 
 PRiemannianManifold {
 	var <atlas;//:: PAtlas
@@ -168,7 +201,7 @@ PSurface {
 	if UnitSpherical(0,0) is to map to (0,0) in vbap coordinats then x=1, y=0,z=0 is front.
 	Because of this the theta angle needs to be reversed
 
-
+	converts points to UnitSpherical using degrees (0-360)
 	*/
 	pointsDegrees {
 		^ClusterArg( pointsWrapped.collect{ |p,i|

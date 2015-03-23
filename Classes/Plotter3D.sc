@@ -16,7 +16,7 @@
     along with GameOfLife Unit Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-Plotter3D : HaskellPFPlot {
+Plotter3D : PFVisualizer {
     var <points, <colors;
 
     *new { |points, colors, closeOnCmdPeriod = false|

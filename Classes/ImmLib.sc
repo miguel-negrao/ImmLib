@@ -47,6 +47,7 @@ ImmLib {
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
 		VBAPLib.startupR( options, serverOptions, startGuis );
+		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
 
 	}
 
@@ -75,9 +76,24 @@ ImmLib {
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
 		VBAPLib.startupR( options, serverOptions );
-		"VBAPLib started".postln;
+		"ImmLib started".postln;
 		if( connectServersInJack) { "sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal };
 		Server.default.latency = 0.25;
+		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
+
+	}
+
+	*startupVBAP { |vbapOptions, serverOptions|
+		var options;
+		options = vbapOptions
+		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
+		Udef.loadOnInit = true;
+		GenericDef.errorOnNotFound = true;
+		VBAPLib.startupR( options, serverOptions );
+		"ImmLib started".postln;
+		Server.default.latency = 0.25;
+		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
+
 	}
 
 	*recWindow {
