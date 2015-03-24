@@ -113,7 +113,7 @@ ImmLib {
 				q.recSynth = Synth.basicNew("rec-ins", q.recServer);
 				q.recBuf = Buffer.new(q.recServer, 262144, 32);
 				q.recBuf.alloc(
-					q.recBuf.writeMsg(q.pathGui.string, "CAF", q.bitGui.item.postln, 0, 0, true,
+					q.recBuf.writeMsg(q.pathGui.string, "CAF", q.bitGui.item, 0, 0, true,
 						completionMessage:
 						q.recSynth.newMsg(q.recServer, ["bufnum", q.recBuf], 'addToTail')
 					)

@@ -52,9 +52,9 @@ ImmUScore : UScore {
 		duration = events.collect(_.endTime).maxItem;
 
 		events.do{ |e|
-			if(e.isKindOf(ParUChain).postln) {
-				if(e.ugroup.postln.isNil.postln){
-					e.ugroup_( ugroups.postln )
+			if(e.isKindOf(ParUChain)) {
+				if(e.ugroup.isNil){
+					e.ugroup_( ugroups )
 				}
 			}
 		};

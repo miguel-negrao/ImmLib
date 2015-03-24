@@ -55,7 +55,7 @@ ImmUChain : ParUChain {
 	initImmUChain { |asurface, asurfaceKey, args|
 
 		var tempDur;
-		"initImmUChain surface %".format(asurface).postln;
+		//"initImmUChain surface %".format(asurface).postln;
 		surface = asurface;
 		surfaceKey = asurfaceKey;
 		n = surface.size;

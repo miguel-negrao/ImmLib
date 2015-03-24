@@ -78,7 +78,7 @@ ParU : U {
 	}
 
 	*formatArgs { |inArgs, server, startPos = 0|
-		"ParU formatArgs".postln;
+		//"ParU formatArgs".postln;
 		^inArgs.clump(2).collect({ |item, i|
 			[ item[0], switch( item[0],
 				\u_startPos, { startPos },
@@ -102,7 +102,7 @@ ParU : U {
 					}
 				}
 			) ];
-		}).flatten(1).postln;
+		}).flatten(1);
 	}
 
 	makeSynth { |target, startPos = 0, synthAction|
@@ -129,7 +129,7 @@ ParU : U {
 	// target :: [ [node](m - parallel servers) ] (n - paru multiplier)
 	prepare { |target, startPos = 0, action|
 		var valuesToPrepare, valuesToPreparePar, valuesToPrepareSingle, act, servers, flatServers;
-		"entered ParU prepare %".format(this).postln;
+		//"entered ParU prepare %".format(this).postln;
 		serversDisposedFor = [];
 		parentChain = UChain.nowPreparingChain;
 
@@ -137,13 +137,13 @@ ParU : U {
 		target = target.collect{ |target| target.select({ |tg|
 			this.shouldPlayOn( tg ) != false;
 		}) };
-		servers = target.collect{ |target| target.collect(_.server) }.postln;
-		flatServers = servers.flat.as(Set).as(Array).postln;
+		servers = target.collect{ |target| target.collect(_.server) };
+		flatServers = servers.flat.as(Set).as(Array);
 
 		if( flatServers.size > 0 ) {
 			act = MultiActionFunc({
 				preparedServers = preparedServers.addAll( flatServers );
-				"done ParU prepare %".format(this).postln;
+				"done ParU prepare %".format(this);
 				action.value
 			});
 			if( loadDef) {
@@ -160,13 +160,13 @@ ParU : U {
 			if( valuesToPrepare.size > 0  ) {
 				//prepare just for each server
 				valuesToPrepareSingle.do{ |val|
-					"single arg preparing % %".format(val, flatServers).postln;
+					"single arg preparing % %".format(val, flatServers);
 					val.prepare(flatServers, startPos, act.getAction, this)
 				};
 				//prepare n times
 				valuesToPreparePar.do{ |val|
 					[servers, val.array].flopWith{ |servers,val|
-						"pararg preparing % %".format(val, flatServers).postln;
+						"pararg preparing % %".format(val, flatServers);
 						val.prepare(servers, startPos, act.getAction, this)
 					}
 				};
@@ -183,17 +183,17 @@ ParU : U {
 	}
 
 	disposeArgsFor { |server, i|
-		"ParU - disposeArgsFor % % %".format(this, server, i).postln;
+		"ParU - disposeArgsFor % % %".format(this, server, i);
 
 		this.values.do{ |val|
 			val.parMatch({
 				if(serversDisposedFor.includes(server).not and: {val.respondsTo(\disposeFor)} ) {
-					"ParU - disposeArgsFor single % % % %".format(this, server, i, val).postln;
+					"ParU - disposeArgsFor single % % % %".format(this, server, i, val);
 					val.disposeFor(server, this)
 				}
 			},{
 				if(val.array[i].respondsTo(\disposeFor)) {
-					"ParU - disposeArgsFor par % % % %".format(this, server, i, val).postln;
+					"ParU - disposeArgsFor par % % % %".format(this, server, i, val);
 					val.array[i].disposeFor(server, this)
 				}
 			})
@@ -363,7 +363,7 @@ ParU : U {
 				started = true;
 			});
 			synth.freeAction_({ |synth|
-				"running freeAction_ %".format(synth).postln;
+				//"running freeAction_ %".format(synth).postln;
 				if( started == false ) { synth.changed( \n_go ) };
 				unit.removeSynth( synth );
 				synth.server.loadBalancerAddLoad( this.apxCPU.neg );

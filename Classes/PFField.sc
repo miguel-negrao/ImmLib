@@ -500,7 +500,7 @@ PField : AbstractFunction {
 
 	//for any range
 	*sphericalHarmonicNormalized{ |m,l|
-		var surface = ImmDef.currentSurface.postln;
+		var surface = ImmDef.currentSurface;
 		var manifold = surface.manifold;
 		//double factorial
 		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };

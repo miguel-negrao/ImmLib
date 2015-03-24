@@ -71,7 +71,7 @@ ParUChain : UChain {
 	// target :: [ [node](m - parallel servers) ] (n - paru multiplier)
 	prepare { |target, startPos = 0, action|
 		var cpu, chainAction, maction;
-		"entered ParUChain prepare %".format(this).postln;
+		//"entered ParUChain prepare %".format(this).postln;
 		nowPreparingChain = this;
 
 		// lastTarget = target;
@@ -119,17 +119,17 @@ ParUChain : UChain {
 		preparedServers = target;
 
 		maction = MultiActionFunc( {
-			"done ParUChain prepare %".format(this).postln;
+			//"done ParUChain prepare %".format(this).postln;
 			action.value
 		} );
-		"ParUChain MultiActionFunc %".format(maction.hash).postln;
+		//"ParUChain MultiActionFunc %".format(maction.hash).postln;
 		//even if first action would fire immediatelly from the first unit this would still delay the actual action from being called
 		chainAction = maction.getAction;
 
 		//this will call prepare n times
 		//target.do{ |target, i|
 		units.do({ |u|
-			"ParUChain - Preparing unit %".format(u).postln;
+			//"ParUChain - Preparing unit %".format(u).postln;
 			u.prepare(target, startPos, maction.getAction);
 		});
 		//};
@@ -165,7 +165,7 @@ ParUChain : UChain {
 
 	prStartBasic { |target, startPos = 0, latency, withRelease = false|
 		var targets, bundles;
-		"ParUChain - prStartBasicpr".postln;
+		//"ParUChain - prStartBasicpr".postln;
 		startPos = startPos ? 0;
 		targets = preparedServers ?? { this.checkTarget(target) };
 		preparedServers = nil;

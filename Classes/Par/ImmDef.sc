@@ -11,7 +11,7 @@ ImmDef : UENTModDef {
 			//"ImmDef currentTimeES is %".format(tEventSource).postln;
 			ImmDef.currentSurface = unit.surface;
 			surface = unit.surface;
-			ImmDef.currentTimeES = tEventSource.postln;
+			ImmDef.currentTimeES = tEventSource;
 			slidersM.sequence(EventNetwork) >>= { |sliderSigs|
 				ENDef.evaluate( descFunc, [tSignal]++sliderSigs )
 				.collect{ |dict|
