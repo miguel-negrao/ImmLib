@@ -203,8 +203,9 @@ PSmoothPlot : PFVisualizer {
         var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
 			this.sendMsg(* (["/colors"]++([v,surface.points].flopWith{ |c,xs|
-				var x  = c.linlin(0.0,1.0,0.3,1.0);
-				[0.0, x, 0.0]
+				//var x  = c.linlin(0.0,1.0,0.3,1.0);
+				//[0.0, x, 0.0]
+				[0.0, c.asFloat, (1-c).asFloat]
 			}.flat)))
             }
         };
@@ -218,7 +219,8 @@ PSmoothPlot : PFVisualizer {
         var sendColors = { |v| IO{
             var msg = ["/colors"]++v.collect{ |v2|
                 //set green to corresponding intensity
-                [0.0, v2.linlin(0.0,1.0,0.3,1.0), 0.0]
+                //[0.0, v2.linlin(0.0,1.0,0.3,1.0), 0.0]
+				[0.0, v.asFloat, (1-v).asFloat]
             }.flat;
             rendererAddr.sendMsg( *msg )
         } };
@@ -276,7 +278,7 @@ PGridPlot : PFVisualizer {
 		^sig.sampleOn(ImmDef.currentTimeES).collect{ |vs|
             IO{
                 this.sendMsg(*(["/colors"]++vs.collect{ |v|
-                [0.0, v, 1-v]
+					[0.0, v.asFloat, (1-v).asFloat]
             }.flat) )
             }
         }.reactimate
