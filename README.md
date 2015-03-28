@@ -53,6 +53,25 @@ ImmLib creates a lot of OSC trafic with the server. It is therefore recommended 
 
 For scores with low number of events or just for trying out ImmLib these two patches are not needed.
 
+pfVisualizer
+------------
+
+ImmLib uses an external process to render 3D representations of surfaces and parameter fields using openGL. The library ships with binaries of pfVisualizer for OSX 10.10 (untested in lower versions) and Ubuntu 12.04 and higher.  If the bundled version does not work on your system then it must be compiled from source.
+
+There is a binary available for Debian 7 and higher at https://github.com/miguel-negrao/pfVisualizer/releases. 
+
+To compile it from source download the source from github at https://github.com/miguel-negrao/pfVisualizer . Use either the .tar download link or git.
+You must have a working haskell system installed, see https://www.haskell.org/platform/. On linux you must have some opengl packages installed.
+
+cd pfVisualizer
+cabal sandbox init
+cabal install --only-dependencies
+cabal build
+
+then copy the binary to ImmLib/pfVisualizer/osx or ImmLib/pfVisualizer/linux.
+
+You can also compile the binary with the nix package manager which takes care of all the linux dependencies, for more info see the [readme of pfVisualizer](https://github.com/miguel-negrao/pfVisualizer).
+
 Documentation
 -------------
 

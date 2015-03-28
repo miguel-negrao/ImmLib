@@ -1,6 +1,6 @@
 TITLE:: PSmoothPlot
 summary:: Plot a PField on a 3D surface
-categories:: ImmDef
+categories:: ImmLib
 related:: Classes/PHemiPlot, Classes/PGridPlot, Classes/PSurface, Classes/PField
 
 DESCRIPTION::
@@ -18,8 +18,8 @@ PSmoothPlot( pf, t )
 ::
 you can instead use
 code::
-pf.plot( t )::.
-::
+pf.plot( t )
+::::
 
 note::
 When using this class the PField has to be internally evaluated twice, once for the actual points in the surface discretization being used and another time for the points being used for the 3D rendering. Because of this the PField is passed to the plot unevaluated together with the signals to be used for evaluation.
@@ -47,11 +47,9 @@ cabal build
 then copy the binary to ImmLib/pfVisualizer/osx or ImmLib/pfVisualizer/linux.
 ::
 
-PRIVATE::animate, animateOnly, basicNew, animate, animateOnly, faces, startRenderermstartRendererIO, surface, proxy
-
 CLASSMETHODS::
 
-PRIVATE:: all, animate, animateOnly, basicNew
+PRIVATE:: all, animate, animateOnly, basicNew, faces, startRenderermstartRendererIO, surface, proxy
 
 METHOD:: new
 Create a new PSmoothPlot.
