@@ -5,6 +5,8 @@ Description
 
 ImmLib is a SuperCollider library for spatial composition with grid-based loudspeaker systems in the context of computer sound synthesis and audio processing which places emphasis on immersiveness and a global approach to space. It implements techniques for dealing with multiple decorrelated, but perceptually similar, sound streams spatialized at different locations in space with the aim of creating an expanded, broad or diffuse sound sources with interesting musical spatial properties. The tool, implemented in SuperCollider, automates the process of creating decorrelated streams from a synthesis definition and provides mechanisms to create and control spatial patterns in a virtual surface by modulating synthesis parameters of the sound processes using different (but coherent) signals for each of the running instances. The main abstraction is the parameter field which defines ways to control the spatial patterns across space based on mathematical functions defined on a surface.
 
+![immlib in action](mainScreenGrab1.png)
+
 Install
 -------
 
