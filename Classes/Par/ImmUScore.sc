@@ -49,7 +49,7 @@ ImmUScore : UScore {
 
 		events = args;
 
-		duration = events.collect(_.endTime).maxItem;
+		duration = events.collect(_.endTime).maxItem ? 60;
 
 		events.do{ |e|
 			if(e.isKindOf(ParUChain)) {
