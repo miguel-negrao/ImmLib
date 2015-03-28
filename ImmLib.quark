@@ -1,0 +1,9 @@
+(
+  name: "ImmLib",
+  summary: "A Library for immersive spatialization",
+  version: "0.1.0",
+  schelp: "ImmLib tutorial",
+  dependencies: ["FPLib","https://github.com/miguel-negrao/UEvNetMod.git"],
+  license: "GPL3",
+  copyright: "Miguel Negrão 2013-2015"
+)
