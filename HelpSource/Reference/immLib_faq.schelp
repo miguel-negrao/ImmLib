@@ -1,0 +1,24 @@
+title:: ImmLib FAQ
+summary:: FAQ
+categories::ImmLib
+
+section:: Questions
+
+Q: I get a lot of messages like the one below when an event ends or I stop a score:
+
+FAILURE IN SERVER /n_set Node 1028 not found
+
+A: This is normal. Usually events end through an envelope that stops the synth. A message is then sent from the server back to sclang. While that message is in transit and being processed, sclang is still sending messages to the synth even if it doesn't exist anymore. Some of those messages will arrive after the synth no longer exists and cause this error.
+
+Q: The scores don't start anymore.
+
+A: When playing a lot of events at the same time without using the tcp protocol, some of the end messages coming back from the server will be dropped or not sent at all. This will put the system in an inconsistent state where it will not work anymore. To check the system is okay you can go to the menu bar "score"->"check system is okay". If it is damaged a fix will be attempted. If it still doesn' work recompile the library and restart the servers.
+
+When many synths stop at the same time the number of messages sent back can be bigger then the max number of messages scsynth can send. When this happens ImmLib will stop working properly for the same reason. In order to avoid this the max number of messages must be increased in scsynth. There is a commit for that at https://github.com/miguel-negrao/supercollider/commit/2d7fe37e3707acb8543314595ec2ccbb0cf22a90 (you will need to compile supercollider). This issue will affect scores with a large number of simultaneous events.
+
+ImmLib creates a lot of OSC trafic with the server. It is therefore recommended to run the server in tcp mode. Connecting and disconnecting from a tcp server is not automatic in sc3.6. A patch for that is available currently at https://github.com/miguel-negrao/supercollider/tree/tcpConnect.
+
+Q: When using VBAP the score stops outputting sound always at the same place in the score.
+
+A: This is a current limitation of unit lib. When you create an ImmUScore VBAP panner chains are automatically added to the score (they are hidden) with a duration equal to end time of the last event. If after creating the score by changing or adding events you make the score longer then the panner events will stop at the original end time of the score. In order to fix this, save the score to disk and open it again.
+

@@ -1,0 +1,71 @@
+TITLE:: ImmUScore
+summary:: ImmLib UScore
+categories:: ImmLib
+related:: Classes/UScore, Classes/ImmUChain
+
+DESCRIPTION::
+The ImmLib equivalent of Unit Lib's UScore.
+
+When using ImmLib with VBAP this class is resposible for starting the VBAP panners. When using VBAP (link::Classes/PSurface::'s renderMethod set to 'vbap') ImmUChains must always be played inside an ImmUScore, otherwise the panners will not be started.
+
+See also the documentation for link::Classes/UScore::.
+
+note::
+When using VBAP currently only one score can be played at any one time.
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new ImmUScore
+
+Possible syntaxes for ImmUScore creation:
+code::
+ImmUScore(surfaceKey, <ImmUChain 1>, <ImmUChain 2>,...)
+ImmUScore(surfaceKey,startTime, <ImmUChain 1>, <ImmUChain 2>,...)
+ImmUScore(surfaceKey,startTime,track, <ImmUChain 1>, <ImmUChain 2>,...)
+ImmUScore(surfaceKey,startTime,track,extraResources, <ImmUChain 1>, <ImmUChain 2>,...)
+::
+
+ARGUMENT:: surfaceKey
+Symbol - PSurface name
+
+ARGUMENT::  ... args
+See above.
+
+returns:: ImmUScore
+
+PRIVATE:: getStringWithAllDefs
+
+INSTANCEMETHODS::
+
+PRIVATE::surface, add, getInitArgs, initImmUScore, gui
+
+EXAMPLES::
+
+code::
+(
+
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+
+PSurfaceDef(\surface1, PSphere(20) );
+)
+
+(
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 0.1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+::

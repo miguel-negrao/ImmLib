@@ -1,0 +1,27 @@
+TITLE:: ImmMod
+summary:: ImmLib Mod
+categories:: ImmLib
+related:: Classes/ImmDef, Classes/ImmU, Classes/ImmUChain, Classes/PField
+
+DESCRIPTION::
+ImmMod is used to associate an ImmDef event network with an ImmU. An ImmDef defines how pfields interact with unit arguments. ImmMod instantiates an ImmDef.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new ImmMod
+
+ARGUMENT:: defName
+Symbol - ImmDef name
+
+ARGUMENT:: sliderValues
+Array of type code::[\arg1, val1,...]:: where code::\argi:: is a parameter of the ImmDef.
+
+INSTANCEMETHODS::
+
+PRIVATE:: makeView, openRenderer
+
+
+EXAMPLES::
+
+See link::Classes/ImmUChain::.

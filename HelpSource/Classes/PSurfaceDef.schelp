@@ -1,0 +1,44 @@
+TITLE:: PSurfaceDef
+summary:: associate a PSurface with a key
+categories:: ImmLib
+related:: Classes/PSurface
+
+DESCRIPTION::
+In order to use a PSurface with an ImmScore or ImmUChain it must first be associated with a key. ImmUScore and ImmUChain only refer to surfaces by key.
+
+
+CLASSMETHODS::
+
+METHOD:: get
+Get the PSurface corresponding to a key
+
+ARGUMENT:: key
+Symbol
+
+returns:: PSurface
+
+METHOD:: new
+Associate a PSurface with a key
+
+ARGUMENT:: key
+Symbol
+
+ARGUMENT:: surface
+PSurface
+
+METHOD:: all
+
+
+returns:: IdentityDictionary
+
+PRIVATE:: initClass
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+PSurfaceDef(\test, PSphere(10))
+::

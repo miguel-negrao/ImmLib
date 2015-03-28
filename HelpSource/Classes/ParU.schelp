@@ -1,0 +1,42 @@
+TITLE:: ParU
+summary:: A class for running multiple Us in parallel
+categories:: ImmLib
+related:: Classes/U, Classes/ParUChain
+
+DESCRIPTION::
+This class behaves virtually identical to U (unit), but in the background it will play multiple copies of the same unit at the same time.
+
+It allows setting arguments to different values for each copy using ParArg.
+
+CLASSMETHODS::
+
+PRIVATE::formatArgs, currentIndex, prNewBasic
+
+METHOD:: new
+Create a new ParU.
+
+ARGUMENT:: n
+Number of synths to create for this unit
+
+ARGUMENT:: def
+Udef name
+
+ARGUMENT:: args
+Same as U except arg values can be a ParArg
+
+ARGUMENT:: mod
+same as U
+
+returns:: ParU
+
+
+INSTANCEMETHODS::
+
+PRIVATE:: synths, n, mapGet, gui, insertUMap, def, addSynth, storeArgsWithoutN, removeSynthPar, set, asParUnit,  makeSynth, storeArgs, initParU,  mapSet, removeUMap, prepare, addSynthPar, serversDisposedFor, init, removeSynth
+
+
+EXAMPLES::
+
+code::
+x = ParU(2, \sine, [\freq, ParArg([200,400])] )
+::

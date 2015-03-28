@@ -1,0 +1,72 @@
+TITLE:: ImmUChain
+summary:: ImmLib UChain
+categories:: ImmLib
+related:: Classes/UChain, Classes/ImmUChain, Classes/ImmMod, Classes/ImmDef
+
+DESCRIPTION::
+The ImmLib equivalent of  Unit Lib's UChain.
+
+See also the documentation for link::Classes/UChain::.
+
+SUBSECTION::GUI
+
+image::ImmUChain_diagram.png::
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new UChain
+
+ARGUMENT:: surfaceKey
+Symbol - PSurface name
+
+ARGUMENT::  ... args
+Array of type [u1, u2, u3, ...] where ui can be code::\defName::, code::[\defname, [\arg1, value1, ...]]:: or code::[\defname, [\arg1, value1, ...], immModi]::.
+
+returns:: ImmUChain
+
+METHOD:: newNoPanner
+This method is used for ImmUChain that do not send directly to the VBAP panners or speakers but that are instead routed to another ImmUChain using a send Udef and private buses.
+
+ARGUMENT:: surfaceKey
+Symbol - PSurface name
+
+ARGUMENT::  ... args
+Array of type [u1, u2, u3, ...] where ui can be code::\defName::, code::[\defname, [\arg1, value1, ...]]:: or code::[\defname, [\arg1, value1, ...], immModi]::.
+
+returns:: ImmUChain
+
+
+INSTANCEMETHODS::
+
+PRIVATE:: storeArgs, surfaceKey, getInitArgs, initImmUChain, createNewUnitFromSymbol, storeModifiersOn
+
+
+EXAMPLES::
+
+code::
+(
+
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+
+PSurfaceDef(\surface1, PSphere(20) );
+)
+
+(
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 0.1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+::

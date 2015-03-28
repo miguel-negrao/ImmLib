@@ -1,0 +1,45 @@
+TITLE:: ImmU
+summary:: ImmLib unit
+categories:: ImmLib
+related:: Classes/U, Classes/ImmUChain, Classes/ImmMod, Classes/ImmDef
+
+DESCRIPTION::
+ImmLib equivalent of U from Unit Lib.
+
+Unlike U it should always be used inside an ImmUChain. Usually the user doesn't need to create an ImmU explicitelly, this is done by ImmUChain.
+
+See also the documentation for link::Classes/U::.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new ImmU
+
+ARGUMENT:: surface
+Symbol - PSurface name
+
+ARGUMENT:: def
+Symbol - Udef name
+
+ARGUMENT:: args
+Array - array containing alternating key-value pairs code::[\arg1, val1, \arg2, val2, ...]::
+
+ARGUMENT:: mod
+ImmMod - the ImmMod carries a will modulate some parameter using pfields. It is optional.
+
+returns:: ImmU
+
+
+INSTANCEMETHODS::
+
+PRIVATE:: initImmU2, insertUMap, asImmUnit, surface
+
+METHOD:: surface
+Symbol - PSurface name
+
+returns:: PSurface
+
+
+EXAMPLES::
+
+see link::Classes/ImmUChain::

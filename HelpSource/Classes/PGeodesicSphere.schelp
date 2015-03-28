@@ -1,0 +1,51 @@
+TITLE:: PGeodesicSphere
+summary:: PSurface that implements the geodesic dome discretization algorithm
+categories:: ImmLib
+related:: Classes/PSurface
+DESCRIPTION::
+PSurface that implements a sphere using the geodesic dome discretization algorithm.
+
+It generates the geodesation of order n.
+
+The first five orders give discretizations with 12, 42, 162, 642, 2562 points. For these number of points this algorithm creates very high symmetry. For most computer systems only the first two orders are usable.
+
+CLASSMETHODS::
+
+PRIVATE:: icosahedronFaces
+
+METHOD:: new
+Create a PGeodesicSphere
+
+ARGUMENT:: n
+Order of the geodesation.
+
+returns:: PGeodesicSphere
+
+METHOD:: sphereFaces
+Returns the triangles that make up the geodesic dome.
+
+ARGUMENT:: n
+The order of the geodesation.
+
+returns:: Array[Array[ RealVector3D ]]
+
+
+INSTANCEMETHODS::
+
+PRIVATE:: storeArgs, initPGeodesicSphere
+
+METHOD:: n
+Order of the geodesation
+
+returns:: Integer
+
+
+EXAMPLES::
+
+code::
+PGeodesicSphere(0).plot
+
+PGeodesicSphere(1).plot
+
+PGeodesicSphere(2).plot
+::

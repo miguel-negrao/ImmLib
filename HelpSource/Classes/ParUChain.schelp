@@ -1,0 +1,42 @@
+TITLE:: ParUChain
+summary:: A class for running multiple UChains in parallel
+categories:: ImmLib
+related:: Classes/UChain, Classes/ParU
+
+DESCRIPTION::
+This class behaves virtually identical to UChain, but in the background it will play multiple copies of the same unit at the same time.
+
+It allows setting arguments to different values for each copy using ParArg.
+
+CLASSMETHODS::
+
+PRIVATE:: prBasicNew, prepareCurrentIndex
+
+
+METHOD:: new
+(describe method here)
+
+ARGUMENT:: n
+Number of synths to create per unit.
+
+ARGUMENT::  ... args
+Same as UChain except the arg list can contain ParArgs
+
+returns:: ParUChain
+
+
+INSTANCEMETHODS::
+
+PRIVATE::checkTarget, createNewUnitFromSymbol, defaultTarget, dispose, getInitArgs,gui,initParUChain,makeBundle,n,prStartBasic,prepare,prepareAndStart,private
+
+EXAMPLES::
+
+code::
+(
+x = ParUChain( 4,
+[\sine, [\freq, ParArg([100,200,300,400]), \amp, [\lfo_sine, [\freq, ParArg([1,2,3,4]), \range, [0.0,0.2]]]]],
+[\stereoOutput, [\point, ParArg(4.collect{ |i| Point( i.linlin(0,3,-1,1),0) })]]);
+x.prepareAndStart;
+x.gui
+)
+::

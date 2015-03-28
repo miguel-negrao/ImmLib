@@ -1,0 +1,70 @@
+TITLE:: PGridPlot
+summary:: plot a signal output from a pfield using squares in 3D
+categories:: ImmLib
+related:: Classes/PHemiPlot, Classes/PSmoothPlot, Classes/PSurface, Classes/PField
+
+DESCRIPTION::
+This class a separate process with a window containing an opengl rendering of the surface updated in real-time. It shows the value of the PField at each point of the discretization of the surface using squares. The squares appear inside of a wireframe cube where the red face is the front wall and the green face is the ceiling.
+
+cmd-. will close the window. It is to be used with the FPSignal resulting from evaluating a pfield with .value.
+
+
+
+note::
+A PGridPlot can be opened for any modulated parameter from the GUI of ImmUChain without the need to explicitelly insert the PGridPlot into the ImmDef.
+::
+
+CLASSMETHODS::
+
+PRIVATE:: basicNew, proxy, animate
+
+METHOD:: all
+
+returns:: IdentityDictionary[Symbol,PFVisualizer]
+
+METHOD:: new
+Create a new PGridPlot.
+
+This should only be called inside an the function passed to the ImmDef.
+
+ARGUMENT:: sig
+FPSignal[ Array[ Float ] ]
+
+ARGUMENT:: label
+String - title of the plot window
+
+
+INSTANCEMETHODS::
+
+PRIVATE::startRendererIO, animate, startRenderer, sendGeometry, startRenderer, quitRenderer, points, init
+
+EXAMPLES::
+
+code::
+(
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
+
+	PGridPlot( pf1 );
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+
+PSurfaceDef(\surface1, PSphere(40) );
+)
+
+(
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain)
+)
+
+~chain.prepareAndStart
+::
