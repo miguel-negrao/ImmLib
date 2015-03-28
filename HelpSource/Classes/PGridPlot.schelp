@@ -8,8 +8,6 @@ This class a separate process with a window containing an opengl rendering of th
 
 cmd-. will close the window. It is to be used with the FPSignal resulting from evaluating a pfield with .value.
 
-
-
 note::
 A PGridPlot can be opened for any modulated parameter from the GUI of ImmUChain without the need to explicitelly insert the PGridPlot into the ImmDef.
 ::
