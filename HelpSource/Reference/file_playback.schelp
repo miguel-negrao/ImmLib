@@ -1,225 +1,139 @@
 title:: File playback with ImmLib
-summary:: "how to" for file playback with ImmLib
+summary:: bufPlayer, diskPlayer, decorrelate units
 categories::ImmLib
 
-By default MUChains just launchs n parallel UChains. When using buffers this would mean also loading the same buffer n times to memory. To avoid the multiple allocations one should use link::Classes/GlobalSndFile:: instead.
+	There are two means of playing soundfiles. A soundfile can be loaded to memory and played with the 'bufPlayer' Udef or it can be played directly from disk with a 'diskPlayer' Udef. The two methods must be dealt with differently in ImmLib.
 
-First evaluate these Udefs:
+	In either case if the file is played directly at each point of the surface the sound output of any two points will be completelly correlated, and the precedence effect will destroy the immersiveness. In order to defeat the precedence effect one should decorrelate each stream. This can be done in multiple ways.
+
+  The start times of the sound file can be set to a different value for each stream. Depending on how far apart the start times are this can destroy completelly the perception of the sound events in the sound file, but it will create decorrelated streams. This can work well for textural sounds where the perception of sound events recorded on the sound file is not important. It's also possible to set the pitch to a different value for each stream.
+
+  It's also possible to use the 'decorrelate' Udef which does decorrelation in the frequency domain using FFTs by adding a different constant random phase offset to each fft bin. This will preserve the internal sound events of the sound file but will color the sound and add artifacts.
+
+  Finally it's possible to use ad-hoc sound processing through aditional units such that the processing introduces enough phase differences that the sound streams become decorrelated.
+
+section:: Sound file playback from memory - bufPlayer.
+
+Using bufPlayer will load the sound file to memory. When using multiple servers ImmLib will take care of loading the buffer into all the servers that will play this event. Selecting the soundfile can be done from the GUI.
+Setting the start time or pitch to a different value for each each stream can also be done directly in the GUI by clicking the 'n' button next to the 'bufrate' and 'fileStartPos' arguments, then 'do'->'edit' and editing the values with the mouse. This can be also be done in code by using ParArgs on those arguments.
 
 code::
-Udef(\filePlayBack1, {
-    var out = BufSndFilePlayer.ar( 1 );
-
-    UOut.ar( 0, out * \amp.kr(0.5) )
-})
-.setSpec(\soundFile, BufSndFileSpec() );
-
-Udef(\bpf, {
-
-    var bpf = BPF.ar( UIn.ar(0), \freq.kr(400,1.0));
-    var out = bpf * 0.5 * Line.ar(0.0,1.0,1);
-    UOut.ar(0, out )
-
-});
-
-Udef(\bpf2, {
-
-    var bpf1 = BPeakEQ.ar( UIn.ar(0),  \freq1.kr(400,1.0), rq: 1.0, db:20 );
-    var bpf2 = BPeakEQ.ar( bpf1,  \freq2.kr(800,1.0), rq:0.4, db:20 );
-    var out = bpf2 * 0.5 * Line.ar(0.0,1.0,1);
-    UOut.ar(0, out )
-
-})
-.setSpec(\freq1, \freq)
-.setSpec(\freq2, \freq);
-
-
-Udef(\lpf, {
-
-    var bpf = LPF.ar( UIn.ar(0),  \freq.kr(400,1.0) );
-    var out = bpf * 0.5 * Line.ar(0.0,1.0,1);
-    UOut.ar(0, out )
-
-});
-
-Udef(\ringMod, {
-    var in = UIn.ar(0);
-    var mix = \mix.kr(0);
-    var ring = (1 - mix) + ( mix * SinOsc.ar( SinOsc.ar(10).range(200,600) ) );
-    UOut.ar(0, in * ring)
-});
-
-Udef(\freeze, {
-    var in = UIn.ar(0);
-    var mix = \mix.kr(0);
-    var fft1 = FFT(LocalBuf(2048), in);
-    var fft2 = PV_MagFreeze(fft1, LFPulse.kr(0.5, width:0.99) );
-    var fft3 = IFFT(fft2);
-    var out = ( (1 - mix) * in) + ( mix * fft3 );
-    UOut.ar(0, out)
-});
-
-Udef(\nothing, {
-    UOut.ar(0, UIn.ar(0) )
-});
-
-Udef(\verb1, {
-    var out = UIn.ar(0,1);
-    out = FreeVerb.ar(out, \mix.ar(0.33), \room.ar(0.5), \damp.ar(0.5) );
-    UOut.ar(0, out)
-
-})
-.setSpec(\mix, \unipolar.asSpec.default_(0.33) )
-.setSpec(\room, \unipolar.asSpec.default_(0.5) )
-.setSpec(\damp, \unipolar.asSpec.default_(0.5) );
-::
-
-To check which global buffers are currently allocated one can do:
-code::
-GlobalBufSndFile.globalBuffers.as(Array).do(_.postln)
-::
-
-Allocate the buffer:
-code::
+//start times far apart
 (
-~globalBuf = GlobalBufSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav", 0, loop:true, useChannels:[0]);
-~globalBuf.createTheBuffers
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).rotate3D.plot(t,rotate, tilt, tumble, f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 ),
+	\rotate, [0, 2pi],
+	\tilt, [0, 2pi],
+	\tumble, [0, 2pi]
+]);
+~file = BufSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav",loop:true);
+~chain = ImmUChain(\sphere,
+	[ 'bufPlayer',
+		[\soundFile, ~file, \globalAmp, 0.0, 'fileStartPos', ParArg( 20.collect{ 4.0.rand }),'bufrate', ParArg( 20.collect{ rrand(0.5,2.0) })],
+		ImmMod(\sphericalHarmonicForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.gui;
+)
+
+//start times closer together ~ 0.2s
+
+(
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).rotate3D.plot(t,rotate, tilt, tumble, f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 ),
+	\rotate, [0, 2pi],
+	\tilt, [0, 2pi],
+	\tumble, [0, 2pi]
+]);
+~file = BufSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav",loop:true);
+~chain = ImmUChain(\sphere,
+	[ 'bufPlayer',
+		[\soundFile, ~file, \globalAmp, 0.0, 'fileStartPos', ParArg( 20.collect{ 0.2.rand }),'bufrate', ParArg( 20.collect{ rrand(0.9,1.1) })],
+		ImmMod(\sphericalHarmonicForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.gui;
 )
 ::
 
-The buffer can be freed with:
+section:: Sound file playback directly from disk - diskPlayer.
+
+diskPlayer will read a sound file from the disk. Internally it uses DiskIn, which uses a buffer and then streams portions of the sound file onto this buffer. This means that each of the different synths of the ImmU must have their own buffer. This can be done by suplying a ParArg with different instances of DiskSndFile to the 'soundFile' argument of the unit.
+
 
 code::
-~globalBuf.dispose
-::
-
-
-Play the sound file on all points of surface:
-
-code::
-//straight to out
 (
-q = ();
-
-q.surface = PSurface.sphere(20);
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
-	[\filePlayBack1,
-		[\soundFile, ~globalBuf ]
-	]
-).fadeIn_(10).fadeIn_(10);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-
-q.score.prepareAndStart
-)
-
-q.chain1.gui
-::
-
-
-This will just play the exact same sound stream panned to all the points of the surface. Most probably the sound will simply be heard from nearest virtual point due to the precedence effect.
-
-In order to defeat the precedence effect one should decorrelate each stream using the code::\decorrelate:: Udef.
-
-code::
-//decorrelated
-(
-q = ();
-
-q.surface = PSurface.sphere(20);
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
-	[\filePlayBack1,
-		[\soundFile, ~globalBuf ]
-	],
-	[\decorrelate]
-).fadeIn_(10).fadeIn_(10);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-
-q.score.prepareAndStart
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).rotate3D.plot(t,rotate, tilt, tumble, f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 ),
+	\rotate, [0, 2pi],
+	\tilt, [0, 2pi],
+	\tumble, [0, 2pi]
+]);
+~file = ParArg( 20.collect{ DiskSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav", 4.rand * 44100,rate:rrand(0.5,2.0), loop:true) });
+~chain = ImmUChain(\sphere,
+	[ 'diskPlayer',
+		[\soundFile, ~file, \globalAmp, 0.0],
+		ImmMod(\sphericalHarmonicForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.gui;
 )
 ::
 
 
 
+section:: 'decorrelate' unit
 
-One can then apply further processing to the sound file applying PFields to parameters of the processing units.
-
+The 'decorrelate' unit should be inserted after the 'diskPlayer' or 'bufPlayer' units.
 
 code::
-//low pass filter
 (
-q = ();
-
-q.pf = PField({ |u, v, t, k|
-    var tau = 2*pi;
-    sin ( (v*k) + t )
-});
-q[\f] = { |t|
-
-    var bfreq = q.pf.( t.changeRate( Var(0.5) ), 2.0 );
-    (freq: UArg( bfreq.linexp(0.0,1.0,400,10000) ) )
-
-};
-
-q.surface = PSurface.sphere(20);
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
-	[\filePlayBack1,
-		[\soundFile, ~globalBuf ]
-	],
-	[\decorrelate],
-	[\lowPass, nil, ImmDef(q[\f], q.surface, 0.1)]
-).fadeIn_(10).fadeIn_(10);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-
-q.score.prepareAndStart
-)
-
-
-
-
-
-//with reverb
-//direct sound is oscilating from side to side
-(
-q = ();
-
-q.pf = PField({ |u, v, t, k|
-    var tau = 2*pi;
-	(sin ( ((v*k) + t) * tau ) + 1)/2
-});
-
-q[\f]  = { |t|
-	var pfmix = q.pf.rotate;
-	var bmix = PSmoothPlot( pfmix, t.changeRate( Var(0.3) ), Var(0.0), Var(pi/2), Var(0), Var(2.0) );
-	( mix: UArg( bmix ) )
-};
-
-q.surface = PSurface.sphere(20);
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
-	[\filePlayBack1,
-		[\soundFile, ~globalBuf ]
-	],
-	[\decorrelate],
-	[\verb1, [\room, 0.7], ImmDef(q[\f], q.surface, 0.1)]
-).fadeIn_(10).fadeIn_(10);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-
-q.score.prepareAndStart
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).rotate3D.plot(t,rotate, tilt, tumble, f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 ),
+	\rotate, [0, 2pi],
+	\tilt, [0, 2pi],
+	\tumble, [0, 2pi]
+]);
+~file = BufSndFile(Platform.resourceDir +/+ "sounds/a11wlk01.wav",loop:true);
+~chain = ImmUChain(\sphere,
+	[ 'bufPlayer',
+		[\soundFile, ~file, \globalAmp, 0.0],
+		ImmMod(\sphericalHarmonicForSphere2),
+	\decorrelate
+]);
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.gui;
 )
 ::
-
-using multiple chains
-available fields
-examples
-
-
 
 
 

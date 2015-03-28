@@ -257,7 +257,11 @@ ImmDef(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecsLo, ControlSpec(0.5,10,default:1), \numSecsHi, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [
+	\numSecsLo, ControlSpec(0.5,10,default:1),
+	\numSecsHi, ControlSpec(0.5,10,default:2),
+	\curve, ControlSpec(-6,6,default:0)
+]);
 
 //ok
 ImmDef(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|

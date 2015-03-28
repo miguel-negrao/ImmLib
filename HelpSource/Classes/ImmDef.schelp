@@ -4,14 +4,22 @@ categories:: ImmLib
 related:: Classes/PField
 
 DESCRIPTION::
-ImmDef stores a definition on an event network for animating PFields. The event network connects PFields and other sources of signals (MIDI, GUIs, OSC, etc) to parameters of MUChains.
+ImmDef stores a definition of an event network for animating PFields. The event network connects PFields and other sources of signals (MIDI, GUIs, OSC, etc) to parameters of ImmUChains.
 
-PRIVATE::currentSurface, createDesc, unit, tESM
+A GUI list of defined ImmDefs can be opened by opening the GUI for an ImmUChain and clicking 'defs'. An ImmDef can then be dragged from that list onto the ImmUChain GUI, to the ImmMod widget.
+
+ImmLib comes with a predefined set of ImmDefs which are loaded at startup. They are in the 'immdefs.scd' file at the base of the ImmLib folder.
 
 CLASSMETHODS::
 
+PRIVATE::currentSurface, createDesc, unit, tESM, currentTimeES
+
+
 METHOD:: new
 (describe method here)
+
+ARGUMENT:: defName
+The ImmDef name.
 
 ARGUMENT:: descFunc
 the function which creates the event network description. It should look like:
@@ -22,7 +30,7 @@ f = { | timeSignal |
 
 ...
 
-	(\key1: signal1, ... )
+	(\key1: UArg(signal1), \key2: USpecArg(signal1), ... )
 }
 ::
 
@@ -32,50 +40,19 @@ link::Classes/PSurface::
 ARGUMENT:: delta
 link::SimpleNumber:: - the animation delta time. The units and plots are updated every delta seconds.
 
-returns:: Dictionary[ Symbol, link::Classes/FPSignal::[link::Classes/UModArg::[Array[Float]]] ]
+returns:: ImmDef
 
 discussion::
-The dictionary returned will be used to connect each signal to the control with the corresponding key of an Udef. The signals should be wrapped in either a UArg which will use the values of the signal directly or USpecArg, in which case it will expect values in the [0,1] range and map them to the spec of that control.
+The dictionary returned by descFunc should be of type
+
+Dictionary[ Symbol, link::Classes/FPSignal::[link::Classes/UModArg::[Array[Float]]] ].
+
+It will be used to connect each signal to the control with the corresponding key of an Udef. The signals should be wrapped in either a UArg which will use the values of the signal directly or USpecArg, in which case it will expect values in the [0,1] range and map them to the spec of that control.
 
 INSTANCEMETHODS::
 
-METHOD:: test
-Allows testing PFields without actually connecting them to units. This makes it easy to test PFields by plotting them.
-
-ARGUMENT:: startTime
-Initial value of the time signal.
-
-returns:: ImmDef
-
+PRIVATE:: asMod, createDesc, surface
 
 EXAMPLES::
-A minimal example of one pfield controlling the amplitude of one unit.
 
-code::
-(
-q = ();
-
-q.m = 20;
-
-q.surface = PSurface.sphere(q.m);
-
-q[\f] = { |t|
-
-	var pf = PField({ |u, v, t|
-		sin( 2pi * ( (0.3 * u) + (t*0.5)) )
-	});
-
-	var amp = pf.(t);
-
-	PGridPlot( amp, "amp" );
-
-	( \amp: USpecArg( amp ) )
-};
-
-q.chain1 = MUChain.immNew(q.surface, [\whiteNoise, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-q.score.gui;
-q.score.prepareAndStart;
-)
-::
+See link::Classes/ImmUChain::.

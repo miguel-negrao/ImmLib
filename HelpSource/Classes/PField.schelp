@@ -1,22 +1,42 @@
 TITLE:: PField
 summary:: A parameter field definition
 categories:: ImmLib
-
+related:: Classes/ImmDef, Classes/FPSignal
 
 DESCRIPTION::
-Encapsulates a function RxRxRxR^n -> [0,1] where R are the real numbers
+Encapsulates a function RxRxRxR^n -> [0,1] where R are the real numbers representing a parameter field.
 
-These are functions that will lool like
+This function will take the form
 
 code::
 f = { |u, v, t, c1, c2| ... }
 ::
 
-Where u and v are two spatial coordinates, t is time and c1, c2, ... are parameters of the function.
+where u and v are two spatial coordinates, t is time and c1, c2, ... are parameters of the paramter field.
 
-PFields, like functions, can be evaluated using the value method or the syntax sugar code:: pfield.(t, param1, ...)::.
+PFields, like functions, can be evaluated using the value method or the syntax sugar code:: pfield.(t, param1, ...)::. PFields are evaluated inside an event network (see FPLib's FRP library). When evaluated a PField returns a FPSignal[ Array[Float (size = n)] ] where n is the number of points in the PSurface being used to evaluate the PField. They should be passed in a FPSignal that carries the time events together with any other signals that control the PField's parameters.
 
-There are number of predefined PFields, that can be accessed through class methods. It's important to distinguish between two types of predefined PFields: pure pfields and pre-evaluated pfields. class methods for pure pfields (gradient, spotlight, spotlightFixed, barU, barV, sphericalHarmonic) return an instance of class PField, which can be evaluated using the code::value:: method. Also, they can be rotated using the code::rotate:: method and also they can be plotted using code::PSmoothPlot::. class methods for pre-evaluated pfields (wave2DSin, randomHills, etc) return an FPSignal, so there is no need for further evaluation. It's also not possible to rotate them, or use PSmoothPlot on them. Pre-evaluated pfields correspong to pfields which are not defined by pure mathematical functions, but instead besides pure mathematical functiosn they also use elements of functional reactive programming to make more complex behaviours, such as changing the mathematical function being used every n seconds, changing the rate of passage of time internally in order to make is possible to smoothly change the frequency of periodic function.
+PFields have available a distance function on the surface which calculates the length of a geodesic connecting two points. This function is different for each surface, so it needs to be fetched inside the function passed to ImmDef. Inside that function it is available at code::ImmDef.currentSurface.distFunc:: and the maximum distance on the surface is available at code::ImmDef.currentSurface.maxDist::. The code below shows a PField which calculates the distance to the point (0,0) and normalizes the result.
+
+code::
+(
+PSurfaceDef(\surface1, PSphere(20) );
+ImmDef(\test, { |t|
+	var dist = ImmDef.currentSurface.distFunc;
+	var maxDist = ImmDef.currentSurface.maxDist;
+
+	var pf = PField({ |u,v,t| dist.(0,0,u,v)/maxDist });
+	var sig = pf.plot( t );
+
+	( amp: USpecArg( sig ) )
+}, 0.1);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+::
+
+For more in depth information on PFields see the link::Reference/ImmLib::.
 
 note:: The range of u and v will depend on the surface. This can be checked using link::Classes/PSurface#rangeU:: and link::Classes/PSurface#rangeV::. For a spherical surface the ranges are [0,2pi]x[-pi/2, pi/2] ::
 
@@ -30,13 +50,9 @@ x.value(t, 0.5) //evaluation arguments
 ::
 ::
 
-note::
-Reading pseudo type signatures: The arguments and return values of the PField methods are anotated with pseudo type signatures.  ClassA[ ClassB, ClassC ] represents an objects of ClassA which contains or depends on objects of ClassB and Class C. So FPSignal[ Float ] represents an object of class FPSignal which carries floats. [A] is an array carrying values of type A (for homogenous arrays).
-::
-
 CLASSMETHODS::
 
-PRIVATE::prBump, barFuncU, barFuncV, expandContract2Func, expandContractFunc, generateHillsBipolarFunc, gradientFunc, prGeodesicDist, prGeodesicDist2, randomPatchGeneral, spotlightFixedFunc, spotlightFunc, generateHillsFunc, continousRandomSpotlight3, gradientFFunc, selfSwitchPeriodically, waveUSin, waveVSin, animate
+PRIVATE::prBump, barFuncU, barFuncV, expandContract2Func, expandContractFunc, generateHillsBipolarFunc, gradientFunc, prGeodesicDist, prGeodesicDist2, randomPatchGeneral, spotlightFixedFunc, spotlightFunc, generateHillsFunc, continousRandomSpotlight3, gradientFFunc, selfSwitchPeriodically, waveUSin, waveVSin,  animate, gradient1DFunc, generateHillsFuncDeterministic, sphericalHarmonicNormalizedFunc, spotlightFuncInverse, randomHillsBipolar.
 
 METHOD:: new
 Creates a PField
@@ -55,162 +71,209 @@ discussion::
 A PField can be any mathematical function that can be described by SuperCollider's language operators. It should return a number.
 
 code::
+//Startup ImmLib first.
+
+
+PSurfaceDef(\surface1, PSphere(20) );
+
+
 (
-ImmDef({ |t|
+ImmDef(\test, { |t|
 
 	var pf = PField({ |u, v, t|
 
-		sin( 2pi * ( (0.3 * u) + t) )
+		sin( 2pi * ( (0.3 * u) + (t*0.2)) ).linlin(-1.0,1.0,0.0,1.0)
 
 	});
 
-	pf.plot( t )
+	var sig = pf.plot( t );
 
-}).test
+	( amp: USpecArg( sig ) )
+}, 0.1);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
 )
 
+//hit cmd-. to stop
+
 (
-ImmDef({ |t|
+ImmDef(\test, { |t|
 
-	var pf = PField({ |u, v, t|
-
-		sin( 2pi * ( (0.2 * u) + t) ) * sin( 2pi * ( (0.3 * v) + t ) + pi )
-
-	});
-
-	pf.plot( t )
-
-}).test
-)
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
 	var pf = PField({ |u, v, t|
 
 		sin( 2pi * ( (0.2 * u) + t) ) * sin( 2pi * ( (0.3 * v) + t ) + pi )
 
 	});
 
-	var out = pf.plot( t );
-	//no plotting
-	//var out = pf.( t );
+	var sig = pf.plot( t );
 
-	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
+	( amp: USpecArg( sig ) )
+}, 0.1);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
 )
+
+//hit cmd-. to stop
 ::
-
-PFields are evaluated inside an event network. They are evaluated using the code::value:: method just like funtions. They should be passed in an FPSignal that carries the time events together with any other signals that controls the PField's parameters.
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 subsection:: Predefined PFields
 
+There are number of predefined PFields, that can be accessed through class methods. It's important to distinguish between two types of predefined PFields: pure pfields and pre-evaluated pfields. class methods for pure pfields (gradient, spotlight, spotlightFixed, barU, barV, sphericalHarmonic, etc) return an instance of class PField, which can be evaluated using the code::value:: method. Also, they can be rotated using the code::rotate2D:: and code::rotate3D:: methods and they can be plotted using code::PSmoothPlot::. Class methods for pre-evaluated pfields (wave2DSin, randomHills, etc) return an FPSignal, so there is no need for further evaluation. It's also not possible to rotate them, or use PSmoothPlot on them. Pre-evaluated pfields are pfields which are not defined purelly by mathematical functions, they also use elements of functional reactive programming to make more complex behaviours, such as changing the mathematical function being used every n seconds or changing the rate of passage of time internally in order to make it possible to smoothly change the frequency of a periodic function.
 
-
-
-
+subsection:: Pure PFields
 
 METHOD:: gradient
 
-A PField with value which goes from value a at point (u2,v2) to value b at points at the maximum distance from (u2,v2) with shape given by curve (curve = 1 is linear). The result at points in between is given by Env([0,1],[1],curve).at( dist(p,p2).linlin(0,maxDist,0,1) ).
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## u2
+     || Start point (rangeU).
+     ## v2
+     || Start point (rangeV).
+     ## a
+     || [0,1].
+     ## b
+     || [0,1].
+     ## curve
+     || ]-inf,inf[.
+::
+::
 
-The PField has arguments t, u2, v2, a, b, curve
+A PField which evaluates to a at point p=(u2,v2) to b at points at the maximum distance from (u2,v2) and at the remaining points goes from a to b with a crossfade shape determined by 'curve'. At a point p2 it evaluates to:
+code::
+
+Env([0,1],[1],curve).at( dist(p,p2).linlin(0,maxDist,0,1) ).
+
+::
 
 returns:: PField
 
 discussion::
 
 code::
+//Startup ImmLib first.
 (
-ImmDef({ |t|
+PSurfaceDef(\sphere, PSphere(20) );
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+)
+
+(
+ImmDef(\test, { |t|
 
 	var pf = PField.gradient;
-	//       t  u2   v2   a    b
-	pf.plot( t, 0.0, 0.0, 0.0, 1.0 );
+	//                 t  u2   v2   a    b
+	var sig = pf.plot( t, 0.0, 0.0, 0.0, 1.0 );
 
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
+	( amp: USpecArg( sig ) )
+}, 0.1);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart
+)
+
+(
+ImmDef(\test, { |t|
+
+	var pf = PField.gradient;
+	                //  t  u2   v2   a                              b
+	var sig =  pf.plot( t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+
+	( amp: USpecArg( sig ) )
+}, 0.1);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart
+)
+
+//press 'f' on the plot window for a top view
+(
+ImmDef(\gradientForPlane, { |t|
+	var pf = PField.gradient;
+	           //t  u2   v2   a                             b
+	var sig = pf.( t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
+	PGridPlot( sig );
+	( amp: USpecArg( sig ) )
+}, 0.1, []);
+~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\gradientForPlane)] );
+~score = ImmUScore(\plane, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 
 
-(
-ImmDef({ |t|
+//With sliders
 
-	var pf = PField.gradient;
-	             //  t  u2   v2   a                              b
-	pf.plot( t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-:
 //sphere
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
+ImmDef(\gradientForSphere, { |t, u, v, a, b, curve|
+	var sig = PField.gradient.plot(t, u, v, a, b, curve);
+	( amp: USpecArg( sig ) )
 
-q.def = ImmDef({ |t, u2, v2, a, b, curve|
-
-	var pf1 = PField.gradient.plot( t, u2, v2, a, b, curve );
-
-	( amp: USpecArg( pf1 ) )
-
-}, q.surface, 0.1,
-[
-	\u0, \azimuth,
-	\v0, \elevation,
-	\a, [0,1.0],
-	\b,	[0,1.0],
-	\curve,	ControlSpec(-6,6,default:0)
+}, 0.1, [
+	\u, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
+	\v, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
 ]);
-
-q.mod = ImmMod(q.def, [\a, 0, \b, 1, \curve, 0]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\gradientForSphere)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 
 //plane
+//press 'f' on the plot window for a top view
 (
-ImmDef({ |t|
+ImmDef(\gradientForPlane, { |t, u, v, a, b, curve|
+	var pf1 = PField.gradient.(t, u, v, a, b, curve);
+	PGridPlot( pf1 );
+	( amp: USpecArg( pf1 ) )
 
-	var pf = PField.gradient;
-	           //t  u2   v2   a                             b
-	var x = pf.( t, 0.0, 0.0, { |x| (sin(x*2)+1)/2 } <%> t, { |x| (sin(x*3)+1)/2 } <%> t );
-	x.enDebug("x");
-	PGridPlot( x, "hello !")
-}, surface: PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+}, 0.1, [
+	\u, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\v, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
+]);
+~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\gradientForPlane)] );
+~score = ImmUScore(\plane, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: gradientF
 
-A PField with value which goes from value a at point p2 = (u2,v2) to value b at points at the maximum distance from (u2,v2) using a function f. The result at points in between is given by f( dist(p,p2)/maxDist) ).linlin(0,1,a,b)
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## u2
+     || Start point (rangeU).
+     ## v2
+     || Start point (rangeV).
+     ## a
+     || [0,1].
+     ## b
+     || [0,1].
+::
+::
 
-The PField has arguments t, u2, v2, a, b
+A PField which evaluates to a at point p=(u2,v2) to b at points at the maximum distance from (u2,v2) and at the remaining points goes from a to b with a crossfade shape determined by function f. At a point p2 it evaluates to:
+code::
+
+f.( dist(p,p2).linlin(0,maxDist,0,1) ).
+
+::
 
 ARGUMENT:: f
 A function f:[0,1] -> [0,1] used to interpolate from a to b. The final value is f(dist(p0,p1)).linlin(0,1,a,b)
@@ -221,45 +284,51 @@ discussion::
 
 code::
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, u2, v2, a, b|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\test, { |t, u2, v2, a, b|
 
 	//make our own non linear shape to go from a to b
 	var x = Env([ 0.0, 1.0, 0.5, 1.0, 0.0 ], [ 0.25, 0.25, 0.25, 0.25 ], [ -2.2, 2.1, 1.8, -2 ]).asMultichannelArray[0];
 
 	var f = { |c| x.envAt(c) };
 
-	var pf1 = PSmoothPlot( PField.gradientF(f), t, u2, v2, a, b );
+	var sig = PField.gradientF(f).plot( t, u2, v2, a, b );
 
-	( amp: USpecArg( pf1 ) )
+	( amp: USpecArg( sig ) )
 
-}, q.surface, 0.1,
-[
-	\u0, \azimuth,
-	\v0, \elevation,
-	\a, [0,1.0],
-	\b,	[0,1.0]
+}, 0.1,[
+	\u, ControlSpec(0.0, 2pi, \lin, 0, 0.0 ),
+	\v, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
+	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
+	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 )
 ]);
-
-q.mod = ImmMod(q.def, [\a, 0, \b, 1]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: spotlight
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## u2
+     || Start point (rangeU).
+     ## v2
+     || Start point (rangeV).
+     ## a
+     || [0,1].
+     ## d
+     || wideness of the transition from 0 to 1 - [0,5].
+::
+::
+
 A PField that grows symetrically from a start point until occupying all the surface.
 
-The PField has arguments t, u2, v2, c, d=0.2 and returns 1 if the distanceof (u1,v1) to (u2,v2) is smaller then c and 0 otherwise. d controls how wide is the smoothing area between the transition area from 0 to 1.
+It returns 1 if the distance of (u1,v1) to (u2,v2) is smaller then c and 0 otherwise.
 
 returns:: PField
 
@@ -268,45 +337,62 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\test, { |t, u2, v2, a, b|
 
 	var pf = PField.spotlight;
 
-	       //t, u,     v,    c,            d
-	pf.plot( t, 0.0,   0.0,  t.lfsine(0.5),  0.0 );
+	                 //t, u,     v,    c,              d
+	var sig = pf.plot( t, 0.0,   0.0,  t.lfsine(0.5),  0.0 );
 
-}).test
+	( amp: USpecArg( sig ) )
+
+}, 0.1,[]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 code::
+//modulated with lfsine
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\test, { |t, u2, v2, a, b|
 
-q.def = ImmDef({ |t, u0, v0, c, d|
+	var pf = PField.spotlight;
+
+	                 //t, u,     v,    c,              d
+	var sig = pf.plot( t, 0.0,   0.0,  t.lfsine(0.5),  0.0 );
+
+	( amp: USpecArg( sig ) )
+
+}, 0.1,[]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+)
+
+//sliders
+(
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\test, { |t, u0, v0, c, d|
 
 	var pf1 = PField.spotlight.plot( t, u0, v0, c, d );
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1,[
+}, 0.1,[
 	\u0, \azimuth,
 	\v0, \elevation,
 	\c, [0,1.0],
 	\d, [0,1.0]
 ]);
-
-q.mod = ImmMod(q.def, [\c, 0.5]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
@@ -314,40 +400,47 @@ q.chain.gui
 On a plane:
 code::
 (
-q = ();
-q.surface = PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] );
+PSurfaceDef(\plane, PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ));
+ImmDef(\test, { |t, u0, v0, c, d|
 
-q.def = ImmDef({ |t, u0, v0, c, d|
+	var sig = PField.spotlight.( t, u0, v0, c, d );
 
-	var x = PField.spotlight.( t, u0, v0, c, d );
+	PGridPlot( sig, "Spotlight on Plane");
 
-	PGridPlot( x, "Spotlight on Plane");
+	( amp: USpecArg( sig ) )
 
-	( amp: USpecArg( x ) )
-
-}, q.surface, 0.1,[
+}, 0.1,[
 	\u0, [0,1],
 	\v0, [0,1],
 	\c, [0,1.0],
 	\d, [0,1.0]
 ]);
-
-q.mod = ImmMod(q.def, [\c, 0.5]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~score = ImmUScore(\plane, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 
 METHOD:: spotlightFixed
-like spotlight but the position of the point to which distance is being measured (u,v) is fixed and not modulatable. The PField function has arguments t, c (0-1), d (0-1).
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## u2
+     || Start point (rangeU).
+     ## v2
+     || Start point (rangeV).
+     ## a
+     || [0,1].
+     ## d
+     || wideness of the transition from 0 to 1 - [0,5].
+::
+::
 
+The same as 'spotlight' but the position of the point to which distance is being measured is fixed and not modulatable.
 
 ARGUMENT:: u
 SimpleNumber - in range surface.manifold.rangeU
@@ -361,63 +454,44 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\test, { |t|
 
 	var pf = PField.spotlightFixed( pi/4, pi/2);
-	               //time,  c
-	PSmoothPlot( pf, t,     { |x| (sin(x*5)+1)/2 }.lift.(t) );
+	                 //time,  c
+	var sig = pf.plot( t,     { |x| (sin(x*5)+1)/2 }.lift.(t), 0.3 );
 
-}).test
-)
+	( amp: USpecArg( sig ) )
 
-(
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, c, d|
-
-	var pf1 = PField.spotlightFixed(0.0,pi/2).plot( t, c, d );
-
-	( amp: USpecArg( pf1 ) )
-
-}, q.surface, 0.1,[
-	\c, [0,1.0],
-	\d, [0,1.0]
-]);
-
-q.mod = ImmMod(q.def, [\c, 0.5]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
-)
-::
-
-code::
-(
-ImmDef({ |t|
-
-	var pf = PField.spotlightFixed( 0.5, 0.5);
-	            //time,  c
-	var x = pf .( t,     { |x| (sin(x*5)+1)/2 }.lift.(t) );
-
-	PGridPlot( x, "spotlightFixed")
-
-}, surface: PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
+}, 0.1,[]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 
 
 METHOD:: expandContract
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## u2
+     || Start point (rangeU).
+     ## v2
+     || Start point (rangeV).
+     ## c
+     || Grow factor - [0,1].
+     ## curve
+     || ]-inf, inf[.
+::
+::
+
 A PField that "grows" symetrically from a start point (u2,v2) until occupying the entire surface and then shrinks into the antipodal point.
 
-The PField has arguments t, u2, v2, c (0-1), curve where (u2,v2) is the start point, c is the grow factor.
 
 note::Only valid for spherical surfaces.::
 
@@ -426,38 +500,42 @@ returns:: PField
 
 discussion::
 code::
+
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\expandContractForSphere2, { |t, u0, v0, c, curve|
 
-q.def = ImmDef({ |t, u0, v0, c, curve|
-
-	var pf1 = PField.expandContract.plot( t,  u0, v0, c, curve);
-
-	PGridPlot( pf1);
+	var pf1 = PField.expandContract.plot( t,  u0, v0, c, curve );
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
-
-q.mod = ImmMod(q.def);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui;
+}, 0.1, [
+	\u0, [0, 2pi],
+	\v0, ControlSpec(pi/2.neg,pi/2, default:0),
+	\c, nil,
+	\curve, ControlSpec(-6,6,default:0)
+]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\expandContractForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 
 ::
 
 METHOD:: barU
-A PField that grows parallel to the u axis.
 
-The PField has arguments t, wideness (0-1).
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## wideness
+     || [0,1]
+::
+::
+
+A PField that grows parallel to the u axis.
 
 returns:: PField
 
@@ -465,46 +543,34 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
-
-	var pf = PField.barU;
-	                      //wideness
-	pf.plot( t,  t.lfsine(0.5) );
-
-}, delta: 0.1).test( startTime:0.0)
-)
-
-(
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, wideness|
-
-	var pf1 = PField.barU.plot( t, wideness );
-
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\barU2, { |t, wideness|
+	var pf1 = PField.barU.plot(t, wideness);
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1,[
-	\wideness, [0.0 ,1.0]
+}, 0.1, [
+	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
-
-q.mod = ImmMod(q.def, [\wideness, 0.0]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\barU2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: barV
-A PField that grows parallel to the v axis.
 
-The PField has arguments t, wideness (0-1).
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## wideness
+     || [0,1]
+::
+::
+
+A PField that grows parallel to the v axis.
 
 returns:: PField
 
@@ -512,62 +578,33 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
-
-	var pf = PField.barV;
-	                      //wideness
-	pf.plot( t,  t.lfsine(0.5) );
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-
-(
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, wideness|
-
-	var pf1 = PField.barV.plot( t, wideness );
-
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\barV2, { |t, wideness|
+	var pf1 = PField.barV.plot( t, wideness);
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1,[
-	\wideness, [0,1.0]
+}, 0.1, [
+	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
-
-q.mod = ImmMod(q.def, [\c, 0.5]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\barV2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
-::
-
-code::
-(
-ImmDef({ |t|
-
-	var pf = PField.barV;
-	           //t,  wideness
-	var x = pf.( t,  t.lfsine(0.5) );
-
-	PGridPlot(x, "hello !")
-
-}, surface: PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
-)
-
 ::
 
 METHOD:: sphericalHarmonic
+note::
+PField arguments:
+definitionlist::
+     ## t
+     || time.
+     ## f
+     || frequency of the monocromatic source [0, 10]
+::
+::
 
 A PField which uses the spherical harmonic functions for given m,n coeficients. The spherical harmonic function is multiplied with a monocromatic source at frequency f.
-
-The PField has arguments t, f where f is the frequency of the monocromatic source.
 
 ARGUMENT:: m
 Integer - range: -l <= m <= l
@@ -581,60 +618,21 @@ discussion::
 
 code::
 (
-
-ImmDef({ |t|
-
-	//var pf = PField.sphericalHarmonic(0,0);
-	var pf = PField.sphericalHarmonic(1,2);
-	//var pf = PField.sphericalHarmonic(2,1);
-	           //    t, f
-	pf.plot( t, 3.0 );
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-
-(
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, f|
-                                          //  -l <= m <= l
-	var pf1 = PField.sphericalHarmonic(2,2).plot( t, f );
-
-	( amp: USpecArg( pf1 ) )
-
-}, q.surface, 0.1,[
-	\freq, [1/10, 4]
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).plot(t,f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
 ]);
-
-q.mod = ImmMod(q.def, [\freq, 2]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\sphericalHarmonicForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
-
-
-//plane
-(
-ImmDef({ |t|
-
-	//var pf = PField.sphericalHarmonic(0,0);
-	var pf = PField.sphericalHarmonic(1,2);
-	//var pf = PField.sphericalHarmonic(2,1);
-
-	var x = PField({ |u,v,t| pf.func.(u*2*pi,v*pi,t) }).( t, 3.0 );
-	PGridPlot( x, "hello !")
-
-
-}, surface: PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ), delta: 0.1).test( startTime:0.0)
-)
-
 ::
 
 
@@ -642,11 +640,17 @@ subsection:: reactive pfields and pre-evaluated pfields
 
 Pre-evaluted pfields return an FPSignal instead of a PField.
 
-Reactive fields are not straight mathematical functions, they use switching (FRP) to change the mathematical function being used when some event comes in. This allows to essentially generate new mathematical functions at runtime while the PField is running. Another reason for a PField to be pre-evaluated is to be able to "slowdown" time in order to be able to smoothly change the frequency of a periodic pfield.
+Reactive fields are not pure mathematical functions, they use switching (FRP) to change the mathematical function being used when some event occurs. This allows the generation of new mathematical functions at runtime while the PField is running. Another reason for a PField to be pre-evaluated is to be able to "slowdown" time in order to be able to smoothly change the frequency of a periodic pfield.
 
 METHOD:: wave2D
 
 A PField which implements a wave travelling throught the surface caused by a point source at (u0,v0) with signal given by function g  where the speed of propagation is proportional to l. The speed of propagations controls the spatial wavelenght, i.e. how far apart in space two peaks of the signal are.
+
+note::
+In order for freq to be the frequency in Hertz the function should have period of 1.
+l controls the spatial frequency/wavelenght.
+This method returns an FPSignal and not a PField.
+::
 
 ARGUMENT:: t
 FPSignal
@@ -675,19 +679,10 @@ returns:: FPSignal[ [Float] ]
 
 discussion::
 
-note::
-In order for freq to be the frequency in Hertz the function should have period of 1.
-l controls the spatial frequency/wavelenght.
-This method returns an FPSignal and not a PField.
-::
-
 code::
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, u0, v0, l, freq|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\wave2D2, { |t, u0, v0, l, freq|
 
 	//make our own non linear shape to go from a to b
 	var x = Env([ 0.0, 1.0, 0.5, 1.0, 0.0 ], [ 0.25, 0.25, 0.25, 0.25 ], [ -2.2, 2.1, 1.8, -2 ]).asMultichannelArray[0];
@@ -698,23 +693,22 @@ q.def = ImmDef({ |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
-
-q.mod = ImmMod(q.def, [\l, 0.4, \freq, 1]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+}, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2D2, [\l,1])] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: wave2DSin
 
 A PField which implements a wave travelling throught the surface caused by a point source at (u0,v0) with signal given by sinusoidal function  where the speed of propagation is proportional to l.
+
+note::
+l controls the spatial frequency/wavelenght.
+This method returns an FPSignal and not a PField.
+::
 
 ARGUMENT:: t
 FPSignal
@@ -734,46 +728,42 @@ ARGUMENT:: freq
 SimpleNumber or FPSignal[ SimpleNumber ]
 
 ARGUMENT:: plot
-Boolean - If true plot pfield with PSmoothPlot
+Boolean - plot pfield with PSmoothPlot
 
 returns:: FPSignal[ [Float] ]
 
 discussion::
 
-note::
-l controls the spatial frequency/wavelenght.
-This method returns an FPSignal and not a PField.
-::
-
 code::
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, u0, v0, l, freq|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\wave2DSinForSphere2, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSin(t, u0, v0, l, freq, true);
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
-
-q.mod = ImmMod(q.def, [\l, 0.4, \freq, 1]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2DSinForSphere2, [\l,1])] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: wave2DSaw
 
 A PField which implements a wave travelling throught the surface caused by a point source at (u0,v0) with signal given by a saw like function where the speed of propagation is proportional to l.
+
+note::
+l controls the spatial frequency/wavelenght.
+This method returns an FPSignal and not a PField.
+::
 
 ARGUMENT:: t
 FPSignal[ Float ]
@@ -799,41 +789,33 @@ returns:: FPSignal[ [Float] ]
 
 discussion::
 
-note::
-In order for freq to be the frequency in Hertz the function should have period of 1.
-l controls the spatial frequency/wavelenght.
-This method returns an FPSignal and not a PField.
-::
+
 
 code::
-//PField.wave2DSaw
 (
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, u0, v0, l, freq|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\wave2DSawForSphere2, { |t, u0, v0, l, freq|
 
 	var pf1 = PField.wave2DSaw(t, u0, v0, l, freq, true);
 
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
-
-q.mod = ImmMod(q.def, [\l, 0.4, \freq, 1]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2DSawForSphere2, [\l,1])] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: continousRandomSpotlight
-A PField that grows symetrically from a start point until occupying all the surface and then shrinks back to the same point, it then randomly chooses another point to grow to and repeats the process. It takes numSecs to grow and shrink back to the chosen point.
+
+A PField that grows symetrically from a start point until occupying all the surface and then shrinks back to the same point, it then randomly chooses another point to grow to and repeats the process indefinitely. It takes numSecs to grow and shrink back to the chosen point.
 
 ARGUMENT:: t
 FPSignal[ Float ]
@@ -852,44 +834,26 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
-	//surface, t, numSecs
-	var x = PField.continousRandomSpotlight( t, 5);
-
-	PGridPlot( x * 2 )
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-
-(
-q = ();
-q.m = 20;
-q.surface = PSphere(q.m);
-
-q.def = ImmDef({ |t, numSecs, curve|
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\continousRandomSpotlights2, { |t, numSecs, curve|
 
 	var pf1 = PField.continousRandomSpotlight(t, numSecs, curve);
-
-	PGridPlot( pf1);
-
+	PGridPlot( pf1 );
 	( amp: USpecArg( pf1 ) )
 
-}, q.surface, 0.1, [\numSecs, [0.5,10], \curve, ControlSpec(-6,6,default:0) ]);
-
-q.mod = ImmMod(q.def, [\numSecs, 2]);
-
-q.u = [\immWhiteNoise, [\amp: 0.23, \ampLag, 0.1], q.mod];
-
-q.chain = ImmUChain(q.surface, 0, 1, inf, true, q.u).fadeIn_(1).fadeOut_(1);
-
-q.score = ImmUScore(q.surface, q.chain);
-q.score.prepareAndStart;
-q.chain.gui;
+}, 0.1, [
+	\numSecs, ControlSpec(0.5,10,default:2),
+	\curve, ControlSpec(-6,6,default:0)
+]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\continousRandomSpotlights2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: continousRandomSpotlight2
-A PField that grows symetrically from a start point until occupying all the surface and then shrinks back to the same point, it then randomly chooses another point to grow to and repeats the process. It takes numSecs to grow and shrink back to the chosen point.
+A PField that grows symetrically from a start point until occupying all the surface and then shrinks back to the same point, it then randomly chooses another point to grow to and a time interval for that growth between numSecsLo and numSecsHi and repeats the process. It takes numSecs to grow and shrink back to the chosen point.
 
 numSecs is calculated randomly between numSecsLo and numSecsHi
 
@@ -911,39 +875,25 @@ discussion::
 
 code::
 (
-ImmDef({ |t|
-	//surface, t, numSecs
-	var x = PField.continousRandomSpotlight( t, 5);
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\continousRandomSpotlight22, { |t, numSecsLo, numSecsHi, curve|
 
-	PGridPlot( x * 2 )
+	var pf1 = PField.continousRandomSpotlight2(t, numSecsLo, numSecsHi, curve);
 
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
+	( amp: USpecArg( pf1 ) )
 
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
+}, 0.1, [
+	\numSecsLo, ControlSpec(0.5,10,default:1),
+	\numSecsHi, ControlSpec(0.5,10,default:2),
+	\curve, ControlSpec(-6,6,default:0)
+]);
 
-q[\f] = { |t|
-
-	//surface, t, numSecs
-	var x = PField.continousRandomSpotlight( t, 5);
-
-	PGridPlot( x * 2 );
-
-
-	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\continousRandomSpotlight22)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
-
-
 
 METHOD:: randomHills
 Every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness given  in [sizeA, sizeB] and height in [heightA, heightB]. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
@@ -980,38 +930,30 @@ When using an FPSignal for numSecs, the number of seconds is only sampled when s
 
 code::
 (
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\randomHills_2, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
+	var pf1 = PField.randomHills(t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
+	PGridPlot( pf1 );
+	( amp: USpecArg( pf1 ) )
 
-ImmDef({ |t|
-	//surface, t, numSecs, numHills = 5
-	var x = PField.randomHills( t, 5, 5);
-
-	PHemiPlot( x * 2 )
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-
-	var x = PField.randomHills( t, 5, 5);
-
-	PHemiPlot( x * 2 );
-
-	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
+}, 0.1, [
+	\numSecs, ControlSpec( 0.5,10, default: 2),
+	\numHills, ControlSpec(1,6,step:1, default:3),
+	\sizeA, ControlSpec(default:0.3),
+	\sizeB, ControlSpec(default:0.35),
+	\bumpSize, ControlSpec( 0.0, 0.5, default: 0.5),
+	\heightA, ControlSpec(default:1),
+	\heightB, ControlSpec(default:1)
+]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\randomHills_2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
 
 METHOD:: randomHills2
-Every num seconds switches into a new function, where num is ramdomly choosen between numSecsLo and numSecsHi. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness given  in [sizeA, sizeB] and height in [heightA, heightB]. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
+Every num seconds switches into a new function, where num is ramdomly choosen between numSecsLo and numSecsHi. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills) each hill having a random wideness in [sizeA, sizeB] and height in [heightA, heightB]. The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
 
 ARGUMENT:: t
 FPSignal[ Float ]
@@ -1048,96 +990,31 @@ When using an FPSignal for numSecs, the number of seconds is only sampled when s
 
 code::
 (
-ImmDef({ |t|
-	//surface, t, numSecs, numHills = 5
-	var x = PField.randomHills( t, 5, 5);
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\randomHills2_2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
 
-	PGridPlot( x * 2 );
-	PHemiPlot( x * 2 )
+	var pf1 = PField.randomHills2(t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB);
+	PGridPlot( pf1 * 2 );
+	( amp: USpecArg( pf1 ) )
 
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-
-	var x = PField.randomHills( t, 5, 5);
-
-	PHemiPlot( x * 2 );
-
-	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
+}, 0.1,
+[
+	\numSecsLo, ControlSpec( 0.5,10, default: 1),
+	\numSecsHi, ControlSpec( 0.5,10, default: 2),
+	\numHills, ControlSpec(1,6,step:1, default:3),
+	\sizeA, ControlSpec(default:0.4),
+	\sizeB, ControlSpec(default:0.5),
+	\bumpSize, ControlSpec( 0.0, 0.5, default: 0.5),
+	\heightA, ControlSpec(default:1),
+	\heightB, ControlSpec(default:1)
+]
+);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\randomHills2_2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
-
-
-
-
-METHOD:: randomHillsBipolar
-every num seconds switches into a new function. Each function is composed of the sum of code::numHills:: spotlight functions with centers on random points (the hills). Some hills have a positive number associated (contribute upwards) and others have a negative number (contribute downwards). The animation progressivelly crossfades from one set of hills to another every code::numSeconds:: seconds.
-
-
-ARGUMENT:: t
-FPSignal[ Float ]
-
-ARGUMENT:: numSecs
-SimpleNumber
-
-ARGUMENT:: numHills
-Integer
-
-ARGUMENT:: sizeA
-Float (0-1)
-
-ARGUMENT:: sizeB
-Float (0-1)
-
-ARGUMENT:: bumpSize
-Float (0-1)
-
-returns::  FPSignal[ [Float] ]
-
-discussion::
-
-code::
-(
-ImmDef({ |t|
-	var x = PField.randomHillsBipolar( t, 5, 2);
-
-	PHemiPlot( x )
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-)
-
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-
-	var x = PField.randomHillsBipolar( t, 5, 2);
-
-	PHemiPlot( x * 2 );
-
-	(freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
-)
-::
-
 
 METHOD:: moveHills
 
@@ -1163,34 +1040,32 @@ ARGUMENT:: startInSamePlace
 Boolean
 If true all spotlights start at the same location.
 
+ARGUMENT:: mode
+one of \bounce, \wrap, \noconstrain
+
 returns::  FPSignal[ [Float] ]
 
 discussion::
 
 code::
 (
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-
-	var x = PField.moveHills(t:t, numSecs:0.5, numHills:5, size:0.35, step:1, startInSamePlace:false);
-
-	PGridPlot( x );
-
-    (freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\moveHills_2, { |t, numSecs, numHills, size, step|
+	var pf1 = PField.moveHills(t,  numSecs, numHills, size, step, true, \bounce);
+	PGridPlot( pf1 );
+	( amp: USpecArg( pf1 ) )
+}, 0.1, [
+	\numSecs, ControlSpec( 0.5,10, default: 1),
+	\numHills, ControlSpec(1,5,step:1,default:2),
+	\size, ControlSpec(default:0.4),
+	\step, ControlSpec( 0.0, 2.0, default: 1)
+]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\moveHills_2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
-
-
-
 
 INSTANCEMETHODS::
 
@@ -1198,7 +1073,7 @@ PRIVATE:: composeNAryOp, reverseComposeBinaryOp, <>, valueArray, composeBinaryOp
 
 
 METHOD:: func
-The actual mathematical function of the PField
+The mathematical function of the PField
 returns:: Function
 
 METHOD:: value
@@ -1209,9 +1084,28 @@ Of kind FPSignal[ SimpleNumber ] or SimpleNumber
 
 returns::  FPSignal[ [Float] ]
 
-METHOD:: rotate
+METHOD:: plot
+Wraps the pfField in a PSmoothPlot
 
-Create a new PField which allows for rotation around 3 axis.
+ARGUMENT::  ... args
+Of kind FPSignal[ SimpleNumber ] or SimpleNumber
+
+returns::  FPSignal[ [Float] ]
+
+METHOD:: rotate2D
+Create a new PField which allows for rotation around 1 axis.
+Adds arguments after 't': angle=0.
+
+note::Only valid for plane surfaces.::
+
+METHOD:: rotTransScale2D
+Create a new PField which allows for rotation around 1 axis, scaling and translation. Adds arguments after 't': angle=0, scale=1, ut=0, vt=0.
+
+note::Only valid for plane surfaces.::
+
+METHOD:: rotate3D
+
+Take the original PField and create a new one which allows for rotation around 3 axis.
 
 The new PField has 3 extra arguments prepended to the argument list for the 3 angles of rotation (rotate, tilt, tumble).
 
@@ -1220,102 +1114,25 @@ note::Only valid for spherical surfaces.::
 discussion::
 code::
 (
-ImmDef({ |t|
-
-	var pf = PField.spotlightFixed(0,0).rotate;
-                  // t,     rotate  tilt     tumble   c
-	pf.plot( t,  0.0,    0.0,     t,       0.5 );
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
+PSurfaceDef(\sphere, PSphere(20) );
+ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
+	//try different values of m and l.
+	var m = 1;
+	var l = 2;
+	var sig = PField.sphericalHarmonic(m,l).rotate3D.plot(t,rotate, tilt, tumble, f);
+	( amp: USpecArg( sig ) )
+}, 0.1, [
+	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 ),
+	\rotate, [0, 2pi],
+	\tilt, [0, 2pi],
+	\tumble, [0, 2pi]
+]);
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\sphericalHarmonicForSphere2)] );
+~score = ImmUScore(\sphere, ~chain);
+~score.prepareAndStart;
+~chain.gui
 )
 ::
-
-Examples::
-
-It's possible to switch from a pfield to another after a certain ammount of seconds:
-
-code::
-//later
-(
-
-ImmDef({ |t|
-
-	var pf1 = PField({ |u, v, t|
-		sin(u + t)
-	});
-	var x = pf1.(t);
-	var pf2 = PField({ |u, v, t|
-		1.0
-	});
-	var y = pf2.(t);
-	PGridPlot( x.switchLater(t, y, 4), "switchLater")
-
-}, surface: PGeodesicSphere(), delta: 0.1).test( startTime:0.0)
-
-)
-::
-
-If one wants to change values of the pfield arguments or other elements of the signal by typing code one can use VarProxy:
-
-code::
-
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-	var pf = PField.spotlight;
-
-	var c = VarProxy.enIn(\x, 0.5);
-	var d = c.enDebug("c");
-	               //t, u,     v,    c,    d
-	var out = PSmoothPlot( pf, t, 0.0,   0.0,  c,  0.0 );
-
-	(freq: UArg( out.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.score.gui;
-q.score.prepareAndStart
-)
-
-
-VarProxy(\x, 0.0)
-VarProxy(\x, 1.0)
-
-//when we don't need this score anymore (i.e. before evaluating the block of code above again) we should dispose of the score in order to stop disconnect everything in the event network:
-q.score.stop
-q.score.disconnect
-::
-
-Closing windows automatically with cmd-.
-
-code::
-(
-q = ();
-q.m = 40;
-q.surface = PSphere(q.m);
-
-q[\f] = { |t|
-
-	var x = PField.moveHills(t:t, numSecs:0.5, numHills:5, size:0.35, step:1, startInSamePlace:false);
-
-	PGridPlot( x );
-
-    (freq: UArg( x.linexp(0.0,1.0,100,10000) ))
-};
-
-q.chain = ImmUChain(q.surface, \immWhiteNoise, [\lowPass, nil , ImmDef(q[\f], q.surface, 0.1) ] ).fadeIn_(1).fadeOut_(1);
-q.score = ImmUScore(q.surface, q.chain);
-q.scoregui = q.score.gui;
-q.score.prepareAndStart;
-CmdPeriod.add({q.scoregui.close; });
-)
-::
-
-
 
 
 

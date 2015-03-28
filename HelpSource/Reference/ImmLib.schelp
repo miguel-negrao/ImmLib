@@ -4,7 +4,7 @@ categories::ImmLib
 
 section:: Introduction
 
-For a overview of the conceptual framework and implementation details of ImmLib see the accompaining pdf in the ImmLib folder.
+For a overview of the conceptual framework and implementation details of ImmLib see the ICMC paper: http://www.friendlyvirus.org/files/miguelnegraoicmc2014.pdf.
 
 ImmLib uses 2 different SuperCollider frameworks:
 
@@ -12,9 +12,10 @@ list::
 ##link::Reference/Unit-Lib:: - A library for general synth and resource creation and manipulation.
 ##link::Overviews/FP:: - A library which provides an implementation of language side event networks through link::Overviews/FRP::. FRP is used to animate and interact with the PFields as well as provide MIDI, OSC and GUI control of unit parameters.
 ::
-To use ImmLib one must become familiar with Unit Lib and with the FRP library in FP Lib.
 
-Unit Lib makes it easier to manage buffers, connect multiple synths and provides a complete DAW GUI system similar to Apple's Logic or Ableton's Live. ImmLib is built on top of Unit Lib, so all of it's functionality, including the DAW GUI is available. To become familiar with Unit Lib it's recommended reading the tutorial: link::Reference/Unit-Lib::. There is also a manual available inside the dmg's of the latest version of WFSCollider (https://github.com/GameOfLife/WFSCollider-Class-Library/releases).
+To use ImmLib you must become familiar with Unit Lib and with the FRP library in FP Lib.
+
+Unit Lib makes it easier to manage buffers, connect multiple synths and provides a complete DAW GUI system similar to Apple's Logic or Ableton's Live. ImmLib is built on top of Unit Lib, so all of it's functionality, including the DAW GUI is available. To become familiar with Unit Lib it is recommended to read the tutorial: link::Reference/Unit-Lib::. There is also a manual available inside the dmgs of the latest version of WFSCollider (https://github.com/GameOfLife/WFSCollider-Class-Library/releases).
 
 To get familiar with FRP read link::Overviews/FRP:: and for event networks see link::Classes/EventNetwork::. The key points to keep in minds are
 
@@ -25,111 +26,97 @@ list::
 ##signals and event streams when placed in an event network are automatically connected to inputs and outputs when the network is compiled or started and are automatically disconnected when the network is stopped. There is no need for explicit registration and de-registration of callbacks.
 ::
 
-section:: Installation
+section:: Installation and startup code
 
-Install the dependencies:
+Follow the instructions in the README.md file.
 
-list::
-##Unit Lib: https://github.com/GameOfLife/Unit-Lib
-##WFSCollider class library: https://github.com/GameOfLife/WFSCollider-Class-Library
-##FP Lib: https://github.com/miguel-negrao/FPLib
-##UEvNetMod: https://github.com/miguel-negrao/UEvNetMod
-##Modality: https://github.com/ModalityTeam/Modality-toolkit
-##wslib quark
-##PopUpTreeMenu quark
-##VectorSpace quark
-##MathLib quark
-##sc3-plugins
-::
-
-Install the library by copying the root folder to the SuperCollider extensions directory.
-
-The systems currently makes use of VBAP panners (hence the need for sc3-plugins). To generate the panner synthdefs for Sarc's Sonic Lab do:
+You need to generate the UnitLib synthdefs once:
 
 code::
-VBAPSynthDef.writeDefs(32)
-VBAPSynthDef.writePreviewDefs
+ULib.writeDefaultSynthDefs
 ::
 
-section:: Startup
-
-Currently the library uses VBAP for rendering, so to startup use VBAPLib.startup or VBAPLib.startupR with a correct configuration.
-
-As an example, the startup code for SARC's Sonic Lab:
+If you intend to use VBAP panners in a system with n speakers you need to execute once:
 
 code::
 (
-Routine({
-	var options = VBAPOptions.fromPreset(\soniclab)
-	.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/UnitDefs"]);
-	Udef.loadOnInit = true;
-	VBAPLib.startupR( options );
-}).play(AppClock)
+VBAPSynthDef.writeDefs(n);
+VBAPSynthDef.writePreviewDefs
 )
 ::
+
+note::
+Pseudo-type signatures are used in the help files for the arguments and return types of methods. ClassA[ ClassB, ClassC ] represents an objects of ClassA which contains or depends on objects of ClassB and Class C. So FPSignal[ Float ] represents an object of class FPSignal which carries floats. Array[A] is an array carrying values of type A (for homogenous arrays).
+::
+
+For startup code see link::Classes/ImmLib::.
 
 section:: Surfaces
 
-ImmLib works with virtual surfaces which can be addressed by a speaker system. The speaker system should be able to pan a source to any location on the surface. The system will not work if one tries to use a surface on which the speaker system cannot pan sources, for instance using a sphere when the speaker system is just horizontal will not work.
+ImmLib works with virtual surfaces which can be addressed by a speaker system. The speaker system should be able to pan a source to any location on the surface. The system will not work if one tries to use a surface on which the speaker system cannot pan sources, for instance using a sphere when the speaker system is horizontal will not work.
 
-Surfaces are represented by the link::Classes/PSurface:: class which holds both a an abstract mathematical description of the surface (how to map onto the surface from an [a,b]x[c,d] domain, i.e. a parametrization for the surface), how to calculate distance in the surface, i.e. a geodesic distance function, and if it is a closed or open surface) and a set of discrete points on the surface to be used for panning positions. Henceforth when we mention "points of the surface" we are referring to the set of discrete points chosen to represent the surface which are stored in the PSurface.
+Surfaces are represented by the link::Classes/PSurface:: class which holds both an abstract mathematical description of the surface (how to map onto the surface from an [a,b]x[c,d] domain, i.e. a parametrization for the surface), how to calculate distance in the surface, i.e. a geodesic distance function, and if it is a closed or open surface) and a set of points on the surface to be used for panning positions. Henceforth when we mention "points of the surface" we are referring to the set of points chosen to represent the surface which are stored in the PSurface.
 
 code::
-PSurface.geodesicSphere.plot
+PGeodesicSphere(1).plot
 
-PSurface.sphere(10).plot
+PSphere(10).plot
 
-PSurface.plane( RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ).plot
+PPlane(RealVector3D[-1.0,-1.0,1.0], RealVector3D[2.0,0.0,0.0], RealVector3D[0.0,2.0,0.0] ,10,10).plot
 ::
 
-section:: MUChain
+Any surfaces that you will be using for a score must be assigned a name with a PSurfaceDef:
+code::
+PSurfaceDef(\test, PSphere(20) )
+::
 
-Given a normal UChain creation arg list such as code::[\sine, \stereoOutput]:: ImmLib needs to create n uchains running in parallel, one per point in the surface. To facilitate this process ImmLib used the link::Classes/MUChain:: and link::Classes/MU:: classes which behave virtually identically to UChain and U, but in the background it will play multiple copies of the same unit at the same time. These classes are implemented using link::Clases/ClusterBasic:: for runtime redirection of the methods to each of the parallel uchains using the TELETYPE::doesNotUnderstand:: method. When calling a method of one of these classes, if one wants to send different values to each of the internal instance of the unit, one must wrap the array of values in a link::Classes/ClusterArg::, all other arguments are automatically "multichannel expanded" to match the number of items in the ClusterArg.
+section:: ImmUChain, ImmUScore.
+
+When using ImmLib one must use the link::Classes/ImmUChain:: and  link::Classes/ImmUScore:: classes. The ImmUChain class inherits from link::Classes/ParUChain::, for details regarding sending different argument values to each synth of an ImmUChain see the documentation of ParUChain and ParU.
+
+A code example:
 
 code::
-
 (
-var x =  MUChain( [\sine, [\freq,  ClusterArg(5.collect{ rrand(100,500) }) ]], \stereoOutput );
-x.prepareAndStart
+//synth definition
+Udef(\mynoise, {
+	var in = WhiteNoise.ar * \amp.kr(1);
+	UOut.ar(0, in * \globalAmp.kr(0.1) )
+})
+.setSpec(\amp, \amp)
+.setSpec(\globalAmp, \amp);
+
+//pfield definitions
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
+
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+
+PSurfaceDef(\surface1, PSphere(10) );
 )
 
-x.set(\freq, ClusterArg(5.collect{ rrand(100,500) }) );
-
-::
-
-In the context of ImmLib MUChain can be mostly used the same way as UChain, since the only ClusterArg'ed value is in a unit hidden from the user.
-
-When using ImmLib one must use #link::Classes/MUChain#immNew:: to create an MUChain and #link::Classes/UScore#immNew:: to create an UScore, they automatically add the necessary VBAP panners.
-
-An example of an MUChain without any PFields attached:
-
-code::
-
-Udef(\simpleNoise, { UOut.ar( 0, WhiteNoise.ar * 0.1) })
-
 (
-q = ();
-
-q.m = 30;
-
-q.surface = PSurface.sphere(q.m);
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60, \simpleNoise ).fadeIn_(5).fadeOut_(5);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-q.score.gui;
-q.score.prepareAndStart
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain)
 )
+
+~score.gui
 ::
 
-Notice that even though we are using the exact same unit (which doesn't have arguments) at each point of the surface, the actual sound stream for each point is decorreated. This is because each WhiteNoise UGen automatically picks a different random number generator on each synth. One should note that link::Classes/MUChain#*immNew:: and link::Classes/UScore#*immNew:: should be passed the surface as first argument. Currently each score can only have one surface and only one score can be played at the same time.
-
-Each score can play any ammount of units, limited only by the cpu usage of both sclang and scsynth.
-
+Notice that even though we are using the exact same \mynoise with the same argument values at each point of the surface, the actual sound stream for each point is decorreated. This is because each WhiteNoise UGen automatically picks a different random number generator on each synth.
 
 section:: PFields
 
-subsection:: Using PFields
+subsection:: Using and creating PFields.
 
 	In ImmLib spatial patterns are created by associating the output of PFields with a parameter of a unit (e.g. teletype::\freq::).
 
@@ -137,15 +124,8 @@ A PField function can be any mathematical function (no side effects !!) that one
 
 code::
 
-	Udef(\simpleNoise2, { UOut.ar( 0, WhiteNoise.ar * 0.1 * \amp.kr(0.0) ) })
-
-
 (
-q = ();
-
-q.surface = PSurface.sphere(20);
-
-q[\f] = { |t|
+ImmDef(\pfield2,{ |t|
 	//the function is passed in the time signal
 	//which is updated once every delta seconds (see below in ImmDef)
 	//with the elapsed time
@@ -175,97 +155,135 @@ q[\f] = { |t|
     //Using Uarg will use the values of the signal directly.
 	( amp: USpecArg( pfSignal ) )
 
-};
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, 60,
-	[\simpleNoise2, nil , ImmDef(descFunc:q[\f], surface:q.surface, delta:0.1) ]
-).fadeIn_(2).fadeIn_(2);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-q.score.gui;
-q.score.prepareAndStart
+});
 )
+
+(
+~mod = ImmMod(\pfield2, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+
+~score.gui
+
+
+(
+ImmDef(\pfield3,{ |t|
+
+	//now using also u and v
+	var pf =  PField({ |u,v,t| ((t + u + v) % 5)/5 });
+
+	//plot using PSmoothPlot
+	var pfSignal = pf.plot(t);
+
+	( amp: USpecArg( pfSignal ) )
+
+});
+)
+
+(
+~mod = ImmMod(\pfield3, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+
+~score.gui
 ::
+
+ImmLib comes with a predefined set of ImmDefs which are loaded at startup. They are in the 'immdefs.scd' file at the base of the ImmLib folder.
 
 subsection:: Combining PFields
 
-PFields are essentially functions, in fact, the PField class has a teletype::func:: variable which contains the actual instance of link::Classes/Function::, therefore the PField functions can be composed as any other function. To simplify this process the link::Classes/PField:: class itself inherits from link::Classes/Function:: and forwards all the composition messages to the the internal Function instance, so you can use a PField as if it was an instance of Function.
+PFields are essentially functions, in fact, the PField class has a teletype::func:: variable which contains the actual instance of link::Classes/Function::, therefore the PField functions can be composed as any other function. To simplify this process the link::Classes/PField:: class itself inherits from link::Classes/AbstractFunction:: and forwards all the composition messages to the the internal Function instance, so you can use a PField as if it was an instance of Function.
 
 code::
 
 (
-ImmDef({ |t|
-
+ImmDef(\def4, { |t|
+	var sig;
 	var pf1 = PField({ |u,v,t| (t % 5)/5 });
 
 	var pf2 = PField({ |u, v, t| sin( 2pi * ( (0.3 * u) + t) ) });
 
-	var pf3 = pf1 * pf2;
+	var pf3 = (pf1 * pf2).postln;
 
-	pf3.postln;
+	sig = pf3.plot( t );
 
-	PSmoothPlot( pf3 , t );
+	( amp: USpecArg( sig ) )
 
-}).test
+})
 )
+
+(
+~mod = ImmMod(\def4, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+
+~score.gui
 
 
 (
-ImmDef({ |t|
-
+ImmDef(\def5, { |t|
+	var sig;
 	var pf1 = PField({ |u,v,t| (t % 5)/5 });
 
 	var pf2 = PField({ |u, v, t| (sin( 2pi * ( (0.3 * u) + t) )+1)/2 });
 
 	var pf3 = (pf1 + pf2)/2;
 
-	pf3.postln;
+	sig = pf3.plot( t );
 
-	PSmoothPlot( pf3 , t );
+	( amp: USpecArg( sig ) )
 
-}).test
+})
 )
 
 (
-ImmDef({ |t|
+~mod = ImmMod(\def5, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
 
+~score.gui
+
+(
+ImmDef(\def6, { |t|
+	var sig;
 
 	var pf1 = PField({ |u, v, t| (sin( 2pi * ( (0.2 * u) + t) )+1)/2 });
 
 	var pf2 = PField({ |u, v, t| (sin( 2pi * ( (0.1 * v) + (0.5*t)) )+1)/2 });
 
-
 	var pf3 = pf1.mod(pf2);
 
-	pf3.postln;
+	sig = pf3.plot( t );
 
-	PSmoothPlot( pf3 , t );
+	( amp: USpecArg( sig ) )
 
-}).test
+})
 )
-
 
 (
-ImmDef({ |t|
-
-	var pf1 = PField({ |u, v, t| (sin( 2pi * ( (0.3 * u) + t) )+1)/2 });
-
-	var pf2 = pf1.cubed ;
-
-	pf2.postln;
-
-	PSmoothPlot( pf2 , t );
-
-}).test
+~mod = ImmMod(\def6, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
 )
+
+~score.gui
 ::
 
-Sometimes one needs make a composition of functions for which there isn't already an operator. In that case one can write the function explicitelly:
+Sometimes one needs to make a composition of functions for which there isn't already an operator. In that case one can write the function explicitelly:
 
 code::
 (
-ImmDef({ |t|
-
+ImmDef(\def7, { |t, k|
+	var sig;
 
 	var pf1 = PField({ |u, v, t, k| (sin( 2pi * ( (0.2 * u) + (k*t)) )+1)/2 });
 
@@ -275,50 +293,25 @@ ImmDef({ |t|
 		pf1.func.(u, v, t, pf2.func.(u,v,t,k)+1 )
 	});
 
-	PSmoothPlot( pf3 , t, Var(0.1) );
+	sig = pf3.plot( t, k );
 
-}).test
+	( amp: USpecArg( sig ) )
+
+}, 0.1, [\k, [0,1]])
 )
+
+(
+~mod = ImmMod(\def7, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+
+~chain.gui
 ::
 
 
 When a PField is evaluated it returns a signal which carries an array of values. Signals can also be composed using any of the signal combinators available (collect, select, inject, etc; see link::Classes/FPSignal#Combinators::).
-
-This can be used for modulating the pfields:
-
-code::
-//line
-(
-ImmDef({ |t|
-
-
-	var pf1 = PField({ |u, v, t, k| (sin( 2pi * ( (0.2 * u) + (k*t)) )+1)/2 });
-
-	var signal1 = { |t| sin( 2pi * 0.1 * t).linlin(-1.0,1.0,0.1,0.5) }.lift.(t);
-
-	var signal2 = pf1.(t, t.line(start:0.1, end:10, dur:10 ) );
-
-	PGridPlot( signal2 , t );
-
-}).test
-)
-
-//lfo sine
-(
-ImmDef({ |t|
-
-
-	var pf1 = PField({ |u, v, t, k| (sin( 2pi * ( (0.2 * u) + (k*t)) )+1)/2 });
-
-	var signal1 = { |t| sin( 2pi * 0.1 * t).linlin(-1.0,1.0,0.1,0.5) }.lift.(t);
-
-	var signal2 = pf1.(t, signal1 );
-
-	PGridPlot( signal2 , t );
-
-}).test
-)
-::
 
 warning::
 The clocked evaluation of PFields (e.g. every 0.1 seconds) is performed in sclang which is a rather slow interpreter. Evaluating a couple of PFields on a 40 point surface can easilly take sclang to 100% cpu usage, it is therefore important to write efficient code. One should  avoid multiple unnecessary function calls.
@@ -354,107 +347,48 @@ On the first case there are two function call, on the second only one function c
 
 subsection:: Interacting with PFields
 
-The reason that PFields evaluate to signals it to be able to interact with them in real-time them, since signals are reactive (a type of functional emphasis::reactive:: programming).
-It's therefore possible to interact with PFields in real-time using GUIs, MIDI or OSC. To do this one must get the source of events being used to appear as a signal inside the event network. To get a event network input from any GUI use  link::Classes/Object#enIn::. For OSC use link::Classes/OSCfunc#*enIn::. For MIDI use the Modality Library, calling link::Classes/Object#enIn:: on the chosen element of the MKtl.
+PFields evaluate to signals which can be interacted with in real-time using GUIs, MIDI or OSC. The first step is to create a signal (or event stream) from the GUI, MIDI or OSC object inside the event network. To get a event network input from any GUI use  link::Classes/Object#enIn::. For OSC use link::Classes/OSCfunc#*enIn::. For MIDI use the Modality Library, calling link::Classes/Object#enIn:: on the MKtlElement.
 
 code::
-
-Udef(\simpleNoise2, { UOut.ar( 0, WhiteNoise.ar * 0.1 * \amp.kr(0.0) ) })
-
-
 (
-q = ();
+~slider = Slider();
 
-q.slider = Slider();
+~window = Window().layout_(VLayout(~slider));
 
-q.window = Window().layout_(VLayout(q.slider));
-
-q.surface = PSurface.sphere(20);
-
-q[\f] = { |t|
+ImmDef(\def9, { |t|
 
     var pf =  PField({ |u,v,t, k| (t % k)/k });
 
-	var sliderSignal = q.slider.enIn;
+	var sliderSignal = ~slider.enIn;
 
-	var pfSignal = pf.(t, sliderSignal.nlin(0.1, 3) );
+	var sig = pf.plot(t, sliderSignal.nlin(0.5, 3) );
 
-    PGridPlot( pfSignal );
+    ( amp: USpecArg( sig ) )
 
-    ( amp: USpecArg( pfSignal ) )
-
-};
-
-q.chain1 = MUChain.immNew(q.surface, 0, 0, inf,
-    [\simpleNoise2, nil , ImmDef(descFunc:q[\f], surface:q.surface, delta:0.1) ]
-).fadeIn_(2).fadeIn_(2);
-
-q.score = UScore.immNew(q.surface, q.chain1);
-q.score.gui;
-q.score.prepareAndStart;
-q.window.front;
+})
 )
-::
 
-
-subsection:: switching
-
-We have already seen that we can compose signals using pure functions:
-
-code::
-{ |a,b,c| ... }.lift.(signal1, signal2, signal3)
-::
-
-We can also work with signals that keep a state:
-
-code::
-signal1.inject(initial state, state change function)
-::
-
-FRP event networks have one aditional capability, they allow to switch between multiple possible signals which are generated at runtime when an event comes in. This is called emphasis::switching:: and is done using the method link::Classes/FPSignal#switch::. When an event triggers a switch a function supplied by the user is run which should return then next signal to be emphasis::switched:: into.
-
-In this example, after 5 seconds a different pffield will be output:
-
-code::
 (
-ImmDef({ |t|
-
-	var pf1 = PField({ |u,v,t| t % 1 });
-
-	var pf2 = PField({ |u, v, t| (sin( 2pi * ( (0.3 * u) + t) )+1)/2 });
-
-	var signal1 = pf1.(t);
-
-	var signal2 = pf2.(t);
-
-	var x = t
-	.inject(0, { |state,t| if(t<5){0}{ if(state==1){2}{1} } })
-	.changes
-	.select(_==2)
-	.hold(0.0)
-	.switch({ |x|
-		if(x == 0.0){
-			signal1
-		} {
-			signal2
-		}
-	});
-
-	PGridPlot( x , t );
-
-}).test
+~mod = ImmMod(\def9, []);
+~chain = ImmUChain(\surface1, [\mynoise, [], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart;
+~window.front
 )
+
+~score.gui
 ::
 
-The method teletype::changes:: converts an FPSignal into an EventSource,this is needed because only EventSource has the teletype::select:: method, which allows filtering of events.
+section:: Adding pfields from the GUI
 
+If you don't want to create pfields, and just want to use the ones that come with ImmLib, it's possible then to use ImmLib just from the GUIs.
 
+You can create a new score from the menu bar ("score"->"new ImmUScore"). By clicking the '+' button you can create a new event and you can add units to it by cliking the 'udefs' button in the event gui which will open the udefs, umaps and Immdefds definitions window, you can then drag units to the uchain GUI. To associate a pfield with a parameter of a unit from the GUI first drag the 'pfield' umap to the parameter you want to modulate. This currently causes an error, just close the uchain GUI and open it again. Then you can drag one of the pfields named UM... into the grey rectangle in the umap.
 
-
-
-
-
-
+image::umap1.png::
+image::umap2.png::
+image::umap3.png::
+image::umap4.png::
 
 
 

@@ -4,20 +4,68 @@ categories:: ImmDef
 related:: Classes/PHemiPlot, Classes/PGridPlot, Classes/PSurface, Classes/PField
 
 DESCRIPTION::
-Plots a PField using a color map projected onto the surface where the PField is being applied.
 
-It starts a separate process with a window containing opengl rendering of the surface. cmd-. will close the window.
+This class a separate process with a window containing an opengl rendering of the surface updated in real-time.
 
-Currently only the spherical surface is implemented.
+It plots a PField using a color map projected onto the surface where the PField is being applied.
 
-PRIVATE::animate, animateOnly, basicNew, animate, animateOnly, faces, startRenderermstartRendererIO, surface
+The surface appear inside of a wireframe cube where the red face is the front wall and the green face is the ceiling.
+
+note::
+There is shortcut for this class. Instead of
+code::
+PSmoothPlot( pf, t )
+::
+you can instead use
+code::
+pf.plot( t )::.
+::
+
+note::
+When using this class the PField has to be internally evaluated twice, once for the actual points in the surface discretization being used and another time for the points being used for the 3D rendering. Because of this the PField is passed to the plot unevaluated together with the signals to be used for evaluation.
+::
+
+note::
+Currently only spherical surfaces are implemented.
+::
+
+note::
+Using PSmoothField requires pfVisualizer to be installed.
+
+On osx pfVisualizer is bundled with ImmLib, it should work out box. If the bundled version does not work for some reason it must be compiled from source.
+
+On linux it must currently be compiled from source.
+
+To compile it from source download the source from github at https://github.com/miguel-negrao/pfVisualizer . Use either the .tar download link or git.
+You must have a working haskell system installed, see https://www.haskell.org/platform/. On linux you must have some opengl packages installed.
+
+cd pfVisualizer
+cabal sandbox init
+cabal install --only-dependencies
+cabal build
+
+then copy the binary to ImmLib/pfVisualizer/osx or ImmLib/pfVisualizer/linux.
+::
+
+PRIVATE::animate, animateOnly, basicNew, animate, animateOnly, faces, startRenderermstartRendererIO, surface, proxy
 
 CLASSMETHODS::
 
-METHOD:: new
-This will add the creation of the window to the list of IO actions to be performed when the event network is started.
+PRIVATE:: all, animate, animateOnly, basicNew
 
-When using this class the PField has to be internally evaluated twice, once for the actual points in the surface being used and another time for the points being used for the 3D rendering. Because of this the PField is passed to the plot unevaluated together with the signals to be used for evaluation.
+METHOD:: new
+Create a new PSmoothPlot.
+
+note::Calling PSmoothPlot#new causes the class to internally increment a the tcp port to be used to connect to pfVisualizer in order to have multiple plots running at the same time::
+
+ARGUMENT::pf
+The unevaluated link::Classes/PField::
+
+ARGUMENT::args
+The signals to be used for evaluation of the PField
+
+METHOD:: off
+Does nothing. Use this method to quickly disable plotting in an ImmDef. Switching from 'off' to 'new' will activate the plot again.
 
 ARGUMENT::pf
 The unevaluated link::Classes/PField::
@@ -27,21 +75,37 @@ The signals to be used for evaluation of the PField
 
 INSTANCEMETHODS::
 
+PRIVATE:: sendGeometry, startRendererIO
+
 
 EXAMPLES::
 
 code::
 (
-ImmDef({ |t|
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
 
-	var pf = PField({ |u, v, t|
+	//instead of
+	//var pf1 = PField.spotlight.(Val(0),u0,v0,c,d);
+	//we do
+	var pf1 = PSmoothPlot( PField.spotlight, t, t, t*2, 0.5, 0.5);
 
-		sin( 2pi * ( (0.3 * u) + t) )
+	( amp: USpecArg( pf1 ) )
 
-	});
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
 
-	PSmoothPlot( pf, t );
-
-}).test
+PSurfaceDef(\surface1, PSphere(40) );
 )
+
+(
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.prepareAndStart
+)
+
 ::

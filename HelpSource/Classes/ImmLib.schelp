@@ -1,9 +1,255 @@
 TITLE:: ImmLib
-summary:: ImmLib
+summary:: Starts up the ImmLib system.
 categories:: ImmLib
-related:: Reference/ImmLib
+related:: Classes/ULib
 
 DESCRIPTION::
-See link::Reference/ImmLib::
+This class is responsible for starting up the ImmLib system.
 
-This class is only for storing the preview mode variable.
+It will create and start multiple servers and when using VBAP will create the necessary VBAP buffers for the current configuration.
+
+note::
+The startup methods must be run inside a routine running on the AppClock.
+::
+
+note::
+When creating scores containing a large number of simultaneous events the ServerOptions passed to ImmLib should have tcp turned on (code::.protocol_(\tcp)::).
+::
+
+CLASSMETHODS::
+
+PRIVATE:: extraDefs, baseDirectory, startupSonicLabTest, prStartupGUIsVBAP, prStartupULib, prStartupVBAP
+
+METHOD:: mode
+'normal' or 'previewStereo'
+
+'normal' will use either VBAP rendering or send the outputs direct to speakers.
+'previewStereo' will create a stereo preview.
+
+METHOD:: startupDirect
+Startup the system without VBAP panners. The PSurfaces created should then have 'renderMethod = direct'.
+
+ARGUMENT:: numServers
+Number of SuperCollider servers to be created. Should be the same as the number of CPU cores.
+
+ARGUMENT:: serverOptions
+ServerOptions
+
+ARGUMENT:: startGuis
+Boolean - open or not the menu bar, server window, EQ GUI and level GUI.
+
+METHOD:: startupVBAP
+Startup the system with VBAP panners.
+
+note::The PSurfaces created should then have 'renderMethod = vbap'.::
+note::
+When in 'vbap' mode while creating an ImmUScore VBAP panner chains are automatically added to the score (they are hidden) with a duration equal to end time of the last event. If after creating the score by changing or adding events you make the score longer then the panner events will stop at the original end time of the score. In order to fix this, save the score to disk and open it again.
+::
+
+ARGUMENT:: vbapOptions
+VBAPOptions
+
+ARGUMENT:: serverOptions
+ServerOptions
+
+ARGUMENT:: startGuis
+Boolean
+
+
+
+METHOD:: startupSonicLab
+Startup the system with VBAP panners configured for SARC's Sonic Lab. The PSurfaces created should then have 'renderMethod = vbap'.
+
+
+ARGUMENT:: serverOptions
+ServerOptions
+
+ARGUMENT:: connectServersInJack
+Boolean - Run script which connects the outputs of the 8 servers to the inputs of the first server in order to record the output of the system.
+
+ARGUMENT:: startGuis
+Boolean
+
+METHOD:: startupStereo
+Startup the system without VBAP panners and render using a simple stereo panner. The PSurfaces created can have any 'renderMethod'.
+
+ARGUMENT:: numServers
+Number of SuperCollider servers to be created. Should be the same as the number of CPU cores.
+
+ARGUMENT:: serverOptions
+ServerOptions
+
+ARGUMENT:: startGuis
+Boolean - open or not the menu bar, server window, EQ GUI and level GUI.
+
+METHOD:: recWindow
+GUI for recording the output of the system. This will record the 32 inputs of the first server. When using multiple servers the outputs of all servers must be connected through jack to the inputs of the first server.
+
+
+EXAMPLES::
+
+subsection:: Preview mode
+code::
+//startup in stereo preview mode
+(
+var o = ServerOptions()
+.memSize_(8192*16)
+.numWireBufs_(64*2)
+.numPrivateAudioBusChannels_(1024)
+.maxSynthDefs_(2048)
+.maxNodes_(4*1024)
+.numOutputBusChannels_(2);
+Routine({ ImmLib.startupStereo(2, o, startGuis:true ) }).play(AppClock)
+)
+::
+
+subsection:: Direct mode
+code::
+//startup for direct mode
+(
+var o = ServerOptions()
+.memSize_(8192*16)
+.numWireBufs_(64*2)
+.numPrivateAudioBusChannels_(1024)
+.maxSynthDefs_(2048)
+.maxNodes_(4*1024)
+.numOutputBusChannels_(25);
+Routine({
+
+ImmLib.startupDirect(2, o, startGuis:true );
+
+ImmDef(\planeWaveForPlane, { |t, angle, l, freq|
+
+	var pf1 = PField({ |u,v, t, l|
+		sin( 2pi * ( (l*u) - t) )
+	}).rotate2D.(t.changeRate(freq), angle.nlin(0,2pi), l);
+
+	( amp: USpecArg( pf1 ) )
+
+}, 0.1,  [
+	\angle, [0,1],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	 \freq, ControlSpec(1/10,2,default:0.5)
+]; );
+
+PSurfaceDef(\surface1,
+PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 5, 5 )
+.renderMethod_(\direct)
+.renderOptions_( (\spkIndxs: (0..24) ) ) );
+
+}).play(AppClock)
+)
+
+//test direct mode
+(
+~mod = ImmMod(\planeWaveForPlane, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+::
+
+subsection::VBAP mode
+
+code::
+//startup in VBAP mode for the Sonic Lab
+(
+var o = ServerOptions()
+.memSize_(8192*16)
+.numWireBufs_(64*2)
+.numPrivateAudioBusChannels_(1024)
+.maxSynthDefs_(2048)
+.maxNodes_(4*1024)
+.numOutputBusChannels_(32);
+
+var v = VBAPOptions(
+				//change this to the number of cores in your computer
+	serverDescs: 4.collect{ |i| ["slave "++(i+1),"localhost", 57456 + i] },
+	device: nil,
+	numInputChannels: 0,
+	numOutputChannels: 32,
+	angles: [
+					[ -25.400967366, 0 ],
+					[ 25.9660516833, 0 ],
+					[ -67.0576274588, 0 ],
+					[ 66.6879780945, 0 ],
+					[ -107.4110491464, 0 ],
+					[ 107.3832377266, 0 ],
+					[ -146.2172414806, 0 ],
+					[ 146.1054525865, 0 ],
+					[ -20.4495476108, 17.8750032812 ],
+					[ 20.571247071, 17.8150833255 ],
+					[ -65.6744247609, 24.0287030727 ],
+					[ 65.6416496995, 23.9189613576 ],
+					[ -108.1204280324, 24.7878302634 ],
+					[ 108.1462414292, 24.906009848 ],
+					[ -155.454155974, 23.6313179834 ],
+					[ 155.6036500106, 23.5605201117 ],
+					[ -27.5218854663, 52.7448792263 ],
+					[ 28.2311587404, 52.8541958285 ],
+					[ -74.594892688, 57.9362142825 ],
+					[ 73.451059145, 59.0965878748 ],
+					[ -113.1577815608, 57.1078901345 ],
+					[ 110.9030667368, 56.4426902381 ],
+					[ -151.3671810066, 54.2142657891 ],
+					[ 152.046597927, 52.8541958285 ],
+					[ -28.0372821602, -50.4062940572 ],
+					[ 28.0372821602, -50.4062940572 ],
+					[ -77.6309384741, -52.9029151782 ],
+					[ 77.1957339347, -53.8362268718 ],
+					[ -116.4957697362, -51.38202567 ],
+					[ 116.7749248886, -51.6531568981 ],
+					[ -159.9660768355, -50.2322714936 ],
+					[ 157.4926118991, -49.7580403359 ]
+				],
+	distances: [
+					6.31, 6.34, 6.67, 6.57, 6.45, 6.46, 7.64, 7.65, 9.22,
+					9.25, 6.95, 6.98, 6.75, 6.72, 7.06, 7.08, 6.91, 6.9,
+					6.49, 6.41, 6.55, 6.6, 6.78, 6.9, 6.0084357365, 6.0084357365,
+					5.8048083517, 5.7349280728, 5.9258332747, 5.9035836574,
+					6.0235952719, 6.0655832366
+				],
+	loadDefsAtStartup: false, //don't write the synthdefs at every startup
+	loadUdefViaRemoteFolder: false,
+	remoteFolderForLoading: "",
+	isSlave: false,
+	extraDefFolders: nil
+);
+
+Routine({
+
+ImmLib.startupVBAP( v, o );
+
+ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
+	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
+	( amp: USpecArg( pf1 ) )
+}, 0.1, [
+	\u0, ControlSpec(0,2pi),
+	\v0, [-pi,pi],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5)
+] );
+
+PSurfaceDef(\surface1, PSphere(10) );
+
+}).play(AppClock);
+)
+
+//you need to run this once for this supercollider instalation:
+(
+VBAPSynthDef.writeDefs(32);
+VBAPSynthDef.writePreviewDefs;
+ULib.writeDefaultSynthDefs;
+)
+
+//test vbap:
+UChain('blip', 'vbap3D_Simple_Panner').gui
+
+//test immlib
+(
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+::
