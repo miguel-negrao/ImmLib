@@ -54,16 +54,73 @@ ImmLib {
 	*startupStereo { |numServers = 1, serverOptions, startGuis = true|
 		GenericDef.errorOnNotFound = true;
 		mode = \previewStereo;
-		ULib.startup(false, true, numServers, serverOptions, false);
+		this.prStartupULib(false, true, numServers, serverOptions, startGuis);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
 	}
 
 	*startupDirect { |numServers = 1, serverOptions, startGuis = true|
 		GenericDef.errorOnNotFound = true;
-		ULib.startup(false, true, numServers, serverOptions, false);
+		this.prStartupULib(false, true, numServers, serverOptions,  startGuis);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
+	}
+
+	*prStartupULib {  |sendDefsOnInit = true, createServers = false, numServers = 4, options, startGuis = true|
+
+		UChain.makeDefaultFunc = {
+			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
+		};
+
+		UnitRack.defsFolders = UnitRack.defsFolders.add(
+			Platform.userAppSupportDir ++ "/UnitRacks/";
+		);
+
+		if(createServers) {
+			ULib.servers = [LoadBalancer(*numServers.collect{ |i|
+				Server("ImmLib server "++(i+1), NetAddr("localhost",57110+i), options)
+			})];
+			Server.default = ULib.allServers[0]
+		};
+
+		if( startGuis ) {
+			if( (thisProcess.platform.class.asSymbol == 'OSXPlatform') && {
+				thisProcess.platform.ideName.asSymbol === \scapp
+			}) {
+				UMenuBar();
+			} {
+				ImmUMenuWindow();
+			};
+			UGlobalGain.gui;
+			UGlobalEQ.gui;
+			if( ((thisProcess.platform.ideName == "scqt") && (ULib.allServers.size == 1)).not  ) {
+				ULib.serversWindow
+			}
+		};
+
+		//if not sending the defs they should have been written to disk once before
+		// with writeDefaultSynthDefs
+		ULib.allServers.do(_.boot);
+		ULib.waitForServersToBoot;
+
+		if( sendDefsOnInit ) {
+			var defs = ULib.getDefaultSynthDefs;
+			"ImmLib: sending unit synthdef".postln;
+			ULib.allServers.do{ |sv|
+				defs.do( _.load( sv ) );
+			}
+		} {
+			var temp = Udef.loadOnInit;
+			Udef.loadOnInit = false;
+			ULib.getDefaultUdefs;
+			Udef.loadOnInit = temp;
+        };
+
+		PSurfaceDef(\default, PSphere(20) );
+		PSurface.default = \default;
+
+		"\n\tImmLib started".postln
+
 	}
 
 	*startupSonicLabTest { |serverOptions|
@@ -83,12 +140,11 @@ ImmLib {
 		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
-		VBAPLib.startupR( options, serverOptions, startGuis );
-		"ImmLib started".postln;
+		this.prStartupVBAP( options, serverOptions, startGuis );
 		if( connectServersInJack) { "sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal };
 		Server.default.latency = 0.25;
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
-
+		"ImmLib started".postln;
 	}
 
 	*startupVBAP { |vbapOptions, serverOptions, startGuis = true|
@@ -97,11 +153,46 @@ ImmLib {
 		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
-		VBAPLib.startupR( options, serverOptions, startGuis );
-		"ImmLib started".postln;
+		this.prStartupVBAP( options, serverOptions, startGuis );
 		Server.default.latency = 0.25;
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
+		"ImmLib started".postln;
+	}
 
+	*prStartupVBAP { |options, serverOptions, startGuis = true|
+
+		var defs;
+
+		if( options.isKindOf(Symbol) ) {
+			options = VBAPOptions.fromPreset(options)
+		};
+
+		UChain.makeDefaultFunc = {
+			UChain( \bufSoundFile, \stereoOutput ).useSndFileDur
+		};
+
+		VBAPLib.prStartupServers(options, serverOptions, startGuis);
+
+		if(options.isSlave.not) {
+			if(startGuis){this.prStartupGUIsVBAP};
+			CmdPeriod.add(VBAPLib);
+		};
+
+		PSurfaceDef(\default, PSphere(20) );
+		PSurface.default = \default;
+	}
+
+	*prStartupGUIsVBAP {
+		if( (thisProcess.platform.class.asSymbol == 'OSXPlatform') && {
+			thisProcess.platform.ideName.asSymbol === \scapp
+		}) {
+			UMenuBar();
+		} {
+			ImmUMenuWindow();
+		};
+
+		UGlobalGain.gui;
+		UGlobalEQ.gui;
 	}
 
 	*recWindow {
