@@ -24,7 +24,7 @@ METHOD:: mode
 'normal' or 'previewStereo'
 
 'normal' will use either VBAP rendering or send the outputs direct to speakers.
-'previewStereo' will create a stereo preview.
+'previewStereo' will create a stereo preview. This stereo preview will mostly destroy spatialization information, it is only to be used to be able to hear all the streams at the same time in stereo.
 
 METHOD:: startupDirect
 Startup the system without VBAP panners. The PSurfaces created should then have 'renderMethod = direct'.

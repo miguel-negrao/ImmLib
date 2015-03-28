@@ -27,8 +27,8 @@ ImmLib {
 	*extraDefs {
 		^[this.baseDirectory++"/UnitDefs"]
 	}
-
-	*startupStereo { |numServers = 1, serverOptions, startGuis = true|
+/*
+	*startupStereoVBAP { |numServers = 1, serverOptions, startGuis = true|
 		var options = VBAPOptions(
 			serverDescs: numServers.collect{ |i| ["ImmLib"++(i+1),"localhost", 57456+i] },
 			device: nil,
@@ -43,12 +43,19 @@ ImmLib {
 			extraDefFolders: false
 		).extraDefFolders_( this.extraDefs );
 		VBAPLib.previewMode = \stereo;
-		mode = \previewStereo;
+		mode = \normal;
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
 		VBAPLib.startupR( options, serverOptions, startGuis );
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
-
+	}
+*/
+	*startupStereo { |numServers = 1, serverOptions, startGuis = true|
+		GenericDef.errorOnNotFound = true;
+		mode = \previewStereo;
+		ULib.startup(false, true, numServers, serverOptions, false);
+		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
+		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;
 	}
 
 	*startupDirect { |numServers = 1, serverOptions, startGuis = true|
@@ -67,7 +74,7 @@ ImmLib {
 		VBAPLib.startupR( options, serverOptions );
 	}
 
-	*startupSonicLab { |serverOptions, connectServersInJack = false|
+	*startupSonicLab { |serverOptions, connectServersInJack = false, startGuis = true|
 		var options;
 		options = VBAPOptions
 		.fromPreset(\soniclabSingle)
@@ -75,7 +82,7 @@ ImmLib {
 		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
-		VBAPLib.startupR( options, serverOptions );
+		VBAPLib.startupR( options, serverOptions, startGuis );
 		"ImmLib started".postln;
 		if( connectServersInJack) { "sh /Volumes/12-13/miguelN/cnServers.sh".runInTerminal };
 		Server.default.latency = 0.25;
@@ -83,13 +90,13 @@ ImmLib {
 
 	}
 
-	*startupVBAP { |vbapOptions, serverOptions|
+	*startupVBAP { |vbapOptions, serverOptions, startGuis = true|
 		var options;
 		options = vbapOptions
 		.extraDefFolders_( [ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs"] );
 		Udef.loadOnInit = true;
 		GenericDef.errorOnNotFound = true;
-		VBAPLib.startupR( options, serverOptions );
+		VBAPLib.startupR( options, serverOptions, startGuis );
 		"ImmLib started".postln;
 		Server.default.latency = 0.25;
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;

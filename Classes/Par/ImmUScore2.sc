@@ -59,7 +59,7 @@ ImmUScore : UScore {
 			}
 		};
 
-		allEvents = if( (surface.renderMethod == \vbap) ) {
+		allEvents = if( (ImmLib.mode != \previewStereo) && (surface.renderMethod == \vbap) ) {
 			panners = ParUChain(surface.size, [\vbap3D_Simple_Panner,
 				[\angles, ParArg( surface.pointsDegrees.items ), \spread, 0.0, \u_i_ar_0_bus, busses ]
 			])
@@ -69,24 +69,7 @@ ImmUScore : UScore {
 			.hideInGUI_(true)
 			.duration_(duration);
 			events++panners;
-		} {
-			if( surface.renderMethod == \vbapTest ) {
-				var pos = ParArg( surface.pointsWrapped.collect{ |p,i|
-					p.theta.linlin(0,2pi,-1,1)
-				});
-				panners = ParUChain(surface.size, [\fakeVBAP,
-					[\pos, pos, \u_i_ar_0_bus, busses ]
-				])
-				.private_(true)
-				.ugroup_(ugroups)
-				.addAction_('addToTail')
-				.hideInGUI_(true)
-				.duration_(duration);
-				events++panners;
-			} {
-			 events
-			}
-		};
+		} { events };
 
 		^super.new(*(initArgs++allEvents)).initImmUScore(surface, surfaceKey)
 

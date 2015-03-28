@@ -36,9 +36,6 @@ ImmUChain : ParUChain {
 			{\vbap} {
 				withPanners.()
 			}
-			{\vbapTest} {
-				withPanners.()
-			}
 			{\direct}{
 				var busses = ParArg( surface.renderOptions.spkIndxs );
 				createImmUChain.(surface, surfaceKey, args ++ [ [\output, [\bus, busses] ] ] )
@@ -46,7 +43,8 @@ ImmUChain : ParUChain {
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}
 		{\previewStereo}{
-			withPanners.()
+			var points = ParArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
+			createImmUChain.(surface, surfaceKey, args ++ [ [\stereoOutput, [\point, points] ] ] )
 		}
 		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
 
