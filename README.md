@@ -25,7 +25,7 @@ Quarks:
 * VectorSpace quark
 * MathLib quark
 
-With SuperCollider v3.7alpha or newer the library can simply be installed by running
+With SuperCollider v3.7alpha or newer the library can simply be installed by running the following code. If you have any of libraries mentioned above installed please uninstall them first.
 
 ```
 (
