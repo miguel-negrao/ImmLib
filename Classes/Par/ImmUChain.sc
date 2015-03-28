@@ -28,8 +28,7 @@ ImmUChain : ParUChain {
 			.initImmUChain( surface, surfaceKey, args )
 		};
 		var withPanners = {
-			var busses = ParArg( surface.ubuses.items );
-			createImmUChain.(surface, surfaceKey, args ++ [ [\pannerout, [\u_o_ar_0_bus, busses] ] ] )
+			createImmUChain.(surface, surfaceKey, args ++ [ [\pannerout, [\u_o_ar_0_bus, surface.ubuses] ] ] )
 		};
 		^switch(ImmLib.mode)
 		{\normal}{

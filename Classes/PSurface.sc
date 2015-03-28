@@ -186,7 +186,7 @@ PSurface {
 	}
 
 	ubuses{
-		^this.size.collect{ |i| UBus("psurface_%_%".format(num,i).asSymbol,1) }.carg
+		^ParArg(this.size.collect{ |i| UBus("psurface_%_%".format(num,i).asSymbol,1) })
 	}
 
 	*prToSphericalRange{ |theta, phi|
@@ -205,7 +205,7 @@ PSurface {
 	converts points to UnitSpherical using degrees (0-360)
 	*/
 	pointsDegrees {
-		^ClusterArg( pointsWrapped.collect{ |p,i|
+		^ParArg( pointsWrapped.collect{ |p,i|
 			UnitSpherical(p.theta/(2*pi)*360.neg, p.phi/(2*pi)*360)
 		})
 	}

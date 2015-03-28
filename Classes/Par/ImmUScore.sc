@@ -26,7 +26,7 @@ ImmUScore : UScore {
 		var surface = PSurfaceDef.get(surfaceKey);
 		var m = surface.size;
 
-		var busses = ParArg( surface.ubuses.items );
+		var buses = surface.ubuses;
 		var ugroups = ParArg( m.collect({ |i| ("immGroup"++i).asSymbol }) );
 		var panners;
 		var allEvents;
@@ -61,7 +61,7 @@ ImmUScore : UScore {
 
 		allEvents = if( (ImmLib.mode != \previewStereo) && (surface.renderMethod == \vbap) ) {
 			panners = ParUChain(surface.size, [\vbap3D_Simple_Panner,
-				[\angles, ParArg( surface.pointsDegrees.items ), \spread, 0.0, \u_i_ar_0_bus, busses ]
+				[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, buses ]
 			])
 			.private_(true)
 			.ugroup_(ugroups)

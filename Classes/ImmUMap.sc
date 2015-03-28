@@ -23,7 +23,7 @@ ImmUMap2 : UMap {
 		var us = surface.points.flop[0];
 		var vs = surface.points.flop[1];
 		var args1 = args ? [];
-		var args2 = args1 ++[\u, ClusterArg(us), \v, ClusterArg(vs)];
+		var args2 = args1 ++[\u, ParArg(us), \v, ParArg(vs)];
 
 		^super.new.init( def, args2, mod ).initImmUMap(surface)
 	}
