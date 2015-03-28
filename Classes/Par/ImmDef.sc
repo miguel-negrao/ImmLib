@@ -71,7 +71,7 @@ ImmMod : UEvNetTMod {
 						var plot = t.at1;
 						var f = t.at2;
 						sampledSig.stopDoing(f);
-						plot.quitRenderer;
+						plot.stopRenderer;
 					};
 					plotData = None();
 				};
