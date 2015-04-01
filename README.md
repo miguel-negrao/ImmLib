@@ -33,6 +33,7 @@ With SuperCollider v3.7alpha0 or newer the library can simply be installed by ru
 (
 Quarks.install("FPLib", "v0.2.0");
 Quarks.install("https://github.com/miguel-negrao/UEvNetMod.git", "v0.1.0");
+Quarks.install("https://github.com/miguel-negrao/Unit-Lib.git", "immlib-v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "immlib-v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.0")
 )
@@ -59,7 +60,7 @@ pfVisualizer
 
 ImmLib uses an external process to render 3D representations of surfaces and parameter fields using openGL. The library ships with binaries of pfVisualizer for OSX 10.10 (untested in lower versions) and Ubuntu 12.04 and higher.  If the bundled version does not work on your system then it must be compiled from source.
 
-There is a binary available for Debian 7 and higher at https://github.com/miguel-negrao/pfVisualizer/releases. 
+There is a binary available for Debian 7 and higher at https://github.com/miguel-negrao/pfVisualizer/releases.
 
 To compile it from source download the source from github at https://github.com/miguel-negrao/pfVisualizer . Use either the .tar download link or git.
 You must have a working haskell system installed, see https://www.haskell.org/platform/. On linux you must have some opengl packages installed.
