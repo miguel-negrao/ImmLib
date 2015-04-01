@@ -94,7 +94,7 @@ ImmMod : UEvNetTMod {
 					var f = { |p|
 						plot.sendMsg(*(["/colors"]++p.array.collect{ |v|
 							//[0.0,v.linlin(0.0,1.0,0.3,1.0),0.0]
-							[0.0,v, 1-v]
+							[0.0, v.asFloat, (1-v).asFloat]
 						}.flat) )
 					};
 					var c = SimpleController(plot).put(\connected, {
