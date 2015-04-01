@@ -52,7 +52,7 @@ ImmUdefsGUI {
 		});
 
 		composites = 3.collect({ |i|
-			 CompositeView( view, bounds.width/3 @ (bounds.height) ).resize_(4+i)
+			CompositeView( view, bounds.width/3 @ (bounds.height) ).resize_(4+if(i==0){0}{1})
 		});
 
 		udefView = UdefListView( composites[0] );

@@ -113,7 +113,7 @@ UEvNetModDefListView {
 		UEvNetModDef.all !? { |all| all.keys.asArray.sort.do({ |key|
 			var category, index, moddef;
 			moddef = all[ key ];
-			category = moddef.class;
+			category = moddef.category;
 			index = categories.indexOf( category );
 			if( index.isNil ) {
 				categories = categories ++ [ category, [ moddef ] ];
@@ -234,7 +234,7 @@ UEvNetModDefListView {
 				});
 			});
 
-			StaticText(views[ \scrollview],100@25).string_("UEvNetModDef");
+			StaticText(views[ \scrollview],100@25).string_("ImmDefs");
 			views[ \scrollview].decorator.nextLine;
 			categories = categories.clump(2).sort({ |a,b| a[0] <= b[0] }).flatten(1);
 			categories.pairsDo(g);
