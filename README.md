@@ -14,8 +14,8 @@ Requires SuperCollider version 3.7alpha0 or higher which can be downloaded [here
 
 The following libraries should be downloaded/cloned from github:
 
-* FP Lib - [github](https://github.com/miguel-negrao/FPLib).
-* UEvNetMod -[github](https://github.com/miguel-negrao/UEvNetMod).
+* FP Lib - v0.2.0 [github](https://github.com/miguel-negrao/FPLib).
+* UEvNetMod -v0.1.0 [github](https://github.com/miguel-negrao/UEvNetMod).
 * Modality - [github](https://github.com/ModalityTeam/Modality-toolkit).
 * Unit Lib - ImmLib branch - [github](https://github.com/miguel-negrao/Unit-Lib/tree/ImmLib).
 * WFSCollider class library - ImmLib branch - [github](https://github.com/miguel-negrao/WFSCollider-Class-Library/tree/immlib).
@@ -31,7 +31,7 @@ With SuperCollider v3.7alpha0 or newer the library can simply be installed by ru
 
 ```
 (
-Quarks.install("FPLib", "v0.1.0");
+Quarks.install("FPLib", "v0.2.0");
 Quarks.install("https://github.com/miguel-negrao/UEvNetMod.git", "v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "immlib-v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.0")
