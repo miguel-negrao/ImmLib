@@ -31,9 +31,10 @@ With SuperCollider v3.7alpha0 or newer the library can simply be installed by ru
 
 ```
 (
-Quarks.install("https://github.com/miguel-negrao/Unit-Lib.git", "ImmLib");
-Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "ImmLib");
-Quarks.install("https://github.com/miguel-negrao/ImmLib.git")
+Quarks.install("FPLib", "v0.1.0");
+Quarks.install("https://github.com/miguel-negrao/UEvNetMod.git", "v0.1.0");
+Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "immlib-v0.1.0");
+Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.0")
 )
 ```
 
