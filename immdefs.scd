@@ -29,7 +29,8 @@ ImmDef(\spotlightForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+])
+.category_(\plane);
 
 ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
@@ -40,7 +41,8 @@ ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+])
+.category_(\plane);
 
 ImmDef(\spotlightForSphere, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlight.(Val(0),u0,v0,c,d);
@@ -51,7 +53,7 @@ ImmDef(\spotlightForSphere, { |t, u0, v0, c, d|
 	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\sphere);
 
 ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
@@ -62,7 +64,7 @@ ImmDef(\spotlightInverseForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\plane);
 
 ImmDef(\barU, { |t, wideness|
 	var pf1 = PField.barU.(Val(0), wideness);
@@ -70,7 +72,7 @@ ImmDef(\barU, { |t, wideness|
 
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\universal);
 
 ImmDef(\barV, { |t, wideness|
 	var pf1 = PField.barV.(Val(0), wideness);
@@ -78,7 +80,7 @@ ImmDef(\barV, { |t, wideness|
 
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\universal);
 
 ImmDef(\gradientForPlane, { |t, u, v, a, b, curve|
 	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
@@ -90,7 +92,7 @@ ImmDef(\gradientForPlane, { |t, u, v, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\plane);
 
 ImmDef(\gradient1DForPlane, { |t, angle, a, b, curve|
 	var pf1 = PField.gradient1D.(Val(0), angle, a, b, curve);
@@ -100,7 +102,7 @@ ImmDef(\gradient1DForPlane, { |t, angle, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\plane);
 
 ImmDef(\gradientForSphere, { |t, u, v, a, b, curve|
 	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
@@ -112,7 +114,7 @@ ImmDef(\gradientForSphere, { |t, u, v, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\sphere);
 
 
 //ok
@@ -130,7 +132,7 @@ ImmDef(\sphericalHarmonicForSphere, { |t, m, l, f|
 	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
 	'l', ControlSpec(0, 4, \lin, 1, 0 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\sphere);
 
 //ok
 ImmDef(\sphericalHarmonicForPlane, { |t, m, l, f|
@@ -148,7 +150,7 @@ ImmDef(\sphericalHarmonicForPlane, { |t, m, l, f|
 	'm', ControlSpec(-4, 4, \lin, 1, 2 ),
 	'l', ControlSpec(0, 4, \lin, 1, 2 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\plane);
 /*
 ImmDef(\sphericalHarmonicForPlane, { |t, m, l, f|
                                           //  -l <= m <= l
@@ -171,7 +173,7 @@ ImmDef(\sphericalHarmonicPlottedForSphere, { |t, f|
 
 }, 0.1, [
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\sphere);
 //ok
 ImmDef(\expandContractForSphere, { |t, u0, v0, c, curve|
 
@@ -179,7 +181,7 @@ ImmDef(\expandContractForSphere, { |t, u0, v0, c, curve|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]).category_(\sphere);
 //ok
 ImmDef(\expandContractPlottedForSphere, { |t, u0, v0, c, curve|
 
@@ -187,7 +189,7 @@ ImmDef(\expandContractPlottedForSphere, { |t, u0, v0, c, curve|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]).category_(\sphere);
 
 
 //wave2DSin
@@ -200,7 +202,7 @@ ImmDef(\wave2DSinForSphere, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\sphere);
 //ok
 ImmDef(\wave2DSinPlottedForSphere, { |t, u0, v0, l, freq|
 
@@ -208,7 +210,7 @@ ImmDef(\wave2DSinPlottedForSphere, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\sphere);
 
 //wave2DSaw
 //ok
@@ -218,7 +220,7 @@ ImmDef(\wave2DSawForSphere, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\sphere);
 //ok
 ImmDef(\wave2DSawPlottedForSphere, { |t, u0, v0, l, freq|
 
@@ -226,7 +228,7 @@ ImmDef(\wave2DSawPlottedForSphere, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\sphere);
 
 x = [\u0, ControlSpec(0,1.0,default:0.5), \v0, ControlSpec(0,1.0,default:0.5), \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ];
 //ok
@@ -236,7 +238,7 @@ ImmDef(\wave2DSinForPlane, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\plane);
 
 //ok
 ImmDef(\planeWaveForPlane, { |t, angle, l, freq|
@@ -247,7 +249,7 @@ ImmDef(\planeWaveForPlane, { |t, angle, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1,  [\angle, [0,1], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ]; );
+}, 0.1,  [\angle, [0,1], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ]; ).category_(\plane);
 
 //wave2DSaw
 //ok
@@ -257,7 +259,7 @@ ImmDef(\wave2DSawForPlane, { |t, u0, v0, l, freq|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\plane);
 
 //continousRandomSpotlight
 //ok
@@ -267,7 +269,7 @@ ImmDef(\continousRandomSpotlight, { |t, numSecs, curve|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecs, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\numSecs, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]).category_(\universal);
 
 //ok
 ImmDef(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
@@ -280,7 +282,7 @@ ImmDef(\continousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
 	\numSecsLo, ControlSpec(0.5,10,default:1),
 	\numSecsHi, ControlSpec(0.5,10,default:2),
 	\curve, ControlSpec(-6,6,default:0)
-]);
+]).category_(\universal);
 
 //ok
 ImmDef(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
@@ -298,7 +300,7 @@ ImmDef(\randomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, h
 	\bumpSize, ControlSpec( 0.0, 0.5, default: 0.5),
 	\heightA, ControlSpec(default:1),
 	\heightB, ControlSpec(default:1)
-]);
+]).category_(\universal);
 
 //ok
 ImmDef(\randomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
@@ -318,7 +320,7 @@ ImmDef(\randomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSi
 	\heightA, ControlSpec(default:1),
 	\heightB, ControlSpec(default:1)
 ]
-);
+).category_(\universal);
 
 //ok
 ImmDef(\moveHills, { |t, numSecs, numHills, size, step|
@@ -327,7 +329,7 @@ ImmDef(\moveHills, { |t, numSecs, numHills, size, step|
 
 	( amp: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecs, ControlSpec( 0.5,10, default: 1), \numHills, ControlSpec(1,5,step:1,default:2), \size, ControlSpec(default:0.4), \step, ControlSpec( 0.0, 2.0, default: 1) ]);
+}, 0.1, [\numSecs, ControlSpec( 0.5,10, default: 1), \numHills, ControlSpec(1,5,step:1,default:2), \size, ControlSpec(default:0.4), \step, ControlSpec( 0.0, 2.0, default: 1) ]).category_(\universal);
 
 
 
@@ -368,7 +370,7 @@ ImmDef(\UMspotlightForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_sphere);
 
 ImmDef(\UMspotlightInverseForPlane, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
@@ -379,7 +381,7 @@ ImmDef(\UMspotlightInverseForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_plane);
 
 ImmDef(\UMspotlightForSphere, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlight.(Val(0),u0,v0,c,d);
@@ -390,7 +392,7 @@ ImmDef(\UMspotlightForSphere, { |t, u0, v0, c, d|
 	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_sphere);
 
 ImmDef(\UMspotlightInverseForPlane, { |t, u0, v0, c, d|
 	var pf1 = PField.spotlightInverse.(Val(0),u0,v0,c,d);
@@ -401,7 +403,7 @@ ImmDef(\UMspotlightInverseForPlane, { |t, u0, v0, c, d|
 	\v0, ControlSpec(-pi/2, pi/2, \lin, 0, 0.0 ),
 	\c, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\d, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_plane);
 
 ImmDef(\UMbarU, { |t, wideness|
 	var pf1 = PField.barU.(Val(0), wideness);
@@ -409,7 +411,7 @@ ImmDef(\UMbarU, { |t, wideness|
 
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_universal);
 
 ImmDef(\UMbarV, { |t, wideness|
 	var pf1 = PField.barV.(Val(0), wideness);
@@ -417,7 +419,7 @@ ImmDef(\UMbarV, { |t, wideness|
 
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
-]);
+]).category_(\um_universal);
 
 ImmDef(\UMgradientForPlane, { |t, u, v, a, b, curve|
 	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
@@ -429,7 +431,7 @@ ImmDef(\UMgradientForPlane, { |t, u, v, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\um_plane);
 
 ImmDef(\UMgradient1DForPlane, { |t, angle, a, b, curve|
 	var pf1 = PField.gradient1D.(Val(0), angle, a, b, curve);
@@ -439,7 +441,7 @@ ImmDef(\UMgradient1DForPlane, { |t, angle, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\um_plane);
 
 ImmDef(\UMgradientForSphere, { |t, u, v, a, b, curve|
 	var pf1 = PField.gradient.(Val(0), u, v, a, b, curve);
@@ -451,7 +453,7 @@ ImmDef(\UMgradientForSphere, { |t, u, v, a, b, curve|
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
 	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
-]);
+]).category_(\um_sphere);
 
 
 //ok
@@ -469,7 +471,7 @@ ImmDef(\UMsphericalHarmonicForSphere, { |t, m, l, f|
 	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
 	'l', ControlSpec(0, 4, \lin, 1, 0 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\um_sphere);
 
 //ok
 ImmDef(\UMsphericalHarmonicForPlane, { |t, m, l, f|
@@ -487,7 +489,7 @@ ImmDef(\UMsphericalHarmonicForPlane, { |t, m, l, f|
 	'm', ControlSpec(-4, 4, \lin, 1, 2 ),
 	'l', ControlSpec(0, 4, \lin, 1, 2 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\um_plane);
 /*
 ImmDef(\UMsphericalHarmonicForPlane, { |t, m, l, f|
                                           //  -l <= m <= l
@@ -510,7 +512,7 @@ ImmDef(\UMsphericalHarmonicPlottedForSphere, { |t, f|
 
 }, 0.1, [
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
-]);
+]).category_(\um_sphere);
 //ok
 ImmDef(\UMexpandContractForSphere, { |t, u0, v0, c, curve|
 
@@ -518,7 +520,7 @@ ImmDef(\UMexpandContractForSphere, { |t, u0, v0, c, curve|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]).category_(\um_sphere);
 //ok
 ImmDef(\UMexpandContractPlottedForSphere, { |t, u0, v0, c, curve|
 
@@ -526,7 +528,7 @@ ImmDef(\UMexpandContractPlottedForSphere, { |t, u0, v0, c, curve|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\u0, [0, 2pi], \v0, ControlSpec(pi/2.neg,pi/2, default:0), \c, nil, \curve, ControlSpec(-6,6,default:0) ]).category_(\um_sphere);
 
 
 //wave2DSin
@@ -539,7 +541,7 @@ ImmDef(\UMwave2DSinForSphere, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\um_sphere);
 //ok
 ImmDef(\UMwave2DSinPlottedForSphere, { |t, u0, v0, l, freq|
 
@@ -547,7 +549,7 @@ ImmDef(\UMwave2DSinPlottedForSphere, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\um_sphere);
 
 //wave2DSaw
 //ok
@@ -557,7 +559,7 @@ ImmDef(\UMwave2DSawForSphere, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\um_sphere);
 //ok
 ImmDef(\UMwave2DSawPlottedForSphere, { |t, u0, v0, l, freq|
 
@@ -565,7 +567,7 @@ ImmDef(\UMwave2DSawPlottedForSphere, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\um_sphere);
 
 x = [\u0, ControlSpec(0,1.0,default:0.5), \v0, ControlSpec(0,1.0,default:0.5), \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ];
 //ok
@@ -575,7 +577,7 @@ ImmDef(\UMwave2DSinForPlane, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x );
+}, 0.1, x ).category_(\um_plane);
 
 //ok
 ImmDef(\UMplaneWaveForPlane, { |t, angle, l, freq|
@@ -586,7 +588,7 @@ ImmDef(\UMplaneWaveForPlane, { |t, angle, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1,  [\angle, [0,1], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ]; );
+}, 0.1,  [\angle, [0,1], \l, ControlSpec(0.0, 2.0,default:1), \freq, ControlSpec(1/10,2,default:0.5) ]; ).category_(\um_plane);
 
 //wave2DSaw
 //ok
@@ -596,7 +598,7 @@ ImmDef(\UMwave2DSawForPlane, { |t, u0, v0, l, freq|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, x);
+}, 0.1, x).category_(\um_plane);
 
 //continousRandomSpotlight
 //ok
@@ -606,7 +608,7 @@ ImmDef(\UMcontinousRandomSpotlight, { |t, numSecs, curve|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecs, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\numSecs, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]).category_(\um_universal);
 
 //ok
 ImmDef(\UMcontinousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
@@ -615,7 +617,7 @@ ImmDef(\UMcontinousRandomSpotlight2, { |t, numSecsLo, numSecsHi, curve|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecsLo, ControlSpec(0.5,10,default:1), \numSecsHi, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]);
+}, 0.1, [\numSecsLo, ControlSpec(0.5,10,default:1), \numSecsHi, ControlSpec(0.5,10,default:2), \curve, ControlSpec(-6,6,default:0) ]).category_(\um_universal);
 
 //ok
 ImmDef(\UMrandomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
@@ -633,7 +635,7 @@ ImmDef(\UMrandomHills, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA,
 	\bumpSize, ControlSpec( 0.0, 0.5, default: 0.5),
 	\heightA, ControlSpec(default:1),
 	\heightB, ControlSpec(default:1)
-]);
+]).category_(\um_universal);
 
 //ok
 ImmDef(\UMrandomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bumpSize, heightA, heightB|
@@ -653,7 +655,7 @@ ImmDef(\UMrandomHills2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bump
 	\heightA, ControlSpec(default:1),
 	\heightB, ControlSpec(default:1)
 ]
-);
+).category_(\um_universal);
 
 //ok
 ImmDef(\UMmoveHills, { |t, numSecs, numHills, size, step|
@@ -662,6 +664,6 @@ ImmDef(\UMmoveHills, { |t, numSecs, numHills, size, step|
 
 	( control: USpecArg( pf1 ) )
 
-}, 0.1, [\numSecs, ControlSpec( 0.5,10, default: 1), \numHills, ControlSpec(1,5,step:1,default:2), \size, ControlSpec(default:0.4), \step, ControlSpec( 0.0, 2.0, default: 1) ]);
+}, 0.1, [\numSecs, ControlSpec( 0.5,10, default: 1), \numHills, ControlSpec(1,5,step:1,default:2), \size, ControlSpec(default:0.4), \step, ControlSpec( 0.0, 2.0, default: 1) ]).category_(\um_universal);
 
 )

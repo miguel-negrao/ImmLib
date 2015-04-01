@@ -8,5 +8,5 @@ if('PV_Decorrelate'.asClass.notNil) {
 
 		UOut.ar(0, IFFT(chain) );
 
-	})
+	}).category_(\ImmLib)
 }
