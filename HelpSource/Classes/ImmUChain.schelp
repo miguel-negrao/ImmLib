@@ -8,6 +8,10 @@ The ImmLib equivalent of  Unit Lib's UChain.
 
 See also the documentation for link::Classes/UChain::.
 
+note::
+ImmUChains should not be started and stoped directly when in 'vbap' mode. In 'vbap' mode you should start and stop the ImmUChains by starting and stoping the score where they reside, otherwise the vbap panners will not start and stop, causing no sound or a pile up of vbap panners.
+::
+
 SUBSECTION::GUI
 
 image::ImmUChain_diagram.png::

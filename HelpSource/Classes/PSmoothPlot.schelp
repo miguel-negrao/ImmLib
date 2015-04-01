@@ -29,6 +29,10 @@ note::
 Currently only spherical surfaces are implemented.
 ::
 
+note::
+Doing cmd-. will close the plot window.
+::
+
 CLASSMETHODS::
 
 PRIVATE:: all, animate, animateOnly, basicNew, faces, startRenderermstartRendererIO, surface, proxy

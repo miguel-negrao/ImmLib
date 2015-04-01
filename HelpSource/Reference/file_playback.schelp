@@ -126,9 +126,9 @@ ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
 ~chain = ImmUChain(\sphere,
 	[ 'bufPlayer',
 		[\soundFile, ~file, \globalAmp, 0.0],
-		ImmMod(\sphericalHarmonicForSphere2),
+		ImmMod(\sphericalHarmonicForSphere2)],
 	\decorrelate
-]);
+);
 ~score = ImmUScore(\sphere, ~chain);
 ~chain.gui;
 ~score.gui;

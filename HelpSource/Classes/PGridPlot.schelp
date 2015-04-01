@@ -6,10 +6,14 @@ related:: Classes/PHemiPlot, Classes/PSmoothPlot, Classes/PSurface, Classes/PFie
 DESCRIPTION::
 This class a separate process with a window containing an opengl rendering of the surface updated in real-time. It shows the value of the PField at each point of the discretization of the surface using squares. The squares appear inside of a wireframe cube where the red face is the front wall and the green face is the ceiling.
 
-cmd-. will close the window. It is to be used with the FPSignal resulting from evaluating a pfield with .value.
+It is to be used with the FPSignal resulting from evaluating a pfield with .value.
 
 note::
 A PGridPlot can be opened for any modulated parameter from the GUI of ImmUChain without the need to explicitelly insert the PGridPlot into the ImmDef.
+::
+
+note::
+Doing cmd-. will close the plot window.
 ::
 
 CLASSMETHODS::

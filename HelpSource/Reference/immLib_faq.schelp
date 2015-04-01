@@ -22,3 +22,10 @@ Q: When using VBAP the score stops outputting sound always at the same place in 
 
 A: This is a current limitation of unit lib. When you create an ImmUScore VBAP panner chains are automatically added to the score (they are hidden) with a duration equal to end time of the last event. If after creating the score by changing or adding events you make the score longer then the panner events will stop at the original end time of the score. In order to fix this, save the score to disk and open it again.
 
+Q: When creating a score from the menu bar in VBAP mode the events don't output any sound.
+
+A: Same reason as previous question. In order to fix this, save the score to disk and open it again.
+
+Q: Why is the movement not smooth ? One can hear the value jumping.
+
+A: You can place a lag on the control being modulated and adjust the lag time until the movement is smooth. 

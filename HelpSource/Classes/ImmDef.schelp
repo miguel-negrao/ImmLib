@@ -6,7 +6,7 @@ related:: Classes/PField
 DESCRIPTION::
 ImmDef stores a definition of an event network for animating PFields. The event network connects PFields and other sources of signals (MIDI, GUIs, OSC, etc) to parameters of ImmUChains.
 
-A GUI list of defined ImmDefs can be opened by opening the GUI for an ImmUChain and clicking 'defs'. An ImmDef can then be dragged from that list onto the ImmUChain GUI, to the ImmMod widget.
+A GUI list of defined ImmDefs can be opened by opening the GUI for an ImmUChain and clicking 'defs'. An ImmDef can then be dragged from that list onto the ImmUChain GUI, to the ImmMod widget (the grey rectangle is the drop are).
 
 ImmLib comes with a predefined set of ImmDefs which are loaded at startup. They are in the 'immdefs.scd' file at the base of the ImmLib folder.
 
