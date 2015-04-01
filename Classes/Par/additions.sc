@@ -106,6 +106,7 @@ this interferes with values that are themselves arrays...
 }
 
 + Array {
+	asParArg{ ^ParArg(this) }
 	asParUnit { |n|
 		^ParU(n, *this)
 	}
