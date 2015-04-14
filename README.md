@@ -35,7 +35,7 @@ Quarks.install("FPLib", "v0.2.0");
 Quarks.install("https://github.com/miguel-negrao/UEvNetMod.git", "v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/Unit-Lib.git", "immlib-v0.1.0");
 Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "immlib-v0.1.0");
-Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.0")
+Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.1")
 )
 ```
 
