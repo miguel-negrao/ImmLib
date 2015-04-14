@@ -1,7 +1,7 @@
 TITLE:: PSphere
-summary:: (put short description here)
-categories:: Undocumented classes
-related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+summary:: spherical surface
+categories:: ImmLib
+related:: Classes/PSurface
 
 DESCRIPTION::
 PSurface that implements the sphere using the discretization algorithm of Spherical Spirals    by Robert Bauer ( Distribution of points on a sphere with application to star catalogs. Journal of Guidance and Control, 23(1), 2000. URL http://www.aric.or.kr/treatise/journal/content.asp?idx=1204 )

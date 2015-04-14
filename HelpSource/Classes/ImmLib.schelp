@@ -208,12 +208,7 @@ var v = VBAPOptions(
 					6.49, 6.41, 6.55, 6.6, 6.78, 6.9, 6.0084357365, 6.0084357365,
 					5.8048083517, 5.7349280728, 5.9258332747, 5.9035836574,
 					6.0235952719, 6.0655832366
-				],
-	loadDefsAtStartup: false, //don't write the synthdefs at every startup
-	loadUdefViaRemoteFolder: false,
-	remoteFolderForLoading: "",
-	isSlave: false,
-	extraDefFolders: nil
+				]
 );
 
 Routine({
