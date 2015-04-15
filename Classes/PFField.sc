@@ -25,26 +25,27 @@ y = PField{ |p,t,c| t * c };
 z = x + y
 )
 
-p = PSurface.sphere(1)
-z.value(p, Var(2.0), 10.0 ).do(postln(_))
+(
+x = PField{ |p,t,c| t + c }.squared
+)
 
+p = PSphere(2)
 
 (
 x = PField{ |p,t,c| t + c }.linlin(0.0,1.0,0.0,10.0);
-x.value(p, Var(0.1), Var(0.3) ).do(postln(_))
+x.valueS(p, Var(0.1), Var(0.3) ).do(postln(_))
 )
 
 (
 x = PField{ |p,t,c| t + c }.linlin(0.0,1.0,0.0,10.0);
-x.valueArray( [p, Var(0.1), Var(0.3)] ).do(postln(_))
+x.valueArrayS( p,  Var(0.1), Var(0.3) ).do(postln(_))
 )
 
 (
 x = PField{ |p,t,c| t + c };
-p = ParameterSurface.sphere(2);
-x.valueArray( p, [ Var(0.1), Var(0.3) ] ).do(postln(_))
+p = PSphere(2);
+x.valueArrayS( p,  Var(0.1), Var(0.3) ).do(postln(_))
 )
-
 
 */
 
@@ -63,23 +64,6 @@ PField : AbstractFunction {
 		^super.newCopyArgs(f)
 	}
 
-	//args should all be FPSignals, sequence needs Applicative instance.
-	/*
-	if we just used normal function evaluation:
-
-	f = { |p,t,k1,k2| ... }
-
-	what I would like to do
-
-	g <‰> t <*> sl1 <*> sl2;
-
-	g = { |t,k1,k2| surface.points.collect{ |p| f.(p,t,k1,k2) }
-
-	create g from f and surface
-
-	g = { |...args| surface.points.collect{ |p| f.( *args.prependI(p) ) } }
-
-*/
 	valueS{ |surface...args|
 		var points, f;
 
@@ -108,7 +92,7 @@ PField : AbstractFunction {
 		^this.valueS(*[ImmDef.currentSurface]++args)
 	}
 
-	//to make it easy to turn on and off animation
+	//to make it easy to turn on and off plotting
 	plot{ |...args|
 		^PSmoothPlot(*args.prependI(this))
 	}
