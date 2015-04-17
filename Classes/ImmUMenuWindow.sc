@@ -150,8 +150,22 @@ ImmUMenuWindow {
 				'New', { UScore().gui; },
 				'New ImmUScore', { ImmUScore(PSurface.default).gui; },
 				'Open...', { UScore.open(nil, UScoreEditorGUI(_) ); },
-				'Save', { UScore.current !? _.save; },
-				'Save as...', { UScore.current !! _.saveAs; },
+				'Save', {
+					UScore.current !? { |x|
+						if(x.isKindOf(ImmUScore)){
+							x.cleanScoreOfParArgs
+						};
+						x.save;
+					}
+				},
+				'Save as...', {
+					UScore.current !? { |x|
+						if(x.isKindOf(ImmUScore)){
+							x.cleanScoreOfParArgs
+						};
+						x.saveAs;
+					}
+				},
 				' ', (),
 				'Export as audio file...', {
 					UScore.current !? { |x|

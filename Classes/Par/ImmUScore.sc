@@ -150,4 +150,18 @@ ImmUScore : UScore {
 		super.add(events)
 	}
 
+	cleanScoreOfParArgs {
+		this.events.do{ |ev|
+			if(ev.isKindOf(UChain)){
+				ev.units.do{ |u|
+					if( u.mod.notNil and:{ u.mod.isKindOf(ImmMod) }){
+						u.mod.keySignalDict.keys.as(Array).do{ |key|
+							u.set(key, u.def.getArgSpec(\amp).default)
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
