@@ -937,7 +937,7 @@ PField : AbstractFunction {
 	*waveUSin {  |t, l, freq, plot = false|
 
 		var pf = PField({ |u,v, t, l|
-			sin( 2pi * ( (l*u) - t) )
+			sin( 2pi * ( (l*u) - t) ).linlin(-1.0,1.0,0.0,1.0)
 		});
 		^if( plot ){
 			PSmoothPlot(pf, t.changeRate(freq), l)
@@ -949,7 +949,7 @@ PField : AbstractFunction {
 
 	*waveVSin { |t, l, freq, plot = false|
 		var pf = PField({ |u,v, t, l|
-			sin( 2pi * ( (l*v) - t) )
+			sin( 2pi * ( (l*v) - t) ).linlin(-1.0,1.0,0.0,1.0)
 		});
 		^if( plot ){
 			PSmoothPlot(pf, t.changeRate(freq), l)
@@ -963,7 +963,7 @@ PField : AbstractFunction {
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
 		var pf = PField({ |u,v, t, u0, v0, l|
-			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) - t) )
+			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) - t) ).linlin(-1.0,1.0,0.0,1.0)
 		});
 		var vrateT = t.changeRate(freq.asFPSignal);
 		^if( plot ){
