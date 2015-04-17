@@ -130,7 +130,7 @@ ParUGUI : UGUI {
 								)
 							);
 							vw.pausable_( unit.mod !? { |mod| mod.keySignalDict } !? { |dict| dict.keys.includes(key) } );
-							vw.testValue = { |value| value.isKindOf( UMap ).not };
+							vw.testValue = { |value| ( value.isKindOf( UMap ) || value.isKindOf( ParUMap )).not };
 							vw.action = { action.value( this, key, value ); };
 							vw.redrawUChainGUIAction = { mapSetAction.value( this ) };
 						}
@@ -142,7 +142,7 @@ ParUGUI : UGUI {
 								\init, { key ++ " (i)" }
 							)
 						);
-						vw.testValue = { |value| value.isKindOf( UMap ).not };
+						vw.testValue = { |value| ( value.isKindOf( UMap ) || value.isKindOf( ParUMap )).not };
 						vw.action = { action.value( this, key, value ); };
 						vw.redrawUChainGUIAction = { mapSetAction.value( this ) };
 					};
