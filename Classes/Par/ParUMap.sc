@@ -220,7 +220,7 @@ ParUMap : ParU {
 	//needs to be changed
 	getSynthArgs {
 		var nonsynthKeys;
-		"ParUMap getSynthArgs".postln;
+		//"ParUMap getSynthArgs".postln;
 		nonsynthKeys = this.argSpecs.select({ |item| item.mode == \nonsynth }).collect(_.name);
 		^this.args.clump(2).select({ |item| nonsynthKeys.includes( item[0] ).not })
 			.collect({ |item|
@@ -368,8 +368,8 @@ ImmUMap : ParUMap {
 		[U.synthDict[unit], keyValuePairs].flopWith{ |synths, keyValuePairs2|
 			keyValuePairs2 = keyValuePairs2.clump(2).collect({ |item|
 				if( this.isMappedArg( item[0] ) && { item[1].isUMap.not } ) {
-					"mapped value %".format(item[0]).postln;
-					[ item[0], this.getSpec( item[0], unit ) !? _.unmap( item[1] ) ? item[1] ].postln;
+					//"mapped value %".format(item[0]).postln;
+					[ item[0], this.getSpec( item[0], unit ) !? _.unmap( item[1] ) ? item[1] ];
 				} {
 					item
 				};
