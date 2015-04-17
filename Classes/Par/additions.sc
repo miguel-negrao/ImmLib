@@ -106,7 +106,8 @@ this interferes with values that are themselves arrays...
 }
 
 + Array {
-	asParArg{ ^ParArg(this) }
+	//ATTENTION VERY IMPORTANT, AVOID DOING THIS BUG AGAIN !
+	//cannot add asParArg because we need to be able to duplicate arrays also !
 	asParUnit { |n|
 		^ParU(n, *this)
 	}
