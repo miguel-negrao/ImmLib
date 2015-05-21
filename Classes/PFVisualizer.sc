@@ -18,19 +18,23 @@
 */
 
 PFVisualizer {
-    classvar <currentPort = 30000,
-    <binary = "pfVisualizer",
-	<>zoom = 0.5,
+    classvar <>currentPort = 30000,
+    <binary = "pfVisualizer";
+
+    var <rendererAddr, <label="";
+	var <>zoom = 0.5,
 	<>rotx = 275.0,
 	<>roty = 180.0,
-	<>rotz = 105.0;
-    var <rendererAddr, <label="";
+	<>rotz = 105.0,
+	<>width = 500,
+	<>height = 500;
+
 	var <connected = false;
 
 
-	*basicNew{ |addr, label=""|
+	*basicNew{ |addr, label="", zoom = 0.5, rotx = 275.0, roty = 180.0, rotz = 105.0, width = 800, height = 800|
         currentPort = currentPort + 1;
-		^super.newCopyArgs(addr, label ?? "")
+		^super.newCopyArgs(addr, label ?? "", zoom, rotx, roty, rotz, width, height)
     }
 
 	*enAnimate{ |...args|
@@ -48,10 +52,10 @@ PFVisualizer {
 	}
 
     startCommand {
-		^PFVisualizer.fullBinaryPath.shellQuote++" "++rendererAddr.port++" "++label.shellQuote++" "++zoom++" "++rotx++" "++roty++" "++rotz;
+		^PFVisualizer.fullBinaryPath.shellQuote++" -p"++rendererAddr.port++" -o"++zoom++" -x"++rotx++" -y"++roty++" -z"++rotz++" -w"++width++" -h"++height++" --l "++label.shellQuote;
     }
 
-    startRenderer { |closeOnCmdPeriod = true|
+    startRenderer { |closeOnCmdPeriod = true, connectedAction|
 		var t, f;
 		this.startCommand.unixCmd;
 		t = Process.elapsedTime;
@@ -62,6 +66,7 @@ PFVisualizer {
 				this.connected_( true );
 				"Connected to pfVisualizer at port %, waited %s.".format(rendererAddr.port, (Process.elapsedTime-t).round(0.001)).postln;
 				this.sendGeometry;
+				if(connectedAction.notNil) { connectedAction.value };
 				if( closeOnCmdPeriod ) {
 					CmdPeriod.doOnce({ this.stopRenderer })
 				};
@@ -100,9 +105,11 @@ PFVisualizer {
 
     stopRenderer {
         fork{
-			this.sendMsg("/quit");
-			0.1.wait;
-			this.connected_( false );
+			if( this.connected ) {
+				this.sendMsg("/quit");
+				0.1.wait;
+				this.connected_( false )
+			}
 		};
     }
 
@@ -116,6 +123,9 @@ PFVisualizer {
 
 	connected_ { |bool|
 		connected = bool;
+		if( connected.not ) {
+			try{ rendererAddr.disconnect }
+		};
 		this.changed(\connected, connected)
 	}
 
@@ -129,13 +139,7 @@ PFVisualizer {
     }
 
     stopRendererIO {
-		^IO{
-			fork{
-				this.sendMsg("/quit");
-				0.1.wait;
-				this.connected_( false );
-			};
-		}
+		^IO{ this.stopRenderer }
     }
 
 
@@ -144,17 +148,75 @@ PFVisualizer {
 PSmoothPlot : PFVisualizer {
 	classvar <all;//:: IdentityDictionary Symbol PFVisualizer
 
-    var <faces, <surface;
+    var <triangles, <surface;
 
 	*initClass {
 		all = IdentityDictionary()
 	}
 
-    *basicNew { |type = \sphere, label, port|
-		var faces = PGeodesicSphere.sphereFaces(2);
-		var surface = PGeodesicSphereDual(2);
+    *basicNew { |type, label, port, zoom = 0.5, rotx = 275.0, roty = 180.0, rotz = 105.0|
+		var triangles;
+		var surface;
+		var underlyingSurface = ImmDef.currentSurface;
+		type ?? {
+			var s = ImmDef.currentSurface;
+			if( s.isKindOf(PSphericalSurface) ){
+				type = \sphere
+			};
+			if( s.isKindOf(PPlane) ) {
+				type = \plane
+			}
+		};
+		switch(type)
+		{\sphere}{
+			triangles = PGeodesicSphere.sphereFaces(2);
+			surface = PGeodesicSphereDual(2);
+			zoom = 0.5;
+			rotx = 275.0;
+			roty = 180.0;
+			rotz = 105.0;
+		}
+		{\plane}{
+			//when testing outside FRP graph we need to have a test PPlane
+			var y = underlyingSurface ?? { PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 6, 6 ) };
+			var n = 13;
+			var dxn = y.dx.normalize;
+			var dyn = y.dy.normalize;
+			var points;
+			var pointsWrapped;
+			var z = n.collect{ |i|
+				n.collect{ |j|
+					var ii = i.linlin(0,n,0.0,1.0);
+					var jj = j.linlin(0,n,0.0,1.0);
+					var lx = y.dx.norm/n;
+					var ly = y.dy.norm/n;
+					var o = y.origin + (y.dx * ii) + (y.dy * jj);
+					var lxp = [1/n,0];
+					var lyp = [0,1/n];
+					var op = [ii, jj];
+					[
+						[
+							[op, op + lxp, op + lyp],
+							[op + lxp + lyp, op + lxp, op + lyp]
+						]
+						,
+						[
+							[o, o + (dxn*lx), o + (dyn*ly)],
+							[o + (dxn*lx) + (dyn*ly), o + (dxn*lx), o + (dyn*ly)]
+						]
+					]
+			}}.flatten.flop;
+			triangles = z[1].flatten;
+			points = z[0].flatten.collect{ |x| x.sum / 3 };
+			pointsWrapped = triangles.collect{ |x| x.sum / 3 };
+			surface = PSurface( PPlaneM( y.origin, y.dx, y.dy), points, pointsWrapped);
+			zoom = 1;
+			rotx = 270;
+			roty = 180;
+			rotz = 90;
+		};
 		port = port ?? { var x = currentPort; currentPort = currentPort + 1; x };
-		^super.basicNew( NetAddr("localhost", port), label ?? "" ).init( faces, surface )
+		^super.basicNew( NetAddr("localhost", port), label ?? "", zoom, rotx, roty, rotz ).init( triangles, surface )
     }
 
 	*off{ |pf...args|
@@ -188,15 +250,38 @@ PSmoothPlot : PFVisualizer {
         plot.animateOnly(pf, *args)
     }
 
-    init { |aFaces, aSurface|
-        faces = aFaces;
+	*reusable{
+		var plot = PSmoothPlot.basicNew;
+		var x1 = plot.startRenderer;
+		var doFunc = { |x| x.unsafePerformIO };
+		var sendColors = { |v| IO{
+			plot.sendMsg(* (["/colors"]++([v,plot.surface.points].flopWith{ |c,xs|
+				[0.0, c.asFloat, (1-c).asFloat]
+			}.flat)))
+		}
+		};
+		var oldSig;
+		^{ |pf...args|
+			var tEventSource = args[0].changes;
+			var outSignal = pf.(*args);
+			var outSignal2 = (sendColors.(_) <%> pf.valueS(*([plot.surface]++args[0..]) ) );
+			//actually I think I can just use enOut here... check later.
+			if(oldSig.notNil) { oldSig.stopDoing(doFunc) };
+			oldSig = (outSignal2  <@ tEventSource);
+			oldSig.do(doFunc);
+			outSignal
+		};
+	}
+
+    init { |aTriangles, aSurface|
+        triangles = aTriangles;
         surface = aSurface;
     }
 
 	sendGeometry {
 		this.sendBundle(
 			["/colors"]++(surface.pointsRV3D.collect{ |v| [0.0, v[2].linlin(-1.0,1.0,0.3,0.7), 0.0] }.flat),
-			["/triangles"]++faces.flat,
+			["/triangles"]++triangles.flat,
 		);
 	}
 
@@ -204,8 +289,6 @@ PSmoothPlot : PFVisualizer {
         var tEventSource = args[0].changes;
         var sendColors = { |v| IO{
 			this.sendMsg(* (["/colors"]++([v,surface.points].flopWith{ |c,xs|
-				//var x  = c.linlin(0.0,1.0,0.3,1.0);
-				//[0.0, x, 0.0]
 				[0.0, c.asFloat, (1-c).asFloat]
 			}.flat)))
             }
