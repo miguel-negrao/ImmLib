@@ -37,8 +37,9 @@ ImmUChain : ParUChain {
 				withPanners.()
 			}
 			{\direct}{
-				var busses = ParArg( surface.renderOptions.spkIndxs );
-				createImmUChain.(surface, surfaceKey, args ++ [ [\output, [\bus, busses] ] ] )
+				//var busses = ParArg( surface.renderOptions.spkIndxs );
+				//createImmUChain.(surface, surfaceKey, args ++ [ [\output, [\bus, busses] ] ] )
+				withPanners.()
 			}
 			{ Error("PSurface renderMethod unknown : %.\nHas to be either \vbap, \vbapTest or \direct".format(surface.renderMethod)).throw }
 		}

@@ -69,7 +69,21 @@ ImmUScore : UScore {
 			.hideInGUI_(true)
 			.duration_(duration);
 			events++panners;
-		} { events };
+		} {
+			if( (ImmLib.mode != \previewStereo) && (surface.renderMethod == \direct) ) {
+				panners = ParUChain(surface.size, [\output,
+					[\bus, ParArg( surface.renderOptions.spkIndxs ), \u_i_ar_0_bus, surface.ubuses ]
+				])
+				.private_(true)
+				.ugroup_(ugroups)
+				.addAction_('addToTail')
+				.hideInGUI_(true)
+				.duration_(duration);
+				events++panners;
+			}{
+			events
+			}
+		}
 
 		^super.new(*(initArgs++allEvents)).initImmUScore(surface, surfaceKey)
 
