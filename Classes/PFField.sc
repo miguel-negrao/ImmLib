@@ -97,6 +97,56 @@ PField : AbstractFunction {
 		^PSmoothPlot(*args.prependI(this))
 	}
 
+	//plotSignal FPSignal carrying 0 or 1 to turn on and off plot
+	plotOnOff{ |plotSignal...args|
+		^PField.plotOnOffFunc( plotSignal ).(this, *args);
+	}
+
+	*plotOnOffFunc{ |plotSignal|
+		var plotBool = plotSignal.collect(_.booleanValue);
+		var plot = PSmoothPlot.basicNew;
+		var x1 = plotBool.changes.onlyChanges.collect{ |v| IO{
+			if(v){plot.startRenderer}{plot.stopRenderer}
+		}}.enOut;
+		var sendColors = { |v| IO{
+			plot.sendMsg(* (["/colors"]++([v,plot.surface.points].flopWith{ |c,xs|
+				[0.0, c.asFloat, (1-c).asFloat]
+			}.flat)))
+		}
+		};
+		var c = 0;
+		^{ |pf...args|
+			var x2 = "doing plotOnOffFunc v %".format(c).postln;
+			var tEventSource = args[0].changes;
+			var outSignal = pf.(*args);
+			var outSignal2 = sendColors.(_) <%> pf.valueS(plot.surface, *args);
+			c = c + 1;
+			(outSignal2  <@ plotBool.when(tEventSource) ).enOut;
+			outSignal
+		}
+	}
+
+	//problem with sc tcp that connections are not closed
+	plotOnOffStatic{ |plotSignal...args|
+		var plotBool = plotSignal.collect(_.booleanValue);
+		var plot = PSmoothPlot.basicNew;
+		var outSignal2 = (sendColors.(_) <%> this.valueS(*([plot.surface,Var(0)]++args) ) );
+		var x1 = (T(_,_) <%> outSignal2 <@> plotBool.changes.onlyChanges).collect{ |t|
+			if(t.at2){IO{ plot.startRenderer(true, { t.at1.unsafePerformIO }) }}{plot.stopRendererIO}
+		}.enOut;
+		var sendColors = { |v| IO{
+			plot.sendMsg(* (["/colors"]++([v,plot.surface.points].flopWith{ |c,xs|
+				[0.0, c.asFloat, (1-c).asFloat]
+			}.flat)))
+		}};
+		var outSignal = this.value(*([Var(0)]++args));
+		var forPlotting = plotBool.when(outSignal2.changes);
+		forPlotting.enOut;
+		//forPlotting.enDebug("forPlotting");
+		//outSignal.enDebug("outsignal");
+		^outSignal
+	}
+
 	valuePlot{ |...args|
 		^PSmoothPlot(*[this]++args)
 	}
@@ -332,7 +382,7 @@ PField : AbstractFunction {
 			var dist = distFunc.(u1, v1, u2, v2);
 			var c2 = c.linlin(0.0,1.0, d.neg, 1.0);
 			var cpi = c2 * maxDist;
-			var cpid = cpi+d;
+			var cpid = cpi + (d*maxDist);
 			if( dist < cpi ) {
 				0
 			} {
@@ -483,6 +533,33 @@ PField : AbstractFunction {
 		})
 	}
 
+	*sphericalHarmonicFunc{
+		//double factorial
+		var dfact = { |x| if(x <= 0) { 1 } { dfact.(x-2) * x } };
+		//Legendre polynomials
+		var legendrepol = { |m,l|
+			case
+			{m>l} { Error("Error, m>l").throw }
+			{l==m } { { |x|  ((-1)**m)*dfact.(2*m-1)*((1-x.squared)**(m/2)) } }
+			{l==(m+1)} { ( _*(2*m+1))*legendrepol.(m,m) }
+			{l>=(m+2) } {  ((_*(2*l-1))*legendrepol.(m,l-1)-((l+m-1)*legendrepol.(m,l-2)))/(l-m) }
+		};
+		var simplifiedsh  = { |m,l|
+			if ( (m>l) || (m<l.neg) ) {  Error("error m< -l or m>l").throw };
+			case
+			{m>0}{ { |phi,theta|  legendrepol.(m.abs,l).(cos(theta))*cos(m*phi) } }
+			{m == 0}{ { |phi,theta| legendrepol.(0,l).(cos(theta)) } }
+			{m <0 }{ { |phi,theta| legendrepol.(m.abs,l).(cos(theta))*sin(m.abs*phi) } }
+		};
+
+		^{ |m,l|
+			var shfunc = simplifiedsh.(m,l);
+			PField({ |u, v, t,f=3|
+				(shfunc.( u, (pi/2)-v)*cos(2pi*f*t)).linlin(-1.0,1.0,0.0,1.0)
+			})
+		}
+	}
+
 	//for any range
 	*sphericalHarmonicNormalized{ |m,l|
 		var surface = ImmDef.currentSurface;
@@ -507,7 +584,7 @@ PField : AbstractFunction {
 
 		var shfunc = simplifiedsh.(m,l);
 		^PField({ |u, v, t,f=3|
-			(shfunc.( manifold.toNormalizedU(u).linlin(0.0,1.0,0,2pi), (pi/2)-manifold.toNormalizedV(v).linlin(0.0,1.0,-pi/2,pi/2))*cos(f*t)).linlin(-1.0,1.0,0.0,1.0)
+			(shfunc.( manifold.toNormalizedU(u).linlin(0.0,1.0,0,2pi), (pi/2)-manifold.toNormalizedV(v).linlin(0.0,1.0,-pi/2,pi/2))*cos(2pi*f*t)).linlin(-1.0,1.0,0.0,1.0)
 		})
 	}
 
@@ -586,7 +663,7 @@ PField : AbstractFunction {
 		}
 	}
 
-	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+	*randomPatchGeneral { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0, plot = false|
 		var numSecsSig = numSecs.asFPSignal;
 		var numHillsSig = numHills.asFPSignal;
 		var sizeASig = sizeA.asFPSignal;
@@ -594,6 +671,7 @@ PField : AbstractFunction {
 		var bumpSizeSig = bumpSize.asFPSignal;
 		var heightASig = heightA.asFPSignal;
 		var heightBSig = heightB.asFPSignal;
+		var plotFunc = if(plot){ PSmoothPlot.reusable }{ { |pf...args| pf.(*args) } };
 
 		//this morphs from function A to function B
 		var f = { |xs|
@@ -613,10 +691,10 @@ PField : AbstractFunction {
 			localT = t.integral1;
 			//localT.collect{ |t| "% : %".format(ndffdgd,t).postln };
 
-			pfSig = PField({ |u, v, t|
+			pfSig = plotFunc.( PField({ |u, v, t|
 				var t2 = t/n;
 				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
-			}).(localT);
+			}), localT);
 
 			{ |x, t, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb|
 				T(x, if((t>=n)){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
@@ -629,7 +707,6 @@ PField : AbstractFunction {
 		var startValues2 = [startValues[1].asInteger, surface]++startValues[2..];
 		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues )/*.enDebug("self")*/;
 	}
-
 
 	*randomPatchDeterministic { |surface, randomValuesArray, generateHillsFunc, t, numSecs,
 		bumpSize = 0.5|
@@ -691,11 +768,11 @@ PField : AbstractFunction {
 		^f.selfSwitch( [ T( nil, startHills ) ]++startValues++[1] );//.enDebug("self");
 	}
 
-	*randomHills { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+	*randomHills { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0, plot = false|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
-			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot )
 	}
 
 	//randomValuesArray -> [ [u, v, size, height] ]
@@ -719,13 +796,13 @@ PField : AbstractFunction {
 		}
 	}
 
-	*randomHills2 { | t, numSecsLo=0.5, numSecsHi=4, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0|
+	*randomHills2 { | t, numSecsLo=0.5, numSecsHi=4, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0, plot = false|
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		var numSecs = { |t, lo, hi| rrand(lo.asFloat, hi.asFloat) }.lift.(t, numSecsLo, numSecsHi);
 
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
-			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB )
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot )
 	}
 
 	*randomHillsBipolar {| t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5|
@@ -766,7 +843,7 @@ PField : AbstractFunction {
 	}
 
 	//Continous Random Spotlight
-	*continousRandomSpotlight{ |t, numSecs, curve = 0|
+	*continousRandomSpotlight{ |t, numSecs, curve = 0, plot = false|
 		var check = this.checkArgs(\PField, \continousRandomSpotlight,
 			[t, numSecs, curve], [FPSignal, [SimpleNumber, FPSignal], [SimpleNumber, FPSignal]] );
 
@@ -775,29 +852,26 @@ PField : AbstractFunction {
 		var u_hi = surface.manifold.rangeU[1].asFloat;
 		var v_lo = surface.manifold.rangeV[0].asFloat;
 		var v_hi = surface.manifold.rangeV[1].asFloat;
+		var plotFunc = if(plot){ PSmoothPlot.reusable }{ { |pf...args| pf.(*args) } };
 
 		var g = { |t, numSecs|
 			var h = PField.spotlightFixedFunc( surface, rrand(u_lo, u_hi), rrand(v_lo, v_hi) );
-			PField({ |u, v, t, curve|
-				var env = [ 0, 1, -99, -99, 1, 1, 5, curve ];
-				if(t < 0.5) {
-					h.(u,v,0,env.envAt(1-(t*2)),0.2)
-				} {
-					h.(u,v,0,env.envAt((t-0.5)*2),0.2)
-				}
-			}).(t / numSecs, curve.asFPSignal)
+			plotFunc.( PField({ |u, v, t, curve|
+				var env = [ 0, 2, -99, -99, 1, numSecs/2, 5, curve, 0, numSecs/2, 5, curve.neg ];
+				h.(u,v,0,env.envAt(t), 0.2)
+			}), t, curve.asFPSignal )
 		};
 
 		^this.selfSwitchPeriodically(t, g, numSecs.asFPSignal)
 	}
 
-	*continousRandomSpotlight2{ |t, numSecsLo, numSecsHi, curve = 0|
+	*continousRandomSpotlight2{ |t, numSecsLo, numSecsHi, curve = 0, plot = false|
 		var check = this.checkArgs(\PField, \continousRandomSpotlight,
 			[t, numSecsLo, numSecsHi, curve],
 			[FPSignal, [SimpleNumber, FPSignal], [SimpleNumber, FPSignal],[SimpleNumber, FPSignal]] );
 
 		var numSecs = { |t, lo, hi| rrand(lo, hi) }.lift.(t, numSecsLo, numSecsHi);
-		^this.continousRandomSpotlight(t, numSecs, curve)
+		^this.continousRandomSpotlight(t, numSecs, curve, plot)
 
 	}
 
