@@ -59,18 +59,21 @@ ImmUScore : UScore {
 			}
 		};
 
-		allEvents = if( (ImmLib.mode != \previewStereo) && (surface.renderMethod == \vbap) ) {
-			panners = ParUChain(surface.size, [\vbap3D_Simple_Panner,
-				[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, buses ]
-			])
-			.private_(true)
-			.ugroup_(ugroups)
-			.addAction_('addToTail')
-			.hideInGUI_(true)
-			.duration_(duration);
-			events++panners;
-		} {
-			if( (ImmLib.mode != \previewStereo) && (surface.renderMethod == \direct) ) {
+		allEvents =  switch(ImmLib.mode)
+		{\normal}{
+			switch( surface.renderMethod )
+			{\vbap} {
+				panners = ParUChain(surface.size, [\vbap3D_Simple_Panner,
+					[\angles, surface.pointsDegrees, \spread, 0.0, \u_i_ar_0_bus, buses ]
+				])
+				.private_(true)
+				.ugroup_(ugroups)
+				.addAction_('addToTail')
+				.hideInGUI_(true)
+				.duration_(duration);
+				events++panners;
+			}
+			{\direct } {
 				panners = ParUChain(surface.size, [\output,
 					[\bus, ParArg( surface.renderOptions.spkIndxs ), \u_i_ar_0_bus, surface.ubuses ]
 				])
@@ -80,10 +83,26 @@ ImmUScore : UScore {
 				.hideInGUI_(true)
 				.duration_(duration);
 				events++panners;
-			}{
-			events
-			}
+			}{Error("renderMethod unknown: must be \vbap or \direct").throw}
 		}
+		{\previewBinaural} {
+			var cipicBuffers = { |subjectID=1|
+				["W","X","Y","Z"].collect{ |letter,i| 2.collect{ |j|
+					var path = "%/FOA/decoders/cipic/44100/512/%/HRIR_%.wav".format(Atk.userKernelDir,subjectID.asString.padLeft(4, "0"), letter);
+					["decoder_buf_%_%".format(i,j).asSymbol, BufSndFile(path, useChannels:[j]) ]
+			}}.flat };
+			panners = ParUChain(surface.size, [\immlib_binaural,
+				cipicBuffers.(27)++[\angles, surface.pointsDegrees, \u_i_ar_0_bus, buses ]
+			])
+			.private_(true)
+			.ugroup_(ugroups)
+			.addAction_('addToTail')
+			.hideInGUI_(true)
+			.duration_(duration);
+			events++panners;
+		}
+		{\previewStereo}{ events }
+		{  Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo or \previewBinaural !".format(ImmLib.mode)).throw }
 
 		^super.new(*(initArgs++allEvents)).initImmUScore(surface, surfaceKey)
 

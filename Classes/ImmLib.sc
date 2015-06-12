@@ -18,7 +18,7 @@
 */
 
 ImmLib {
-	//normal or previewStereo
+	//mode = normal | previewStereo | previewBinaural
 	classvar <>mode = \normal;
 
 	*baseDirectory{
@@ -53,7 +53,7 @@ ImmLib {
 */
 	*startupStereo { |numServers = 1, serverOptions, startGuis = true|
 		GenericDef.errorOnNotFound = true;
-		mode = \previewStereo;
+		mode = \previewBinaural;
 		this.prStartupULib(false, true, numServers, serverOptions, startGuis);
 		(ImmLib.filenameSymbol.asString.dirname++"/../UnitDefs/*.scd").pathMatch.do(_.load);
 		(ImmLib.filenameSymbol.asString.dirname++"/../immdefs.scd").load;

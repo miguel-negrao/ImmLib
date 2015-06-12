@@ -47,7 +47,10 @@ ImmUChain : ParUChain {
 			var points = ParArg( surface.pointsRV3D.collect{ |p| Point(p.x, p.y) } );
 			createImmUChain.(surface, surfaceKey, args ++ [ [\stereoOutput, [\point, points] ] ] )
 		}
-		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo !".format(ImmLib.mode)).throw }
+		{\previewBinaural}{
+			withPanners.()
+		}
+		{ Error("ImmLib.mode unknown : %.\nHas to be either \normal or \previewStereo or \previewBinaural !".format(ImmLib.mode)).throw }
 
 	}
 
