@@ -178,7 +178,7 @@ PSmoothPlot : PFVisualizer {
 		}
 		{\plane}{
 			//when testing outside FRP graph we need to have a test PPlane
-			var y = underlyingSurface ?? { PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 6, 6 ) };
+			var y = underlyingSurface ?? { PPlane(RealVector3D[1.0, 1.0, 1.0],  RealVector3D[0.0,0.0,-2.0], RealVector3D[0.0,-2.0,0.0], 4, 6 ) };
 			var n = 13;
 			var dxn = y.dx.normalize;
 			var dyn = y.dy.normalize;
@@ -210,10 +210,10 @@ PSmoothPlot : PFVisualizer {
 			points = z[0].flatten.collect{ |x| x.sum / 3 };
 			pointsWrapped = triangles.collect{ |x| x.sum / 3 };
 			surface = PSurface( PPlaneM( y.origin, y.dx, y.dy), points, pointsWrapped);
-			zoom = 1;
+			zoom = 0.9;
 			rotx = 270;
 			roty = 180;
-			rotz = 90;
+			rotz = -90;
 		};
 		port = port ?? { var x = currentPort; currentPort = currentPort + 1; x };
 		^super.basicNew( NetAddr("localhost", port), label ?? "", zoom, rotx, roty, rotz ).init( triangles, surface )
