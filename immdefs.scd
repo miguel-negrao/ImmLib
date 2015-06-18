@@ -229,10 +229,12 @@ specs = [
 	\u0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\l, ControlSpec(0.0, 2.0,default:1),
-	\freq, ControlSpec(1/10,2,default:0.5)
+	\freq, ControlSpec(1/10,2,default:0.5),
+	\plot, ControlSpec(0,1,step:1,default:0)
+
 ];
 
-f = { |plot| {|key| { |t, u0, v0, l, freq|
+f = {|key| { |t, u0, v0, l, freq, plot|
 	var surface = ImmDef.currentSurface;
 	var ua = surface.manifold.rangeU[0];
 	var ub = surface.manifold.rangeU[1];
@@ -242,12 +244,11 @@ f = { |plot| {|key| { |t, u0, v0, l, freq|
 	var v0conv = v0.collect( _.linlin(0.0,1.0,va,vb) );
 	var pf1 = PField.wave2DSin(t, u0conv, v0conv, l, freq, plot);
 	Dictionary.newFrom([key, USpecArg( pf1 )])
-}}};
+}};
 
-make.("wave2DSin", f.(false), specs, "default");
-make.("wave2DSinPlot", f.(true), specs, "smooth_plot");
+make.("wave2DSin", f, specs, "default");
 
-f = { |plot| {|key| { |t, u0, v0, l, freq|
+f = {|key| { |t, u0, v0, l, freq, plot|
 	var surface = ImmDef.currentSurface;
 	var ua = surface.manifold.rangeU[0];
 	var ub = surface.manifold.rangeU[1];
@@ -257,10 +258,35 @@ f = { |plot| {|key| { |t, u0, v0, l, freq|
 	var v0conv = v0.collect( _.linlin(0.0,1.0,va,vb) );
 	var pf1 = PField.wave2DSaw(t, u0conv, v0conv, l, freq, plot);
 	Dictionary.newFrom([key, USpecArg( pf1 )])
-}}};
+}};
 
-make.("wave2DSaw", f.(false), specs, "default");
-make.("wave2DSawPlot", f.(true), specs, "smooth_plot");
+make.("wave2DSaw", f, specs, "default");
+
+//***************************************************************************
+//wave1DSin
+//wave1DSaw
+//ok
+specs = [
+	\angle, [0,1],
+	\l, ControlSpec(0.0, 2.0,default:1),
+	\freq, ControlSpec(1/10,2,default:0.5),
+	\plot, ControlSpec(0,1,step:1,default:0)
+];
+
+f = {|key| { |t, angle, l, freq, plotSignal|
+	var x = PField.wave1DSin(t, angle, l, freq, plotSignal);
+	Dictionary.newFrom([key, USpecArg( x )])
+}};
+
+make.("wave1DSin", f, specs, "default");
+
+f = {|key| { |t, angle, l, freq, plotSignal|
+	var x = PField.wave1DSaw(t, angle, l, freq, plotSignal);
+	Dictionary.newFrom([key, USpecArg( x )])
+}};
+
+make.("wave1DSaw", f, specs, "default");
+
 
 //***************************************************************************
 //continousRandomSpotlight

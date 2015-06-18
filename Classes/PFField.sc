@@ -1032,7 +1032,7 @@ PField : AbstractFunction {
 		}
 	}
 
-	*wave2DSin { |t, u0, v0, l, freq, plot = false|
+	*wave2DSin { |t, u0, v0, l, freq, plot|
 		var surface = ImmDef.currentSurface;
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
@@ -1040,25 +1040,19 @@ PField : AbstractFunction {
 			sin( 2pi * ((l*distFunc.(u,v,u0,v0)/maxDist) - t) ).linlin(-1.0,1.0,0.0,1.0)
 		});
 		var vrateT = t.changeRate(freq.asFPSignal);
-		^if( plot ){
-			PSmoothPlot(pf, vrateT, u0, v0, l)
-		} {
-			pf.(vrateT, u0, v0, l)
-		}
+		^pf.plotOnOff(plot, vrateT, u0, v0, l)
 	}
 
-	*wave2DSaw { |t, u0, v0, l, freq, plot = false|
+	*wave2DSaw { |t, u0, v0, l, freq, plot|
 		var surface = ImmDef.currentSurface;
 		var distFunc = surface.distFunc;
 		var maxDist = surface.maxDist;
 		var pf = PField({ |u,v, t, u0, v0, l|
 			( (l*distFunc.(u,v,u0,v0)/maxDist) - t) % 1.0
 		});
-		^if( plot ){
-			PSmoothPlot(pf, t.changeRate(freq), u0, v0, l)
-		} {
-			pf.(t.changeRate(freq), u0, v0, l)
-		}
+		var vrateT = t.changeRate(freq.asFPSignal);
+		^pf.plotOnOff(plot, vrateT, u0, v0, l)
+
 	}
 
 	*wave2D { |t, u0, v0, l, freq, g, plot = false|
@@ -1073,6 +1067,24 @@ PField : AbstractFunction {
 		} {
 			pf.(t.changeRate(freq), u0, v0, l)
 		}
+	}
+
+	*wave1DSin { |t, angle, l, freq, plotSignal|
+		^PField({ |u,v, t, l|
+			sin( 2pi * ( (l*u) - t) ).linlin(-1.0,1.0,0.0,1.0)
+		}).rotate2D.plotOnOff(plotSignal, t.changeRate(freq), angle.nlin(0,2pi), l)
+	}
+
+	*wave1DSaw { |t, angle, l, freq, plotSignal|
+		^PField({ |u,v, t, l|
+			( (l*u) - t) % 1.0
+		}).rotate2D.plotOnOff(plotSignal, t.changeRate(freq), angle.nlin(0,2pi), l)
+	}
+
+	*wave1D { |t, angle, l, freq, g, plotSignal|
+		^PField({ |u,v, t, l|
+			g.( (l*u) - t)
+		}).rotate2D.plotOnOff(plotSignal, t.changeRate(freq), angle.nlin(0,2pi), l)
 	}
 
 }
