@@ -265,7 +265,7 @@ PSmoothPlot : PFVisualizer {
 			var tEventSource = args[0].changes;
 			var outSignal = pf.(*args);
 			var outSignal2 = (sendColors.(_) <%> pf.valueS(*([plot.surface]++args[0..]) ) );
-			//actually I think I can just use enOut here... check later.
+			//actually I think I can just use enOut here... yes, if not used inside switchTo.
 			if(oldSig.notNil) { oldSig.stopDoing(doFunc) };
 			oldSig = (outSignal2  <@ tEventSource);
 			oldSig.do(doFunc);

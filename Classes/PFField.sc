@@ -126,6 +126,29 @@ PField : AbstractFunction {
 		}
 	}
 
+	*plotOnOffFuncMerged{ |plotSignal|
+		var plotBool = plotSignal.collect(_.booleanValue);
+		var plot = PSmoothPlot.basicNew;
+		var x1 = plotBool.changes.onlyChanges.collect{ |v| IO{
+			if(v){plot.startRenderer}{plot.stopRenderer}
+		}}.enOut;
+		var sendColors = { |v| IO{
+			plot.sendMsg(* (["/colors"]++([v,plot.surface.points].flopWith{ |c,xs|
+				[0.0, c.asFloat, (1-c).asFloat]
+			}.flat)))
+		}
+		};
+		var c = 0;
+		^{ |pf...args|
+			//var x2 = "doing plotOnOffFunc v %".format(c).postln;
+			var tEventSource = args[0].changes;
+			var outSignal = pf.(*args);
+			var outSignal2 = sendColors.(_) <%> pf.valueS(plot.surface, *args);
+			c = c + 1;
+			T(_,_) <%> outSignal <*> (outSignal2  <@ plotBool.when(tEventSource) ).hold(IO{});
+		}
+	}
+
 	*plotOnOffFuncSeparate{ |plotSignal|
 		var plotBool = plotSignal.collect(_.booleanValue);
 		var plot = PSmoothPlot.basicNew;
@@ -733,6 +756,55 @@ PField : AbstractFunction {
 		^f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues )/*.enDebug("self")*/;
 	}
 
+	*randomPatchGeneral2 { |generateHillsFunc, surface, t, numSecs, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0, plot=0.0|
+		var numSecsSig = numSecs.asFPSignal;
+		var numHillsSig = numHills.asFPSignal;
+		var sizeASig = sizeA.asFPSignal;
+		var sizeBSig = sizeB.asFPSignal;
+		var bumpSizeSig = bumpSize.asFPSignal;
+		var heightASig = heightA.asFPSignal;
+		var heightBSig = heightB.asFPSignal;
+		var plotSignal = plot.asFPSignal;
+
+		var plotFunc = PField.plotOnOffFuncMerged(plotSignal);
+
+		//this morphs from function A to function B
+		var f = { |xs|
+
+			var oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb, newState, a, b, localT, pfSig, r;
+			var ndffdgd = rrand(0,1000);
+			#oldState, n, nextnumHills, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb = xs;
+
+			nextnumHills = nextnumHills.asInteger;
+			//"Running switch function again realt: %".format(t.now).postln;
+			//we create a new set of hills to morph to:
+			newState = T( oldState.at2, generateHillsFunc.(nextnumHills, surface, nextsizeA, nextsizeB, nextbumpSize, nexthA, nexthb) );
+			a = newState.at1;
+			b = newState.at2;
+
+			//we create a new local time signal starting from 0;
+			localT = t.integral1;
+			//localT.collect{ |t| "% : %".format(ndffdgd,t).postln };
+
+			pfSig = plotFunc.( PField({ |u, v, t|
+				var t2 = t/n;
+				( (1-t2) * a.(u,v)  ) + (t2 * b.(u,v))
+			}), localT);
+
+			{ |x, t, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb|
+				T(x, if((t>=n)){Some([newState, nnumSecs, nnumHills, nsizeA, nsizeB, nbumpSize, nha, nhb])}{None()}) }
+			.lift.(pfSig, localT, numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig);
+		};
+
+		//event switching
+		//calling .now is not pure...
+		var startValues = [numSecsSig, numHillsSig, sizeASig, sizeBSig, bumpSizeSig, heightASig, heightBSig].collect(_.now);
+		var startValues2 = [startValues[1].asInteger, surface]++startValues[2..];
+		var result = f.selfSwitch( [ T( generateHillsFunc.(*startValues2), generateHillsFunc.(*startValues2) ) ]++startValues )/*.enDebug("self")*/;
+		result.collect(_.at2).enOut;
+		^result.collect(_.at1)
+	}
+
 	*randomPatchDeterministic { |surface, randomValuesArray, generateHillsFunc, t, numSecs,
 		bumpSize = 0.5|
 
@@ -797,6 +869,13 @@ PField : AbstractFunction {
 		//this.checkArgs(\PField, \randomHills,
 			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
 		^this.randomPatchGeneral( this.generateHillsFunc, ImmDef.currentSurface, t,
+			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot )
+	}
+
+	*randomHillsPlot { | t, numSecs=5.0, numHills = 5, sizeA=0.3, sizeB=0.5, bumpSize = 0.5, heightA=1.0, heightB=1.0, plot = 0.0|
+		//this.checkArgs(\PField, \randomHills,
+			//[t, numSecs, numHills, sizeA, sizeB, bumpSize], [FPSignal]++(SimpleNumber ! 5));
+		^this.randomPatchGeneral2( this.generateHillsFunc, ImmDef.currentSurface, t,
 			numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot )
 	}
 
