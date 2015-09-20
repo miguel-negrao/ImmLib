@@ -26,6 +26,8 @@ var make = { |name, f, specs, cat|
 };
 
 //***************************************************************************
+//spotlight
+
 specs = [
 	\u0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
 	\v0, ControlSpec(0.0, 1.0, \lin, 0, 0.5 ),
@@ -68,6 +70,8 @@ f = { |key|
 make.("spotlightInverse", f, specs, "default");
 
 //***************************************************************************
+//barU
+
 specs = [
 	\wideness, ControlSpec(0.0, 1.0,\lin, 0, 0.5 ),
 	\plot, ControlSpec(0,1,step:1,default:0)
@@ -114,17 +118,19 @@ make.("gradient", f, specs, "default");
 
 
 //***************************************************************************
+//gradient1DPlane
 
 specs =  [
 	\angle, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\a, ControlSpec(0.0, 1.0, \lin, 0, 0.0 ),
 	\b, ControlSpec(0.0, 1.0, \lin, 0, 1.0 ),
-	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 )
+	\curve, ControlSpec(-6.0, 6.0, \lin, 0, 0.0 ),
+	\plot, ControlSpec(0,1,step:1,default:0)
 ];
 
 f = { |key|
-	{ |t, angle, a, b, curve|
-		var pf1 = PField.gradient1D.(Val(0), angle, a, b, curve);
+	{ |t, angle, a, b, curve, plotSignal|
+		var pf1 = PField.gradient1D.plotOnOffStatic(plotSignal, angle, a, b, curve);
 		Dictionary.newFrom([key, USpecArg( pf1 )])
 
 	}
@@ -134,13 +140,13 @@ make.("gradient1DPlane", f, specs, "default");
 
 
 //***************************************************************************
-
+//sphericalHarmonic
 specs = [
 	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
 	'l', ControlSpec(0, 4, \lin, 1, 0 ),
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
 ];
-
+/*
 f = { |plot| { |key|
 	{ |t, m, l, f|
 		var surface = ImmDef.currentSurface;
@@ -163,7 +169,7 @@ f = { |plot| { |key|
 
 
 }}};
-/*
+*/
 specs = [
 	'm', ControlSpec(-4, 4, \lin, 1, 0 ),
 	'l', ControlSpec(0, 4, \lin, 1, 0 ),
@@ -171,30 +177,36 @@ specs = [
 	\plot, ControlSpec(0,1,step:1,default:0)
 ];
 
-f = { |key|
+f = {{ |key|
 	{ |t, m, l, f, plotSignal|
 		var surface = ImmDef.currentSurface;
-		var plotFunc = PField.plotOnOffFunc(plotSignal);
+		var plotFuncs = PField.plotOnOffFuncSeparate(plotSignal);
 		//  -l <= m <= l
 		var sh = if( surface.isKindOf(PSphericalSurface) ) {
 			PField.sphericalHarmonicFunc
 		}{
 			PField.sphericalHarmonicNormalizedFunc
 		};
+		var orders = T(_,_) <%> m <*> l;
 
-		var pf1 = (T(_,_) <%> m <*> l).switchTo({ |tup|
+		var pf1 = orders.switchTo({ |tup|
 			var l = tup.at2;
 			var m = tup.at1.min(l).max(l.neg);
-			plotFunc.( sh.(m,l) ,t, f)
-		}, plotFunc.( sh.(1,1) ,t, f));
+			plotFuncs.at1.( sh.(m,l) ,t, f)
+		}, plotFuncs.at1.( sh.(1,1) ,t, f));
+
+		orders.switchTo({ |tup|
+			var l = tup.at2;
+			var m = tup.at1.min(l).max(l.neg);
+			plotFuncs.at2.( sh.(m,l) ,t, f)
+		}, plotFuncs.at2.( sh.(1,1) ,t, f)).enOut;
 
 		Dictionary.newFrom([key, USpecArg( pf1 )])
 
+}}};
 
-}};
-*/
 make.("sphericalHarmonic", f.(false), specs, "default");
-make.("sphericalHarmonicPlot", f.(true), specs, "smooth_plot");
+//make.("sphericalHarmonicPlot", f.(true), specs, "smooth_plot");
 
 //***************************************************************************
 
@@ -220,7 +232,7 @@ f = { |plot| { |key|
 		Dictionary.newFrom([key, USpecArg( pf1 )])
 }}};
 
-make.("expandContract", f.(false), specs, "default");
+make.("expandContractSphere", f.(false), specs, "default");
 
 //***************************************************************************
 //wave2DSin
@@ -317,6 +329,27 @@ make.("continousRandomSpotlight2Plot", f.(true), specs, "smooth_plot");
 
 //***************************************************************************
 //randomHills
+
+//incomplete, need see this throughly
+/*
+specs = [
+	\numSecs, ControlSpec( 0.5,10, default: 2),
+	\numHills, ControlSpec(1,6,step:1, default:3),
+	\sizeA, ControlSpec(default:0.3),
+	\sizeB, ControlSpec(default:0.35),
+	\bumpSize, ControlSpec( 0.0, 0.5, default: 0.5),
+	\heightA, ControlSpec(default:1),
+	\heightB, ControlSpec(default:1),
+	\plot, ControlSpec(0,1,step:1,default:0)
+];
+
+f = { |x| {|key| { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot|
+	var pf1 = PField.randomHillsPlot(t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA, heightB, plot);
+	Dictionary.newFrom([key, USpecArg( pf1 )])
+}}};
+
+make.("randomHills", f.(false), specs, "default");
+*/
 
 specs = [
 	\numSecs, ControlSpec( 0.5,10, default: 2),
