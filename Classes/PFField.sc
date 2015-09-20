@@ -126,6 +126,31 @@ PField : AbstractFunction {
 		}
 	}
 
+	*plotOnOffFuncSeparate{ |plotSignal|
+		var plotBool = plotSignal.collect(_.booleanValue);
+		var plot = PSmoothPlot.basicNew;
+		var x1 = plotBool.changes.onlyChanges.collect{ |v| IO{
+			if(v){plot.startRenderer}{plot.stopRenderer}
+		}}.enOut;
+		var sendColors = { |v| IO{
+			plot.sendMsg(* (["/colors"]++([v,plot.surface.points].flopWith{ |c,xs|
+				[0.0, c.asFloat, (1-c).asFloat]
+			}.flat)))
+		}
+		};
+		var c = 0;
+		^T({ |pf...args|
+			pf.(*args)
+		},
+		{ |pf...args|
+			var x2 = "doing plotOnOffFunc v %".format(c).postln;
+			var tEventSource = args[0].changes;
+			var outSignal2 = sendColors.(_) <%> pf.valueS(plot.surface, *args);
+			c = c + 1;
+			(outSignal2  <@ plotBool.when(tEventSource)).hold(IO{})
+		})
+	}
+
 	//problem with sc tcp that connections are not closed
 	plotOnOffStatic{ |plotSignal...args|
 		var plotBool = plotSignal.collect(_.booleanValue);
