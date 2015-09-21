@@ -6,7 +6,7 @@
   dependencies: [
     "FPLib@v0.2.0",
     "https://github.com/miguel-negrao/UEvNetMod.git@v0.1.0",
-    "https://github.com/miguel-negrao/Unit-Lib.git@immlib-v0.1.0",
+    "https://github.com/miguel-negrao/Unit-Lib.git@immlib-v0.1.1",
     "https://github.com/miguel-negrao/WFSCollider-Class-Library.git@immlib-v0.1.0"
   ],
   license: "GPL3",
