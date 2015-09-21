@@ -116,7 +116,7 @@ PField : AbstractFunction {
 		};
 		var c = 0;
 		^{ |pf...args|
-			var x2 = "doing plotOnOffFunc v %".format(c).postln;
+			//var x2 = "doing plotOnOffFunc v %".format(c).postln;
 			var tEventSource = args[0].changes;
 			var outSignal = pf.(*args);
 			var outSignal2 = sendColors.(_) <%> pf.valueS(plot.surface, *args);
@@ -166,7 +166,7 @@ PField : AbstractFunction {
 			pf.(*args)
 		},
 		{ |pf...args|
-			var x2 = "doing plotOnOffFunc v %".format(c).postln;
+			//var x2 = "doing plotOnOffFunc v %".format(c).postln;
 			var tEventSource = args[0].changes;
 			var outSignal2 = sendColors.(_) <%> pf.valueS(plot.surface, *args);
 			c = c + 1;
