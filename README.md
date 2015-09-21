@@ -10,9 +10,13 @@ ImmLib is a SuperCollider library for spatial composition with grid-based loudsp
 Install
 -------
 
-Requires SuperCollider version 3.7alpha0 or higher which can be downloaded [here](https://github.com/supercollider/supercollider/releases/).
+Requires 
 
-The following libraries should be downloaded/cloned from github:
+* SuperCollider version 3.7alpha0 or higher which can be downloaded [here](https://github.com/supercollider/supercollider/releases/).
+* sc3-plugins available [here](https://github.com/supercollider/sc3-plugins)
+* [ATK kernels](http://www.ambisonictoolkit.net/wiki/tiki-index.php?page=Downloads)
+
+The following libraries should be downloaded/cloned from github (or as quarks, see below):
 
 * FP Lib - v0.2.0 [github](https://github.com/miguel-negrao/FPLib).
 * UEvNetMod -v0.1.0 [github](https://github.com/miguel-negrao/UEvNetMod).
@@ -26,6 +30,8 @@ Quarks:
 * wslib quark
 * VectorSpace quark
 * MathLib quark
+
+and their dependencies.
 
 With SuperCollider v3.7alpha0 or newer the library can simply be installed by running the following code. If you have any of libraries mentioned above installed please uninstall them first. In version alpha0 you need to already have a lang yaml file otherwise the Quarks system will not work. You can create the file by adding a path, saving and then removing in the interpreter options.
 
@@ -44,7 +50,7 @@ sc3plugins
 
 In order to use the decorrelate unit you must install a patched version of sc3-plugins including PV_Decorrelated available in [github](https://github.com/miguel-negrao/sc3-plugins) in the 'pv' branch. You can download the source from [here](https://github.com/miguel-negrao/sc3-plugins/archive/pv.zip) and compile it.
 
-If you don't need the 'decorrelate' unit just install the normal sc3-plugins from [gihub](https://github.com/supercollider/sc3-plugins).
+If you don't need the 'decorrelate' unit just install the normal sc3-plugins from [github](https://github.com/supercollider/sc3-plugins).
 
 supercollider patches
 ---------------------
@@ -78,6 +84,11 @@ Documentation
 -------------
 
 See the help files and the [ICMC paper](http://www.friendlyvirus.org/files/miguelnegraoicmc2014.pdf).
+
+Getting started
+---------------
+
+Read the tutorial in the "ImmLib tutorial" SuperCollider help file.
 
 License
 -------
