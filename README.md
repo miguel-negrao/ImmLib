@@ -12,38 +12,41 @@ Install
 
 Requires 
 
-* SuperCollider version 3.7alpha0 or higher which can be downloaded [here](https://github.com/supercollider/supercollider/releases/).
+* SuperCollider version 3.7alpha1 or higher which can be downloaded [here](https://github.com/supercollider/supercollider/releases/).
 * sc3-plugins available [here](https://github.com/supercollider/sc3-plugins)
 * [ATK kernels](http://www.ambisonictoolkit.net/wiki/tiki-index.php?page=Downloads)
 
+note:
+In order for pfVisualizer to work properly a patched version of SuperCollider is needed, as long a needed pull request is not merged. The current solution is to either build from source using [this branch](https://github.com/miguel-negrao/supercollider/tree/fix-TCP-NetAddr-disconnect) or use this [prebuilt binary](https://151.80.150.1/owncloud/index.php/s/RBHcdTUbIwYpbqp/download) for OSX 10.10.
+
+
+The easy way:
+
+With SuperCollider v3.7alpha1 or newer the library can simply be installed by running the following one liner. If you have any of libraries mentioned below installed please uninstall them first, since for ImmLib specific versions are required.
+
+```
+Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.3")
+```
+The hard way:
+
 The following libraries should be downloaded/cloned from github (or as quarks, see below):
 
-* FP Lib - v0.2.0 [github](https://github.com/miguel-negrao/FPLib).
-* UEvNetMod -v0.1.0 [github](https://github.com/miguel-negrao/UEvNetMod).
+* wslib - tag 'immlib-v0.1.0' [github](https://github.com/miguel-negrao/wslib)
+* FP Lib - tag 'v0.2.0' [github](https://github.com/miguel-negrao/FPLib).
+* UEvNetMod -tag 'v0.1.0' [github](https://github.com/miguel-negrao/UEvNetMod).
 * Modality - [github](https://github.com/ModalityTeam/Modality-toolkit).
-* Unit Lib - ImmLib branch - [github](https://github.com/miguel-negrao/Unit-Lib/tree/ImmLib).
-* WFSCollider class library - ImmLib branch - [github](https://github.com/miguel-negrao/WFSCollider-Class-Library/tree/immlib).
-* PopUpTreeMenu - patched version - [github](https://github.com/miguel-negrao/PopUpTreeMenu)
+* Unit Lib - tag 'immlib-v0.1.1' - [github](https://github.com/miguel-negrao/Unit-Lib/).
+* WFSCollider class library - tag 'immlib-v0.1.0' - [github](https://github.com/miguel-negrao/WFSCollider-Class-Library/).
+* PopUpTreeMenu - [github](https://github.com/miguel-negrao/PopUpTreeMenu)
 
 Quarks:
 
-* wslib quark
 * VectorSpace quark
 * MathLib quark
 
 and their dependencies.
 
-With SuperCollider v3.7alpha0 or newer the library can simply be installed by running the following code. If you have any of libraries mentioned above installed please uninstall them first. In version alpha0 you need to already have a lang yaml file otherwise the Quarks system will not work. You can create the file by adding a path, saving and then removing in the interpreter options.
 
-```
-(
-Quarks.install("FPLib", "v0.2.0");
-Quarks.install("https://github.com/miguel-negrao/UEvNetMod.git", "v0.1.0");
-Quarks.install("https://github.com/miguel-negrao/Unit-Lib.git", "immlib-v0.1.0");
-Quarks.install("https://github.com/miguel-negrao/WFSCollider-Class-Library.git", "immlib-v0.1.0");
-Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.2")
-)
-```
 
 sc3plugins
 ----------
