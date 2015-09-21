@@ -91,6 +91,7 @@ EXAMPLES::
 subsection:: Preview mode
 code::
 //startup in stereo preview mode
+//It is a good idea to use as many servers as CPU cores.
 (
 var o = ServerOptions()
 .memSize_(8192*16)
@@ -99,13 +100,14 @@ var o = ServerOptions()
 .maxSynthDefs_(2048)
 .maxNodes_(4*1024)
 .numOutputBusChannels_(2);
-Routine({ ImmLib.startupStereo(2, o, startGuis:true ) }).play(AppClock)
+Routine({ ImmLib.startupStereo(numServers:2, serverOptions:o, startGuis:true ) }).play(AppClock)
 )
 ::
 
 subsection:: Direct mode
 code::
 //startup for direct mode
+//It is a good idea to use as many servers as CPU cores.
 (
 var o = ServerOptions()
 .memSize_(8192*16)
@@ -116,21 +118,7 @@ var o = ServerOptions()
 .numOutputBusChannels_(25);
 Routine({
 
-ImmLib.startupDirect(2, o, startGuis:true );
-
-ImmDef(\planeWaveForPlane, { |t, angle, l, freq|
-
-	var pf1 = PField({ |u,v, t, l|
-		sin( 2pi * ( (l*u) - t) )
-	}).rotate2D.(t.changeRate(freq), angle.nlin(0,2pi), l);
-
-	( amp: USpecArg( pf1 ) )
-
-}, 0.1,  [
-	\angle, [0,1],
-	\l, ControlSpec(0.0, 2.0,default:1),
-	 \freq, ControlSpec(1/10,2,default:0.5)
-]; );
+ImmLib.startupDirect(numServers:2, serverOptions:o, startGuis:true );
 
 PSurfaceDef(\surface1,
 PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 5, 5 )
@@ -142,7 +130,7 @@ PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,
 
 //test direct mode
 (
-~mod = ImmMod(\planeWaveForPlane, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
+~mod = ImmMod(\wave2DSin, [\u0, pi/2, \v0, 0, \l, 1, \freq, 0.5]);
 ~chain = ImmUChain(\surface1, [\immWhiteNoise, [\amp, 0.5, \freq, 2000], ~mod] );
 ~score = ImmUScore(\surface1, ~chain);
 ~score.gui
@@ -214,16 +202,6 @@ var v = VBAPOptions(
 Routine({
 
 ImmLib.startupVBAP( v, o );
-
-ImmDef(\wave2DSin, { |t, u0, v0, l, freq|
-	var pf1 = PField.wave2DSin(t, u0, v0, l, freq);
-	( amp: USpecArg( pf1 ) )
-}, 0.1, [
-	\u0, ControlSpec(0,2pi),
-	\v0, [-pi,pi],
-	\l, ControlSpec(0.0, 2.0,default:1),
-	\freq, ControlSpec(1/10,2,default:0.5)
-] );
 
 PSurfaceDef(\surface1, PSphere(10) );
 

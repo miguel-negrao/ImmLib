@@ -21,14 +21,18 @@ To get familiar with FRP read link::Overviews/FRP:: and for event networks see l
 
 list::
 ##FPSignals and EventStreams represent events that can happen at any time.
-##Signals are continuous (they have a "now" value) while event streams are discrete (no "now" value).
+##Signals are continuous (they have a "now" value) while event streams are discrete (no "now" value). You can think of a signal as a function of time f: Time -> A, and an event as a list of time stamped values { (t1,v1), (t2,v2), ... }.
 ##An event network connects inputs (MIDI, GUI, OSC, timer, etc) to outputs (set argument to a synth, draw on screen, etc) via signals and event streams.
 ##signals and event streams when placed in an event network are automatically connected to inputs and outputs when the network is compiled or started and are automatically disconnected when the network is stopped. There is no need for explicit registration and de-registration of callbacks.
 ::
 
+note::
+Pseudo-type signatures are used in the help files for the arguments and return types of methods. ClassA[ ClassB, ClassC ] represents an objects of ClassA which contains or depends on objects of ClassB and Class C. So FPSignal[ Float ] represents an object of class FPSignal which carries floats. Array[A] is an array carrying values of type A (for homogenous arrays).
+::
+
 section:: Installation and startup code
 
-Follow the instructions in the README.md file.
+To correctly install ImmLib and its dependencies, follow the instructions in the README.md file.
 
 You need to generate the UnitLib synthdefs once:
 
@@ -43,10 +47,6 @@ code::
 VBAPSynthDef.writeDefs(n);
 VBAPSynthDef.writePreviewDefs
 )
-::
-
-note::
-Pseudo-type signatures are used in the help files for the arguments and return types of methods. ClassA[ ClassB, ClassC ] represents an objects of ClassA which contains or depends on objects of ClassB and Class C. So FPSignal[ Float ] represents an object of class FPSignal which carries floats. Array[A] is an array carrying values of type A (for homogenous arrays).
 ::
 
 For startup code see link::Classes/ImmLib::.
@@ -70,7 +70,50 @@ code::
 PSurfaceDef(\test, PSphere(20) )
 ::
 
-section:: ImmUChain, ImmUScore.
+section:: Quick start
+
+Make sure the system is properly started. For a sphere with 30 points you probably will need to start multiple servers.
+
+ImmLib makes available a set of predefined ImmDefs containing one PField which you can use out of the box, for modulating the 'amp' control.
+
+The currently available ImmDefs are : gradient, spotlightInverse, randomHills, randomHills2, spotlight, sphericalHarmonic, expandContractSphere, continousRandomSpotlight2Plot, wave2DSin, wave1DSaw, randomHills2Plot, moveHills, barU, gradient1DPlane, wave2DSaw, continuousRandomSpotlightPlot, barV, continuousRandomSpotlight, randomHillsPlot, wave1DSin, continousRandomSpotlight2.
+
+You can try a different ImmDef either by changing the name in the ImmMod or by dragging from the def list window to the chain gui. For modulating any parameter using predefined ImmDefs see the last section of this tutorial.
+
+You can double-click on the event on the score to open the chain gui. There you can use the 'plot' slider to turn on and off the visualization.
+
+code::
+(
+PSurfaceDef(\surface1, PSphere(30) );
+~mod = ImmMod(\wave2DSin, [\u0, 0.25, \v0, 0.5, \l, 0.4]);
+~chain = ImmUChain(\surface1, [\immWhiteNoise, [\globalAmp, 0.03], ~mod ] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+::
+
+code::
+(
+Udef(\dust,{
+	var a = Dust.ar(\density.ukr(10,10, 100,\exp));
+	var b = a * \amp.kr(0.0) * \globalAmp.ukr(0.1, \amp);
+	UOut.ar(0, b)
+})
+)
+
+(
+PSurfaceDef(\surface1, PSphere(30) );
+~mod = ImmMod(\randomHillsPlot, [\sizeA, 0.525, \sizeB, 0.7]);
+~chain = ImmUChain(\surface1, [\dust, [\density, 80, \globalAmp, 0.8], ~mod ] );
+~score = ImmUScore(\surface1, ~chain);
+~score.gui
+)
+
+
+::
+
+
+section:: ImmUChain, ImmUScore
 
 When using ImmLib one must use the link::Classes/ImmUChain:: and  link::Classes/ImmUScore:: classes. The ImmUChain class inherits from link::Classes/ParUChain::, for details regarding sending different argument values to each synth of an ImmUChain see the documentation of ParUChain and ParU.
 

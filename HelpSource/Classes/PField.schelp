@@ -158,11 +158,23 @@ discussion::
 
 code::
 //Startup ImmLib first.
-(
+
 PSurfaceDef(\sphere, PSphere(20) );
+//or
 PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\gradient)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
 )
 
+
+//bas
 (
 ImmDef(\test, { |t|
 
@@ -176,6 +188,7 @@ ImmDef(\test, { |t|
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart
 )
+
 
 (
 ImmDef(\test, { |t|
@@ -333,8 +346,20 @@ Creates a gradient on the plane along the direction given by angle. Lines perpen
 discussion::
 
 code::
-(
+
 PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\gradient1DPlane)] );
+~score = ImmUScore(\plane, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+
+
+(
 ImmDef(\gradient1DForPlane, { |t, angle, a, b, curve|
     var pf1 = PField.gradient1D.plot(t, angle, a, b, curve);
     ( amp: USpecArg( pf1 ) )
@@ -378,6 +403,21 @@ discussion::
 
 
 code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\spotlight)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+
 (
 PSurfaceDef(\sphere, PSphere(20) );
 ImmDef(\test, { |t, u2, v2, a, b|
@@ -390,7 +430,7 @@ ImmDef(\test, { |t, u2, v2, a, b|
 	( amp: USpecArg( sig ) )
 
 }, 0.1,[]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -411,7 +451,7 @@ ImmDef(\test, { |t, u2, v2, a, b|
 	( amp: USpecArg( sig ) )
 
 }, 0.1,[]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 )
@@ -431,7 +471,7 @@ ImmDef(\test, { |t, u0, v0, c, d|
 	\c, [0,1.0],
 	\d, [0,1.0]
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -457,7 +497,7 @@ ImmDef(\test, { |t, u0, v0, c, d|
 	\c, [0,1.0],
 	\d, [0,1.0]
 ]);
-~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~chain = ImmUChain(\plane, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
 ~score = ImmUScore(\plane, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -506,7 +546,7 @@ ImmDef(\test, { |t|
 	( amp: USpecArg( sig ) )
 
 }, 0.1,[]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\test)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\test)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -541,6 +581,24 @@ note::Only valid for spherical surfaces.::
 returns:: PField
 
 discussion::
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\expandContractSphere)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
 code::
 
 (
@@ -557,7 +615,7 @@ ImmDef(\expandContractForSphere2, { |t, u0, v0, c, curve|
 	\c, nil,
 	\curve, ControlSpec(-6,6,default:0)
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\expandContractForSphere2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\expandContractForSphere2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -583,6 +641,24 @@ returns:: PField
 
 discussion::
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\barU)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -593,7 +669,7 @@ ImmDef(\barU2, { |t, wideness|
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\barU2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\barU2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -619,6 +695,23 @@ returns:: PField
 discussion::
 
 code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\barV)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
+code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
 ImmDef(\barV2, { |t, wideness|
@@ -628,7 +721,7 @@ ImmDef(\barV2, { |t, wideness|
 }, 0.1, [
 	\wideness, ControlSpec(0.0, 1.0, \lin, 0, 0.5 )
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\barV2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\barV2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -658,6 +751,24 @@ returns:: PField
 
 discussion::
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\sphericalHarmonic)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -670,7 +781,7 @@ ImmDef(\sphericalHarmonicForSphere2, { |t, f|
 }, 0.1, [
 	\freq, ControlSpec(1/10, 4, \lin, 0, 0.5 )
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\sphericalHarmonicForSphere2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\sphericalHarmonicForSphere2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -736,7 +847,7 @@ ImmDef(\wave2D2, { |t, u0, v0, l, freq|
 	( amp: USpecArg( pf1 ) )
 
 }, 0.1, [\u0, [0,2pi], \v0, [-pi,pi], \l, [0.0, 2.0], \freq, [1/10,2] ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2D2, [\l,1])] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2D2, [\l,1])] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -776,6 +887,24 @@ returns:: FPSignal[ [Float] ]
 
 discussion::
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2DSin)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -791,7 +920,7 @@ ImmDef(\wave2DSinForSphere2, { |t, u0, v0, l, freq|
 	\l, ControlSpec(0.0, 2.0,default:1),
 	\freq, ControlSpec(1/10,2,default:0.5)
 ] );
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2DSinForSphere2, [\l,1])] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2DSinForSphere2, [\l,1])] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -832,6 +961,22 @@ returns:: FPSignal[ [Float] ]
 discussion::
 
 
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2DSaw)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
 
 code::
 (
@@ -848,7 +993,7 @@ ImmDef(\wave2DSawForSphere2, { |t, u0, v0, l, freq|
 	\l, ControlSpec(0.0, 2.0,default:1),
 	\freq, ControlSpec(1/10,2,default:0.5)
 ] );
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\wave2DSawForSphere2, [\l,1])] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2DSawForSphere2, [\l,1])] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -874,6 +1019,24 @@ returns::  FPSignal[ [Float] ]
 
 discussion::
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\continuousRandomSpotlightPlot)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -887,7 +1050,7 @@ ImmDef(\continousRandomSpotlights2, { |t, numSecs, curve|
 	\numSecs, ControlSpec(0.5,10,default:2),
 	\curve, ControlSpec(-6,6,default:0)
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\continousRandomSpotlights2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\continousRandomSpotlights2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -930,7 +1093,7 @@ ImmDef(\continousRandomSpotlight22, { |t, numSecsLo, numSecsHi, curve|
 	\curve, ControlSpec(-6,6,default:0)
 ]);
 
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\continousRandomSpotlight22)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\continousRandomSpotlight22)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -970,6 +1133,25 @@ discussion::
 
 When using an FPSignal for numSecs, the number of seconds is only sampled when switching occurs to the new set of hills. So if the previous numSecs value was 8seconds, even if the numSecs signal changes in the mean time, only after 8 seconds will the new value of numSecs signal be sampled.
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\randomHillsPlot)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -987,7 +1169,7 @@ ImmDef(\randomHills_2, { |t, numSecs, numHills, sizeA, sizeB, bumpSize, heightA,
 	\heightA, ControlSpec(default:1),
 	\heightB, ControlSpec(default:1)
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\randomHills_2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\randomHills_2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -1030,6 +1212,25 @@ discussion::
 
 When using an FPSignal for numSecs, the number of seconds is only sampled when switching occurs to the new set of hills. So if the previous numSecs value was 8seconds, even if the numSecs signal changes in the mean time, only after 8 seconds will the new value of numSecs signal be sampled.
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\randomHills2Plot)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -1051,7 +1252,7 @@ ImmDef(\randomHills2_2, { |t, numSecsLo, numSecsHi, numHills, sizeA, sizeB, bump
 	\heightB, ControlSpec(default:1)
 ]
 );
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\randomHills2_2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\randomHills2_2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -1089,6 +1290,25 @@ returns::  FPSignal[ [Float] ]
 
 discussion::
 
+
+code::
+//Startup ImmLib first.
+
+PSurfaceDef(\sphere, PSphere(20) );
+//or
+PSurfaceDef(\plane, PPlane(RealVector3D[1.0,-1.0,-1.0], RealVector3D[0.0,2.0,0.0], RealVector3D[0.0,0.0,2.0], 8, 8 ) );
+
+//try:
+//use plot slider for visualization
+(
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\moveHills)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.prepareAndStart
+)
+::
+
+
 code::
 (
 PSurfaceDef(\sphere, PSphere(20) );
@@ -1102,7 +1322,7 @@ ImmDef(\moveHills_2, { |t, numSecs, numHills, size, step|
 	\size, ControlSpec(default:0.4),
 	\step, ControlSpec( 0.0, 2.0, default: 1)
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\moveHills_2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\moveHills_2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
@@ -1169,7 +1389,7 @@ ImmDef(\sphericalHarmonicForSphere2, { |t, f, rotate, tilt, tumble|
 	\tilt, [0, 2pi],
 	\tumble, [0, 2pi]
 ]);
-~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.0], ImmMod(\sphericalHarmonicForSphere2)] );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\sphericalHarmonicForSphere2)] );
 ~score = ImmUScore(\sphere, ~chain);
 ~score.prepareAndStart;
 ~chain.gui
