@@ -22,14 +22,14 @@ In order for pfVisualizer to work properly a patched version of SuperCollider is
 
 The easy way:
 
-With SuperCollider v3.7alpha1 or newer the library can simply be installed by running the following one liner. If you have any of libraries mentioned below installed please uninstall them first, since for ImmLib specific versions are required.
+With SuperCollider v3.7alpha1 or newer the library can simply be installed by running the following one liner. If you have any of the libraries mentioned below installed please uninstall them first, since for ImmLib, specific versions are required.
 
 ```
 Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.3")
 ```
 The hard way:
 
-The following libraries should be downloaded/cloned from github (or as quarks, see below):
+The following libraries should be downloaded/cloned from github:
 
 * wslib - tag 'immlib-v0.1.0' [github](https://github.com/miguel-negrao/wslib)
 * FP Lib - tag 'v0.2.0' [github](https://github.com/miguel-negrao/FPLib).
@@ -39,14 +39,12 @@ The following libraries should be downloaded/cloned from github (or as quarks, s
 * WFSCollider class library - tag 'immlib-v0.1.0' - [github](https://github.com/miguel-negrao/WFSCollider-Class-Library/).
 * PopUpTreeMenu - [github](https://github.com/miguel-negrao/PopUpTreeMenu)
 
-Quarks:
+The following quarks should be installed:
 
-* VectorSpace quark
-* MathLib quark
-
-and their dependencies.
-
-
+* VectorSpace
+* MathLib
+* JITLibExtensions
+* NetLib
 
 sc3plugins
 ----------
