@@ -12,17 +12,17 @@ Install
 
 Requires 
 
-* SuperCollider version 3.7alpha1 or higher which can be downloaded [here](https://github.com/supercollider/supercollider/releases/).
+* SuperCollider from current master (commit 2fdb730407454fd2b522462669447e9dade42b1e or higher ) which can be downloaded for OSX [here](http://supercollider.s3.amazonaws.com/builds/supercollider/supercollider/osx/master-latest.html).
 * sc3-plugins available [here](https://github.com/supercollider/sc3-plugins)
 * [ATK kernels](http://www.ambisonictoolkit.net/wiki/tiki-index.php?page=Downloads)
 
 note:
-In order for pfVisualizer to work properly a patched version of SuperCollider is needed, as long a needed pull request is not merged. The current solution is to either build from source using [this branch](https://github.com/miguel-negrao/supercollider/tree/fix-TCP-NetAddr-disconnect) or use this [prebuilt binary](https://151.80.150.1/owncloud/index.php/s/RBHcdTUbIwYpbqp/download) for OSX 10.10.
+In order for pfVisualizer to work properly a copy of SuperCollider built from commit 2fdb730407454fd2b522462669447e9dade42b1e or higher is needed.
 
 
 The easy way:
 
-With SuperCollider v3.7alpha1 or newer the library can simply be installed by running the following one liner. If you have any of the libraries mentioned below installed please uninstall them first, since for ImmLib, specific versions are required.
+With SuperCollider downloaded from the link above the library can by simply installed by running the following one liner. If you have any of the libraries mentioned below installed please uninstall them first, since for ImmLib, specific versions are required.
 
 ```
 Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.3")
@@ -45,6 +45,11 @@ The following quarks should be installed:
 * MathLib
 * JITLibExtensions
 * NetLib
+
+Getting started
+---------------
+
+Read the tutorial in the "ImmLib tutorial" SuperCollider help file and the "ImmLib" help file for startup code.
 
 sc3plugins
 ----------
@@ -86,10 +91,6 @@ Documentation
 
 See the help files and the [ICMC paper](http://www.friendlyvirus.org/files/miguelnegraoicmc2014.pdf).
 
-Getting started
----------------
-
-Read the tutorial in the "ImmLib tutorial" SuperCollider help file.
 
 License
 -------
