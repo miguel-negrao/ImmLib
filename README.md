@@ -25,7 +25,7 @@ The easy way:
 With SuperCollider downloaded from the link above the library can by simply installed by running the following one liner. If you have any of the libraries mentioned below installed please uninstall them first, since for ImmLib, specific versions are required.
 
 ```
-Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.4")
+Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.5")
 ```
 The hard way:
 
@@ -33,8 +33,8 @@ The following libraries should be downloaded/cloned from github:
 
 * wslib - tag 'immlib-v0.1.0' [github](https://github.com/miguel-negrao/wslib)
 * FP Lib - tag 'v0.2.0' [github](https://github.com/miguel-negrao/FPLib).
-* UEvNetMod -tag 'v0.1.0' [github](https://github.com/miguel-negrao/UEvNetMod).
-* Modality - [github](https://github.com/ModalityTeam/Modality-toolkit).
+* UEvNetMod - tag 'v0.1.0' [github](https://github.com/miguel-negrao/UEvNetMod).
+* Modality - tag 'immlib-v0.1.0' [github](https://github.com/miguel-negrao/Modality-toolkit).
 * Unit Lib - tag 'immlib-v0.1.1' - [github](https://github.com/miguel-negrao/Unit-Lib/).
 * WFSCollider class library - tag 'immlib-v0.1.0' - [github](https://github.com/miguel-negrao/WFSCollider-Class-Library/).
 * PopUpTreeMenu - [github](https://github.com/miguel-negrao/PopUpTreeMenu)
