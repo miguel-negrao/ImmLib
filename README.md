@@ -51,6 +51,42 @@ Getting started
 
 Read the tutorial in the "ImmLib tutorial" SuperCollider help file and the "ImmLib" help file for startup code.
 
+Note that after installing ImmLib you need to quit and then start scide in order for the help files to become visible.
+
+minimal code to get started:
+
+Run once:
+```
+ULib.writeDefaultSynthDefs
+```
+
+Start system in stereo binaural preview:
+```
+(
+var o = ServerOptions()
+.memSize_(8192*16)
+.numWireBufs_(64*2)
+.numPrivateAudioBusChannels_(1024)
+.maxSynthDefs_(2048)
+.maxNodes_(4*1024)
+.numOutputBusChannels_(2);
+Routine({ ImmLib.startupStereo(numServers:2, serverOptions:o, startGuis:true ) }).play(AppClock)
+)
+```
+
+Start one event:
+```
+(
+PSurfaceDef(\sphere, PSphere(30) );
+~chain = ImmUChain(\sphere, [\immWhiteNoise, [\globalAmp, 0.1], ImmMod(\wave2DSin)] );
+~score = ImmUScore(\sphere, ~chain);
+~chain.gui;
+~score.gui;
+~score.prepareAndStart
+)
+```
+
+
 sc3plugins
 ----------
 
