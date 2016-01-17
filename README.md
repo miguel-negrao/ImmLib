@@ -25,7 +25,7 @@ The easy way:
 With SuperCollider downloaded from the link above the library can by simply installed by running the following one liner. If you have any of the libraries mentioned below installed please uninstall them first, since for ImmLib, specific versions are required.
 
 ```
-Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.5")
+Quarks.install("https://github.com/miguel-negrao/ImmLib.git","v0.1.6")
 ```
 The hard way:
 

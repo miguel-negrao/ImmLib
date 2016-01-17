@@ -1,7 +1,7 @@
 (
   name: "ImmLib",
   summary: "A Library for immersive spatialization",
-  version: "0.1.5",
+  version: "0.1.6",
   schelp: "ImmLib tutorial",
   dependencies: [
     "FPLib@v0.2.1",
