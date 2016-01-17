@@ -186,12 +186,19 @@ ImmUScore : UScore {
 	cleanScoreOfParArgs {
 		this.events.do{ |ev|
 			if(ev.isKindOf(UChain)){
-				ev.units.do{ |u|
+				var action = { |u|
 					if( u.mod.notNil and:{ u.mod.isKindOf(ImmMod) }){
 						u.mod.keySignalDict.keys.as(Array).do{ |key|
-							u.set(key, u.def.getArgSpec(\amp).default)
-						}
+							u.set(key, u.def.getArgSpec(key).default)
+						};
 					}
+				};
+				ev.units.do{ |u|
+					action.(u);
+					u.getAllUMaps.do(action)
+				};
+				if(ev.ugroup.asString.contains("imm")){
+					ev.ugroup_(nil)
 				}
 			}
 		}
